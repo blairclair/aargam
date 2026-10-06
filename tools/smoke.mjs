@@ -31,7 +31,7 @@ const CHROME = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', 
 if (!CHROME) { console.error('smoke: no Chrome found; skipping'); process.exit(0); }
 
 const server = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1'], { cwd: root, stdio: 'ignore' });
-const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', `--remote-debugging-port=${cdpPort}`, `--user-data-dir=${mkdtempSync(join(tmpdir(), 'smoke-'))}`, '--window-size=960,540', '--autoplay-policy=no-user-gesture-required', 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', `--remote-debugging-port=${cdpPort}`, `--user-data-dir=${mkdtempSync(join(tmpdir(), 'smoke-'))}`, '--window-size=960,540', '--mute-audio', 'about:blank'], { stdio: 'ignore' });
 const cleanup = () => { try { chrome.kill(); } catch {} try { server.kill(); } catch {} };
 process.on('exit', cleanup);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -69,8 +69,12 @@ for (const [i, q] of urls.entries()) {
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/index.html${q ? '?' + q : ''}` });
   await sleep(1200);
   await evaluate('localStorage.clear()');
+  // skip intro dialogs so gameplay actually runs (Enter advances Dialog)
+  for (let k = 0; k < 8; k++) await key('Enter', 'Enter', 60);
+  await sleep(300);
   // poke it: move, attack, ability, swap, special, click center
   await key('KeyD', 'd', 400); await key('KeyW', 'w', 300);
+  for (let k = 0; k < 6; k++) { await key('KeyJ', 'j', 80); await key('KeyA', 'a', 150); }
   await key('KeyJ', 'j'); await key('ShiftLeft', 'Shift'); await key('KeyQ', 'q'); await key('KeyE', 'e'); await key('KeyJ', 'j');
   await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 600, y: 300 });
   await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 600, y: 300, button: 'left', clickCount: 1 });
