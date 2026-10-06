@@ -161,7 +161,7 @@ function decorate(g, region, X0, Y0) {
     } else if (kind === 'brick') {
       if (v < 0.22) leaf(g, v);
       else if (v < 0.28) { g.fillStyle = 'rgba(80,120,60,0.45)'; g.fillRect(-4, -0.5, 8, 1.2); } // moss in mortar
-      else if (v < 0.31) manhole(g);
+      else if (v < 0.29 && h < 0.03) manhole(g); // rare cast-iron drain cover
     }
     g.restore();
   }
@@ -211,21 +211,29 @@ function leaf(g, v) {
   g.strokeStyle = 'rgba(90,40,20,0.5)'; g.lineWidth = 0.6; g.beginPath(); g.moveTo(-4, 0); g.lineTo(4, 0); g.stroke();
 }
 function manhole(g) {
-  g.fillStyle = '#4a4f57'; g.beginPath(); g.arc(0, 0, 9, 0, TAU); g.fill();
-  g.strokeStyle = '#2f3339'; g.lineWidth = 1;
-  for (let r = 3; r < 9; r += 3) { g.beginPath(); g.arc(0, 0, r, 0, TAU); g.stroke(); }
+  // round cast-iron drain cover: rim, raised cross-hatch, slots
+  g.fillStyle = 'rgba(16,19,31,0.35)'; g.beginPath(); g.arc(0.8, 1.2, 12, 0, TAU); g.fill();
+  g.fillStyle = '#3c4048'; g.beginPath(); g.arc(0, 0, 12, 0, TAU); g.fill();
+  g.fillStyle = '#545a64'; g.beginPath(); g.arc(0, 0, 10, 0, TAU); g.fill();
+  g.save(); g.beginPath(); g.arc(0, 0, 9, 0, TAU); g.clip();
+  g.strokeStyle = '#2a2d33'; g.lineWidth = 1.2;
+  for (let i = -9; i <= 9; i += 3) { g.beginPath(); g.moveTo(i, -9); g.lineTo(i, 9); g.stroke(); g.beginPath(); g.moveTo(-9, i); g.lineTo(9, i); g.stroke(); }
+  g.restore();
+  g.strokeStyle = 'rgba(255,255,255,0.18)'; g.lineWidth = 1; g.beginPath(); g.arc(0, 0, 11, Math.PI * 1.1, Math.PI * 1.6); g.stroke();
 }
 
 // ---- frost overlay tile (seamless 256) ----
 function frostTile() {
   return cached('ground:frosttile', 256, 256, (g) => {
     const wrap = (fn) => { for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) { g.save(); g.translate(ox, oy); fn(); g.restore(); } };
-    for (let i = 0; i < 14; i++) {
-      const x = ih(i, 1, 201) * 256, y = ih(i, 2, 201) * 256, rx = 20 + ih(i, 3, 201) * 40, ry = rx * 0.45;
+    // irregular snow drifts: clusters of small overlapping lumps with a crisp edge
+    for (let i = 0; i < 9; i++) {
+      const x = ih(i, 1, 201) * 256, y = ih(i, 2, 201) * 256, n = 4 + Math.floor(ih(i, 3, 201) * 5);
       wrap(() => {
-        const gr = g.createRadialGradient(x, y, 1, x, y, rx);
-        gr.addColorStop(0, 'rgba(255,255,255,0.75)'); gr.addColorStop(0.7, 'rgba(232,248,255,0.45)'); gr.addColorStop(1, 'rgba(232,248,255,0)');
-        g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU); g.fill();
+        g.fillStyle = 'rgba(160,200,230,0.35)';
+        for (let k = 0; k < n; k++) { const a = ih(i, k, 205) * TAU, d = ih(i, k, 206) * 16; g.beginPath(); g.ellipse(x + Math.cos(a) * d * 1.6, y + Math.sin(a) * d * 0.6 + 2, 7 + ih(i, k, 207) * 8, 3 + ih(i, k, 208) * 3, 0, 0, TAU); g.fill(); }
+        g.fillStyle = 'rgba(248,252,255,0.85)';
+        for (let k = 0; k < n; k++) { const a = ih(i, k, 205) * TAU, d = ih(i, k, 206) * 16; g.beginPath(); g.ellipse(x + Math.cos(a) * d * 1.6, y + Math.sin(a) * d * 0.6, 7 + ih(i, k, 207) * 8, 3 + ih(i, k, 208) * 3, 0, 0, TAU); g.fill(); }
       });
     }
     for (let i = 0; i < 40; i++) {

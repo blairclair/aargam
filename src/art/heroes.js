@@ -7,10 +7,12 @@ const TAU = Math.PI * 2;
 
 // ---------- portraits ----------
 /** Circular crop of a portrait image cached at a fixed resolution bucket. */
-function portraitCanvas(game, id, px) {
-  const img = game?.assets?.image?.(HEROES[id]?.portrait);
+function portraitCanvas(game, id, px, tight) {
+  const key = tight ? (HEROES[id]?.face ?? HEROES[id]?.portrait) : HEROES[id]?.portrait;
+  let img = game?.assets?.image?.(key);
+  if (!img && tight) { img = game?.assets?.image?.(HEROES[id]?.portrait); tight = false; }
   if (!img || !img.complete || !img.naturalWidth) return null;
-  return cached(`portrait:${id}:${px}`, px, px, (c) => {
+  return cached(`portrait:${id}:${px}:${tight ? 't' : 'w'}`, px, px, (c) => {
     c.imageSmoothingQuality = 'high';
     c.beginPath(); c.arc(px / 2, px / 2, px / 2, 0, TAU); c.clip();
     // centre-crop the square (images are square already, but be safe)
@@ -21,7 +23,8 @@ function portraitCanvas(game, id, px) {
 
 /**
  * Circular photo portrait centered at (x, y), radius r.
- * o: { border?: px, borderColor?, ring?: color (outer glow ring), alpha?, grey?: bool (knocked-out dim) }
+ * o: { border?: px, borderColor?, ring?: color (outer glow ring), ringWidth?, alpha?, grey?: bool (knocked-out dim),
+ *      tight?: bool (use the face-only crop; in-world heads) }
  */
 export function drawPortrait(ctx, game, id, x, y, r, o = {}) {
   const h = HEROES[id];
@@ -35,7 +38,7 @@ export function drawPortrait(ctx, game, id, x, y, r, o = {}) {
   const m = ctx.getTransform ? ctx.getTransform() : { a: 1, b: 0 };
   const scr = r * 2 * Math.hypot(m.a, m.b);
   const px = scr <= 40 ? 48 : scr <= 100 ? 128 : 256;
-  const pc = h ? portraitCanvas(game, id, px) : null;
+  const pc = h ? portraitCanvas(game, id, px, !!o.tight) : null;
   ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
   ctx.fillStyle = h?.look.skin ?? PALETTE.paper; ctx.fill();
   if (pc) ctx.drawImage(pc, x - r, y - r, r * 2, r * 2);
@@ -203,49 +206,115 @@ function drawScoopInHand(c, x, y, r = 3.2) {
   c.fillStyle = PALETTE.choc; c.fillRect(x - 1.2, y - 1.6, 1, 1); c.fillRect(x + 0.8, y - 0.4, 1, 1);
 }
 
-function drawVictoriaHairBack(c, L, hy, r) {
-  c.fillStyle = L.hairDark;
+// Victoria's long wavy honey-blond hair: smooth wavy silhouettes (no beads, no hard edges).
+// Builds one side's outer edge as a list of points from temple to tip.
+function hairEdge(s, hy, r, len, out, sway, phase = 0) {
+  const pts = [];
+  const n = 7;
+  for (let k = 0; k <= n; k++) {
+    const f = k / n;
+    const y = hy - r * 0.55 + f * (r * 1.0 + len);
+    const widen = Math.sin(Math.min(1, f * 1.6) * Math.PI / 2) * 4;
+    const wave = Math.sin(f * 9 + phase) * 2.2 * f;
+    pts.push([s * (r * out + widen + wave) + sway * f * 2.5, y]);
+  }
+  return pts;
+}
+function smoothThrough(c, pts) {
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [x, y] = pts[i], [nx, ny] = pts[i + 1];
+    c.quadraticCurveTo(x, y, (x + nx) / 2, (y + ny) / 2);
+  }
+  const last = pts[pts.length - 1];
+  c.lineTo(last[0], last[1]);
+}
+function hairMass(c, hy, r, len, out, sway, phase) {
+  const R = hairEdge(1, hy, r, len, out, sway, phase), Lf = hairEdge(-1, hy, r, len, out, sway, phase + 1.3);
   c.beginPath();
-  c.moveTo(-r * 1.05, hy - r * 0.3);
-  c.bezierCurveTo(-r * 1.35, hy - r * 1.5, r * 1.35, hy - r * 1.5, r * 1.05, hy - r * 0.3);
-  // wavy ends down to the shoulders
-  c.bezierCurveTo(r * 1.45, hy + r * 0.6, r * 1.0, hy + r * 1.1, r * 1.25, hy + r * 1.55);
-  c.quadraticCurveTo(r * 0.9, hy + r * 1.75, r * 0.6, hy + r * 1.35);
-  c.lineTo(-r * 0.6, hy + r * 1.35);
-  c.quadraticCurveTo(-r * 0.9, hy + r * 1.75, -r * 1.25, hy + r * 1.55);
-  c.bezierCurveTo(-r * 1.0, hy + r * 1.1, -r * 1.45, hy + r * 0.6, -r * 1.05, hy - r * 0.3);
-  c.fill();
-  c.fillStyle = L.hair;
-  c.beginPath();
-  c.moveTo(-r * 0.95, hy - r * 0.2);
-  c.bezierCurveTo(-r * 1.25, hy - r * 1.35, r * 1.25, hy - r * 1.35, r * 0.95, hy - r * 0.2);
-  c.bezierCurveTo(r * 1.3, hy + r * 0.5, r * 0.95, hy + r * 1.0, r * 1.1, hy + r * 1.4);
-  c.lineTo(-r * 1.1, hy + r * 1.4);
-  c.bezierCurveTo(-r * 0.95, hy + r * 1.0, -r * 1.3, hy + r * 0.5, -r * 0.95, hy - r * 0.2);
+  c.moveTo(Lf[0][0], Lf[0][1]);
+  c.arc(0, hy - 1, r * out * 1.02, Math.PI * 1.12, Math.PI * 1.88); // crown
+  c.lineTo(R[0][0], R[0][1]);
+  smoothThrough(c, R);
+  // scalloped wavy ends
+  const tipR = R[R.length - 1], tipL = Lf[Lf.length - 1];
+  const yb = Math.max(tipR[1], tipL[1]);
+  c.quadraticCurveTo(tipR[0] * 0.75, yb + 4, tipR[0] * 0.5, yb - 1);
+  c.quadraticCurveTo(0, yb - 6, tipL[0] * 0.5, yb - 1);
+  c.quadraticCurveTo(tipL[0] * 0.75, yb + 4, tipL[0], tipL[1]);
+  const back = Lf.slice().reverse();
+  smoothThrough(c, back);
+  c.closePath();
   c.fill();
 }
-
-function drawVictoriaHairFront(c, L, hy, r, t) {
-  // two wavy locks framing the face (on the rim, never over the face centre)
-  const sway = Math.sin(t * 2.4) * 0.6;
+/** Dark underlayer: crown + long wavy hair down to mid-torso (drawn BEHIND the body). */
+function drawVictoriaHairBack(c, L, hy, r, sway = 0) {
+  c.fillStyle = L.hairDark;
+  hairMass(c, hy, r, r * 1.05, 1.08, sway, 0);
+  c.strokeStyle = shade(L.hairDark, -0.3); c.lineWidth = 1; c.stroke();
+}
+/** Mid layer: lighter lengths falling over the shoulders (over the body, under the face). */
+function drawVictoriaHairOver(c, L, hy, r, sway = 0) {
+  c.fillStyle = L.hair;
+  hairMass(c, hy, r, r * 0.8, 0.98, sway, 0.6);
+  c.strokeStyle = L.hairLight; c.lineWidth = 1.1; c.lineCap = 'round';
+  for (const s of [-1, 1]) {
+    c.beginPath();
+    c.moveTo(s * r * 1.02, hy - r * 0.1);
+    c.bezierCurveTo(s * r * 1.3, hy + r * 0.4, s * r * 0.95, hy + r * 0.8, s * r * 1.2 + sway * 2, hy + r * 1.35);
+    c.stroke();
+    c.strokeStyle = L.hairDark; c.lineWidth = 0.8;
+    c.beginPath();
+    c.moveTo(s * r * 1.15, hy + r * 0.2);
+    c.bezierCurveTo(s * r * 1.35, hy + r * 0.6, s * r * 1.1, hy + r * 1.0, s * r * 1.3 + sway * 2, hy + r * 1.5);
+    c.stroke();
+    c.strokeStyle = L.hairLight; c.lineWidth = 1.1;
+  }
+}
+/** Top layer: two soft locks framing the face + crown volume with a side part (over the rim only). */
+function drawVictoriaHairFront(c, L, hy, r, t, sway = 0) {
+  const sw = Math.sin(t * 2.4) * 0.5 + sway * 0.5;
   for (const s of [-1, 1]) {
     c.fillStyle = L.hair;
     c.beginPath();
-    c.moveTo(s * r * 0.72, hy - r * 0.78);
-    c.bezierCurveTo(s * r * 1.12, hy - r * 0.35, s * r * 0.86, hy + r * 0.25, s * (r * 1.06 + sway), hy + r * 0.75);
-    c.bezierCurveTo(s * r * 1.12, hy + r * 1.05, s * r * 1.32, hy + r * 1.25, s * (r * 1.12 + sway), hy + r * 1.5);
-    c.bezierCurveTo(s * r * 1.5, hy + r * 1.05, s * r * 1.3, hy + r * 0.6, s * r * 1.38, hy + r * 0.1);
-    c.bezierCurveTo(s * r * 1.4, hy - r * 0.55, s * r * 1.1, hy - r * 0.95, s * r * 0.72, hy - r * 0.78);
+    c.moveTo(s * r * 0.55, hy - r * 0.85);
+    c.bezierCurveTo(s * r * 1.0, hy - r * 0.55, s * r * 0.82, hy + r * 0.1, s * (r * 0.95 + sw), hy + r * 0.6);
+    c.bezierCurveTo(s * r * 1.02, hy + r * 0.9, s * r * 0.9, hy + r * 1.15, s * (r * 1.05 + sw), hy + r * 1.35);
+    c.bezierCurveTo(s * r * 1.35, hy + r * 1.0, s * r * 1.22, hy + r * 0.45, s * r * 1.22, hy);
+    c.bezierCurveTo(s * r * 1.22, hy - r * 0.6, s * r * 0.95, hy - r * 0.95, s * r * 0.55, hy - r * 0.85);
     c.fill();
-    c.strokeStyle = L.hairLight; c.lineWidth = 0.8;
-    c.beginPath();
-    c.moveTo(s * r * 1.1, hy - r * 0.4);
-    c.bezierCurveTo(s * r * 1.25, hy, s * r * 1.05, hy + r * 0.5, s * r * 1.2, hy + r * 1.05);
-    c.stroke();
+    c.strokeStyle = L.hairLight; c.lineWidth = 0.9; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(s * r * 1.08, hy - r * 0.45); c.bezierCurveTo(s * r * 1.15, hy, s * r * 0.98, hy + r * 0.5, s * r * 1.12, hy + r * 1.05); c.stroke();
   }
-  // soft crown so the round crop reads as hair, not a sticker
-  c.strokeStyle = L.hair; c.lineWidth = r * 0.16;
-  c.beginPath(); c.arc(0, hy, r * 1.02, Math.PI * 1.12, Math.PI * 1.88); c.stroke();
+  // crown with a soft side part
+  c.fillStyle = L.hair;
+  c.beginPath();
+  c.arc(0, hy, r * 1.1, Math.PI * 1.08, Math.PI * 1.92);
+  c.bezierCurveTo(r * 0.7, hy - r * 0.7, r * 0.35, hy - r * 0.86, r * 0.15, hy - r * 0.9);
+  c.quadraticCurveTo(-r * 0.4, hy - r * 0.84, -r * 1.0, hy - r * 0.3);
+  c.closePath(); c.fill();
+  c.strokeStyle = L.hairLight; c.lineWidth = 1.1; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(r * 0.12, hy - r * 1.05); c.quadraticCurveTo(-r * 0.5, hy - r * 0.98, -r * 0.92, hy - r * 0.42); c.stroke();
+  c.beginPath(); c.moveTo(r * 0.22, hy - r * 1.04); c.quadraticCurveTo(r * 0.7, hy - r * 0.92, r * 0.98, hy - r * 0.48); c.stroke();
+  c.strokeStyle = L.hairDark; c.lineWidth = 0.9;
+  c.beginPath(); c.moveTo(r * 0.16, hy - r * 1.08); c.lineTo(r * 0.14, hy - r * 0.9); c.stroke();
+}
+/** Aaron: short swept strawberry-blond hair peeking over the rim. */
+function drawAaronHair(c, hy, r) {
+  const hair = HEROES.aaron.look.hair, light = shade(hair, 0.3), dark = shade(hair, -0.15);
+  c.fillStyle = dark;
+  c.beginPath(); c.arc(0, hy, r + 1.5, Math.PI * 1.1, Math.PI * 1.9); c.arc(0, hy, r - 2, Math.PI * 1.9, Math.PI * 1.1, true); c.closePath(); c.fill();
+  // swept-up quiff: a few soft rounded flicks leaning the same way
+  const tufts = [[-0.84, 2.5], [-0.72, 3.8], [-0.6, 4.6], [-0.48, 4.4], [-0.36, 3.4], [-0.24, 2.2]];
+  for (const [f, h] of tufts) {
+    const a = f * Math.PI;
+    const bx = Math.cos(a - 0.1) * (r - 1.5), by = hy + Math.sin(a - 0.1) * (r - 1.5);
+    const nx = Math.cos(a + 0.16) * (r - 1.5), ny = hy + Math.sin(a + 0.16) * (r - 1.5);
+    const tx = Math.cos(a + 0.12) * (r + h), ty = hy + Math.sin(a + 0.12) * (r + h);
+    c.fillStyle = hair;
+    c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(Math.cos(a - 0.05) * (r + h * 0.9), hy + Math.sin(a - 0.05) * (r + h * 0.9), tx, ty); c.quadraticCurveTo(nx + (tx - nx) * 0.3, ny + (ty - ny) * 0.3, nx, ny); c.closePath(); c.fill();
+  }
+  c.strokeStyle = light; c.lineWidth = 0.9; c.lineCap = 'round';
+  c.beginPath(); c.arc(0, hy, r + 1.8, Math.PI * 1.3, Math.PI * 1.62); c.stroke();
 }
 
 function speedLines(c, t, n = 4) {
@@ -291,7 +360,9 @@ export function drawHeroImpl(ctx, game, id, x, y, o = {}) {
     ctx.restore();
     const hx = -dir * 28, hy = -9;
     if (hid === 'victoria') { ctx.save(); ctx.translate(hx, hy); ctx.rotate(-dir * 1.45); drawVictoriaHairBack(ctx, L, 0, 13); ctx.restore(); }
-    drawPortrait(ctx, game, hid, hx, hy, 13, { grey: true, border: 1.5 });
+    drawPortrait(ctx, game, hid, hx, hy, 13, { grey: true, border: 1.2, borderColor: 'rgba(16,19,31,0.5)', tight: true });
+    if (hid === 'aaron') { ctx.save(); ctx.translate(hx, hy); ctx.rotate(-dir * 1.45); drawAaronHair(ctx, 0, 13); ctx.restore(); }
+    if (hid === 'victoria') { ctx.save(); ctx.translate(hx, hy); ctx.rotate(-dir * 1.45); drawVictoriaHairFront(ctx, L, 0, 13, t); ctx.restore(); }
     for (let i = 0; i < 3; i++) {
       const a = t * 3 + i * TAU / 3;
       ctx.fillStyle = PALETTE.ice;
@@ -370,24 +441,32 @@ export function drawHeroImpl(ctx, game, id, x, y, o = {}) {
     c.restore();
   }
 
+  // head placement (hair/portrait are drawn unmirrored so the face is never flipped)
+  const headY = -46 - tall + P.bob + (anim === 'dash' ? 1 : 0);
+  const headX = Math.sin(P.lean) * 30 * dir;
+  const sway = anim === 'walk' ? Math.sin(t * 11) * 1.3 - dir * 0.8 : anim === 'dash' ? -dir * 2.5 : Math.sin(t * 2.4) * 0.5;
+
+  // Victoria's dark hair underlayer goes BEHIND the body
+  if (hid === 'victoria') {
+    ctx.save(); ctx.translate(headX, 0);
+    withFlash(ctx, 80, 90, 40, -headY + 35, o.flash, (c) => drawVictoriaHairBack(c, L, headY, headR, sway));
+    ctx.restore();
+  }
+
   // body (flash-tinted via scratch buffer)
   withFlash(ctx, 120, 90, 60, 80, o.flash, drawBody);
 
-  // head: hair/portrait are drawn unmirrored so the face is never flipped
-  const headY = -46 - tall + P.bob + (anim === 'dash' ? 1 : 0) + Math.sin(P.lean) * 0;
-  const headX = Math.sin(P.lean) * 30 * dir;
   if (hid === 'victoria') {
     ctx.save(); ctx.translate(headX, 0);
-    withFlash(ctx, 70, 70, 35, -headY + 35, o.flash, (c) => drawVictoriaHairBack(c, L, headY, headR));
+    withFlash(ctx, 80, 90, 40, -headY + 35, o.flash, (c) => drawVictoriaHairOver(c, L, headY, headR, sway));
     ctx.restore();
   }
   const ring = o.flash > 0 ? `rgba(255,255,255,${Math.min(1, o.flash)})` : null;
-  drawPortrait(ctx, game, hid, headX, headY, headR, { border: 1.6, ring, ringWidth: 3 });
-  if (hid === 'victoria') {
-    ctx.save(); ctx.translate(headX, 0);
-    drawVictoriaHairFront(ctx, L, headY, headR, t);
-    ctx.restore();
-  }
+  drawPortrait(ctx, game, hid, headX, headY, headR, { border: hid === 'victoria' ? 0 : 1.4, borderColor: 'rgba(16,19,31,0.65)', ring, ringWidth: 3, tight: true });
+  ctx.save(); ctx.translate(headX, 0);
+  if (hid === 'victoria') drawVictoriaHairFront(ctx, L, headY, headR, t, sway);
+  else drawAaronHair(ctx, headY, headR);
+  ctx.restore();
   if (o.flash > 0) {
     ctx.fillStyle = `rgba(255,255,255,${Math.min(1, o.flash) * 0.35})`;
     ctx.beginPath(); ctx.arc(headX, headY, headR, 0, TAU); ctx.fill();

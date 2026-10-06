@@ -370,7 +370,7 @@ function frostify(g, w, h, f, seed) {
   g.globalCompositeOperation = 'source-atop';
   g.fillStyle = rgba(PALETTE.frost, 0.38 * f); g.fillRect(0, 0, w, h);
   g.restore();
-  const th = 1 + f * 3;
+  const th = 2 + f * 7; // canvas is 2x supersampled
   g.fillStyle = '#f4fbff';
   for (const [x, y] of tops) g.fillRect(x, y - th * 0.4, 1, th);
   g.fillStyle = 'rgba(255,255,255,0.9)';
@@ -378,9 +378,9 @@ function frostify(g, w, h, f, seed) {
   if (f > 0.4) {
     for (const [x, y] of bottoms) {
       if (hash2(x, y, seed + 9) > 0.12 * f) continue;
-      const L = 3 + hash2(x, y, 3) * 7 * f;
+      const L = 6 + hash2(x, y, 3) * 14 * f;
       g.fillStyle = rgba(PALETTE.ice, 0.95);
-      g.beginPath(); g.moveTo(x - 1.5, y); g.lineTo(x + 1.5, y); g.lineTo(x, y + L); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(x - 2.5, y); g.lineTo(x + 2.5, y); g.lineTo(x, y + L); g.closePath(); g.fill();
     }
   }
 }

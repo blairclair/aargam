@@ -333,7 +333,7 @@ function baron_brrr(c, P) {
   // scepter: gold staff topped with an ice-cream scoop (the stolen goods!)
   const sa = -0.25 - atk * 1.4;
   c.save();
-  c.translate(20, -40);
+  c.translate(30, -36);
   c.rotate(sa);
   c.strokeStyle = PALETTE.sunDeep; c.lineWidth = 3; c.lineCap = 'round';
   c.beginPath(); c.moveTo(0, 30); c.lineTo(0, -32); c.stroke();
@@ -347,7 +347,7 @@ function baron_brrr(c, P) {
   c.fillStyle = PALETTE.choc; c.fillRect(-3, -40, 1.5, 1.5); c.fillRect(2, -38, 1.5, 1.5);
   c.restore();
   // gloved hand
-  c.fillStyle = '#ffffff'; c.beginPath(); c.arc(20, -40, 4, 0, TAU); c.fill();
+  c.fillStyle = "#ffffff"; c.beginPath(); c.arc(30, -36, 4, 0, TAU); c.fill();
   c.restore();
 }
 
