@@ -3,6 +3,9 @@
 export const MANIFEST = {
   'portrait.aaron': 'assets/portraits/aaron.jpg',
   'portrait.victoria': 'assets/portraits/victoria.jpg',
+  // Tight face-only crops (little background) — best for small in-world chibi heads.
+  'face.aaron': 'assets/portraits/aaron_face.jpg',
+  'face.victoria': 'assets/portraits/victoria_face.jpg',
 };
 
 export class Assets {

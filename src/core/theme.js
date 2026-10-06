@@ -44,7 +44,8 @@ export const HEROES = {
     id: 'aaron',
     name: 'Aaron',
     title: 'The Trail Guide',
-    portrait: 'portrait.aaron',
+    portrait: 'portrait.aaron', // wider crop: HUD, dialog, title
+    face: 'face.aaron',         // tight crop: in-world sprite heads
     look: { hair: '#c99a5b', shirt: PALETTE.tee, pants: '#2b2f3a', glasses: true, skin: '#f2c7a5' },
     base: { maxHp: 120, speed: 190, damage: 18 },
     // Melee bruiser: hiking-pole sweep, Compass Dash, Summit Shout (stun).
@@ -59,6 +60,7 @@ export const HEROES = {
     name: 'Victoria',
     title: 'The Old City Explorer',
     portrait: 'portrait.victoria',
+    face: 'face.victoria',
     look: { hair: '#d9b47a', shirt: '#1f2540', jacket: PALETTE.denim, pants: '#4a6b94', glasses: false, skin: '#f4cdb0' },
     base: { maxHp: 95, speed: 205, damage: 14 },
     // Ranged tactician: flings mint-chip scoops, Denim Shield, Flower Box Bloom (heal zone).
