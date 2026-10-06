@@ -47,7 +47,7 @@ Static node info lives in `data.js` keyed by id; saves only hold dynamic values.
 - Start: 40 Scoops, 2 Sunshine.
 - Victory bonus: Scoops `(20 + 12·difficulty + 8·frost + 40 if boss) × freezer mult`; Sunshine `1 + (frost 3) + (boss)`.
   Plus everything picked up in the mission (picked-up scoops also get the freezer multiplier).
-- Defeat: keep 50% of picked-up Scoops and all Sunshine. The node gains +1 frost, capped at 2, so a defeat never creates a frost-3 node.
+- Defeat: keep 50% of picked-up Scoops and all Sunshine. The node gains +1 frost, capped at 2 and skipped if the storm already targets it tonight, so a defeat never creates a frost-3 node.
 - Heroes are fully healed after every mission.
 - Shop: see `docs/teams/upgrades.md`. Stat tier I is 60–80, tier II 130–150, abilities 110–170.
   Buildings: Cocoa 100, Scout 110, Freezer 80/160 (+25%/+50% Scoops), Hammock 120 (+1 Sunshine every morning).

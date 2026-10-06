@@ -81,6 +81,16 @@ export default class OverworldScene {
     if (fc.some((c) => c.id === 'camp' && c.delta > 0 && !c.blocked) && !lossReason(s)) this.after.push(CAMP_CHILL_WARNING);
   }
 
+  /** Results panel geometry (shared by update + render). */
+  resultsBox() {
+    const { rep, night } = this.results;
+    const extra = (rep.thawed.length > 1 ? 1 : 0) + (rep.frostUp ? 1 : 0);
+    const rows = Math.max(1, Math.min(6, night.changes.length)) + (night.morning.sunshine ? 1 : 0);
+    const h = 186 + extra * 18 + rows * 17 + 56;
+    const y = Math.round((this.game.height - 36 - h) / 2) + 18;
+    return { x: 250, y, w: 460, h, btnY: y + h - 52 };
+  }
+
   goEnding(victory) { this.game.switchScene('ending', { victory }); }
 
   defaultSelection() {
@@ -123,7 +133,7 @@ export default class OverworldScene {
     if (this.dialog.active) { this.dialog.update(dt); return; }
 
     if (this.results) {
-      if (button(null, g, 'Continue', 400, 404, 160, 40) || inp.pressed('confirm')) this.closeResults();
+      if (button(null, g, 'Continue', 400, this.resultsBox().btnY, 160, 40) || inp.pressed('confirm')) this.closeResults();
       return;
     }
     if (!s.map) return;
@@ -259,6 +269,7 @@ export default class OverworldScene {
     const g = this.game, s = g.state, id = this.selected, n = NODE_BY_ID[id];
     panel(ctx, 600, 440, 352, 96, { fill: 'rgba(16,19,31,0.88)' });
     text(ctx, n.name, 612, 459, { font: 'bold 16px "Trebuchet MS", system-ui, sans-serif', color: PALETTE.sun });
+    text(ctx, 'Arrows: pick | Enter: go | C: camp', 942, 459, { font: FONT.small, align: 'right', color: '#8790a6' });
     let sub;
     if (id === 'camp') sub = `Home base. Chill ${s.map.campChill}/${ECON.campChillLimit}. Shop for upgrades here.`;
     else {
@@ -311,7 +322,9 @@ export default class OverworldScene {
   drawResults(ctx) {
     const g = this.game, { rep, night } = this.results;
     ctx.fillStyle = 'rgba(16,19,31,0.55)'; ctx.fillRect(0, 0, g.width, g.height);
-    panel(ctx, 250, 96, 460, 360, { stroke: rep.victory ? PALETTE.sun : PALETTE.frost });
+    const box = this.resultsBox(), oy = box.y - 96;
+    ctx.save(); ctx.translate(0, oy);
+    panel(ctx, box.x, 96, box.w, box.h, { stroke: rep.victory ? PALETTE.sun : PALETTE.frost });
     const title = rep.victory ? (rep.liberated ? 'REGION LIBERATED!' : 'SUMMER RESTORED!') : 'Tactical Retreat...';
     text(ctx, title, g.width / 2, 142, { align: 'center', font: FONT.big, color: rep.victory ? PALETTE.sun : PALETTE.frost });
     text(ctx, nameOf(rep.nodeId) + (rep.victory ? ' is thawed!' : ' stays frozen.'), g.width / 2, 172, { align: 'center' });
@@ -329,6 +342,8 @@ export default class OverworldScene {
       y += 17;
     }
     if (night.morning.sunshine) { text(ctx, `Sunny Hammock: +${night.morning.sunshine} Sunshine`, 290, y, { font: FONT.small, color: PALETTE.sun }); y += 17; }
-    button(ctx, g, 'Continue', 400, 404, 160, 40);
+    ctx.restore();
+    button(ctx, g, 'Continue', 400, box.btnY, 160, 40);
+    text(ctx, 'Enter', 400 + 160 + 8, box.btnY + 25, { font: FONT.small, color: '#9aa3b5' });
   }
 }

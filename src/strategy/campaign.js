@@ -272,7 +272,7 @@ export function applyOutcome(state, outcome) {
     rep.scoops = Math.floor(collectedScoops * ECON.defeatScoopKeep);
     rep.sunshine = collectedSun;
     const ns = state.map.nodes[id];
-    if (!isBoss(id) && ns.frost < 2) { ns.frost++; rep.frostUp = true; } // forgiving: a defeat never creates a frost-3 node
+    if (!isBoss(id) && ns.frost < 2 && !state.map.storm.ids.includes(id)) { ns.frost++; rep.frostUp = true; } // forgiving: a defeat never creates a frost-3 node
   }
   state.resources.scoops += rep.scoops;
   state.resources.sunshine += rep.sunshine;
