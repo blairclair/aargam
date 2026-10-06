@@ -11,7 +11,7 @@ import { ECON, NODES, NODE_BY_ID, REGION_GOLEM } from './data.js';
 import {
   ensureCampaign, forecast, isAvailable, lockReason, frostOf, difficultyOf, rewardsFor, modifiersFor,
   missionParamsFor, applyOutcome, endDay, lossReason, canWarm, warmNode, canShield, shieldNode,
-  shielded, currentRegion,
+  shielded, currentRegion, stormStrength,
 } from './campaign.js';
 import { drawMap, hitNode, nodeRadius, KIND_LABEL } from './mapdraw.js';
 import { FIRST_VISIT, LIBERATED, BARON_DEFEATED, DEFEAT_LINES, CAMP_CHILL_WARNING } from './story.js';
@@ -107,12 +107,12 @@ export default class OverworldScene {
     const x = 612, y = 502, h = 28, out = [];
     if (id === 'camp') {
       out.push({ key: 'camp', label: 'Enter Camp', x, y, w: 160, h, enabled: true });
-      out.push({ key: 'shield', label: `Shield camp (${ECON.shieldCost} Sun)`, x: x + 166, y, w: 162, h, enabled: canShield(s, id) });
+      out.push({ key: 'shield', label: `Shield camp (${ECON.shieldCost}\u2600)`, x: x + 166, y, w: 158, h, enabled: canShield(s, id) });
       return out;
     }
-    out.push({ key: 'launch', label: 'Launch!', x, y, w: 100, h, enabled: isAvailable(s, id) });
-    out.push({ key: 'warm', label: `Warm -1 (${ECON.warmCost} Sun)`, x: x + 106, y, w: 126, h, enabled: canWarm(s, id) });
-    out.push({ key: 'shield', label: `Shield (${ECON.shieldCost} Sun)`, x: x + 238, y, w: 90, h, enabled: canShield(s, id) });
+    out.push({ key: 'launch', label: 'Launch!', x, y, w: 104, h, enabled: isAvailable(s, id) });
+    out.push({ key: 'warm', label: `Warm -1 (${ECON.warmCost}\u2600)`, x: x + 110, y, w: 112, h, enabled: canWarm(s, id) });
+    out.push({ key: 'shield', label: `Shield (${ECON.shieldCost}\u2600)`, x: x + 228, y, w: 96, h, enabled: canShield(s, id) });
     return out;
   }
 
@@ -244,6 +244,15 @@ export default class OverworldScene {
       text(ctx, l.t, cx + 11, cy, { font: FONT.small, color: col });
     });
     if (lines.length > shown.length) text(ctx, `+${lines.length - shown.length} more`, x + w - 10, y + 18, { font: FONT.small, align: 'right' });
+    if (lines.length <= 4) { // spare column: how frost works
+      const tips = [
+        `The Baron's storm adds frost to ${stormStrength(g.state.day)} node${stormStrength(g.state.day) > 1 ? 's' : ''} a night.`,
+        'Frost-3 nodes re-freeze thawed neighbors.',
+        'A frost-3 node next to camp chills the camp.',
+        'Sunshine: Warm (-1 frost) or Shield (safe tonight).',
+      ];
+      tips.forEach((t, i) => text(ctx, t, x + 300, y + 37 + i * 16, { font: FONT.small, color: '#aab4c8' }));
+    }
   }
 
   drawSelection(ctx) {
