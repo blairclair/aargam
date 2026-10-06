@@ -1,0 +1,34 @@
+{
+  "_comment": "Path ownership. Only the owning team edits these paths. Need a change elsewhere? Message the supervisor. Globs: '/**' = whole dir.",
+  "supervisor": [
+    "index.html",
+    "package.json",
+    "OWNERS.json",
+    ".gitignore",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "src/main.js",
+    "src/scenes.js",
+    "src/core/**",
+    "tools/**",
+    "docs/DESIGN.md",
+    "docs/ARCHITECTURE.md",
+    "docs/WORKFLOW.md",
+    "assets/portraits/**"
+  ],
+  "action": [
+    "src/action/**",
+    "docs/teams/action.md"
+  ],
+  "strategy": [
+    "src/strategy/**",
+    "docs/teams/strategy.md",
+    "docs/teams/upgrades.md"
+  ],
+  "presentation": [
+    "src/art/**",
+    "src/ui/**",
+    "src/audio/**",
+    "docs/teams/presentation.md"
+  ]
+}

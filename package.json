@@ -1,0 +1,10 @@
+{
+  "name": "aargam",
+  "private": true,
+  "type": "module",
+  "description": "Aaron & Victoria: The Great Scoop Heist — browser action/adventure/strategy game. No build step, no dependencies.",
+  "scripts": {
+    "serve": "python3 -m http.server ${PORT:-8000}",
+    "check": "node tools/check.mjs"
+  }
+}
