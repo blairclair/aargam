@@ -73,6 +73,13 @@ export const HEROES = {
 };
 export const HERO_IDS = ['aaron', 'victoria'];
 
+// Dialog speakers that aren't heroes. Dialog shows `name` on the name plate; narrator has no plate.
+export const SPEAKERS = {
+  narrator: { name: '', style: 'narration' },
+  baron: { name: 'Baron von Brrr', color: '#6fb7e8', style: 'villain' },
+  townsfolk: { name: 'Grateful Local', color: '#ffc94a', style: 'normal' },
+};
+
 // Regions are drawn from places in the photos.
 export const REGIONS = {
   lakeside: { id: 'lakeside', name: 'Lakeside Camp', blurb: 'The pavilion by the lake, sandy paths, picnic tables, pines.', ground: '#d8c79a', accent: PALETTE.lake },
