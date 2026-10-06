@@ -2,11 +2,12 @@
 // internals are a placeholder for the art team to replace.
 // Coordinates: (x, y) is the entity's FEET / ground point in world or screen space; the caller
 // has already applied any camera transform.
-import { PALETTE } from '../core/theme.js';
 import { drawHeroImpl, drawPortrait as drawPortraitImpl, drawDenimShield } from './heroes.js';
 import { drawEnemyImpl, drawNPCImpl } from './enemies.js';
 import { drawGroundImpl, warmGround, groundKind } from './ground.js';
+import { drawPropImpl, drawProjectileImpl } from './props.js';
 export { drawDenimShield, warmGround, groundKind };
+export { PROP_KINDS, ZONE_KINDS, PICKUP_KINDS, drawZone, drawPickup, drawWeather, drawFrostOverlay } from './props.js';
 
 /**
  * Draw a hero. Heroes are "big-head" chibis: the photo portrait is the head.
@@ -41,15 +42,11 @@ export function drawNPC(ctx, game, kind, x, y, o = {}) { drawNPCImpl(ctx, game, 
  * 'door','icewall','iceblock','cart','pavilion','pine','bench','barrel'.
  * (x, y) = base point. Props are drawn y-sorted by the caller along with entities.
  */
-export function drawProp(ctx, game, kind, x, y, o = {}) {
-  ctx.save();
-  ctx.fillStyle = kind === 'iceblock' || kind === 'icewall' ? PALETTE.ice : '#555';
-  ctx.fillRect(x - 12, y - 24, 24, 24);
-  ctx.restore();
-}
+export function drawProp(ctx, game, kind, x, y, o = {}) { drawPropImpl(ctx, game, kind, x, y, o); }
 
-/** Projectile (scoop, slush ball, etc). kinds: 'mintscoop','slush','icicle','shout'. */
-export function drawProjectile(ctx, game, kind, x, y, o = {}) {
-  ctx.fillStyle = kind === 'mintscoop' ? PALETTE.mint : PALETTE.frost;
-  ctx.beginPath(); ctx.arc(x, y, o.r ?? 6, 0, Math.PI * 2); ctx.fill();
-}
+/**
+ * Projectile. kinds: 'mintscoop','slush','icicle','shout' (+ 'snowball','shockwave').
+ * o: { r?, angle? (radians) or vx?/vy? (adds a trail + orients icicles), t?, life? 0..1 (rings fade), alpha? }
+ * 'shout'/'shockwave' are expanding rings: pass r = current radius.
+ */
+export function drawProjectile(ctx, game, kind, x, y, o = {}) { drawProjectileImpl(ctx, game, kind, x, y, o); }
