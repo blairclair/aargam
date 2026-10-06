@@ -140,18 +140,6 @@ export function drawNpcPlaceholder(ctx, x, y, seed = 0, t = 0, alpha = 1, frozen
   ctx.restore();
 }
 
-export function makeSnow(n) {
-  return Array.from({ length: n }, () => ({ x: Math.random() * 960, y: Math.random() * 540, vx: -20 + Math.random() * 50, vy: 30 + Math.random() * 50, r: 1 + Math.random() * 2 }));
-}
-export function drawSnow(ctx, snow) {
-  ctx.save();
-  ctx.fillStyle = 'rgba(232,248,255,0.12)';
-  ctx.fillRect(0, 0, 960, 540);
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  for (const s of snow) { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill(); }
-  ctx.restore();
-}
-
 export function drawShieldArc(ctx, h, t) {
   ctx.save();
   ctx.strokeStyle = PALETTE.denim; ctx.lineWidth = 6; ctx.globalAlpha = 0.75 + Math.sin(t * 20) * 0.15;

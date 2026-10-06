@@ -16,7 +16,7 @@ import { createEnemy, updateEnemies, enemyDrawOpts } from './enemies.js';
 import { updateShots, updateWaves, updateTelegraphs, updateZones, updatePickups, killEnemy } from './combat.js';
 import { createMission, resolveBossType } from './missions.js';
 import { introLines, victoryLines, defeatLines } from './banter.js';
-import { drawWater, drawTelegraph, drawWave, drawZone, drawPickup, drawNpcPlaceholder, drawSnow, makeSnow, drawSweepArc } from './draw.js';
+import { drawWater, drawTelegraph, drawWave, drawZone as drawZoneFallback, drawPickup as drawPickupFallback, drawNpcPlaceholder, drawSweepArc } from './draw.js';
 
 const W = 960, H = 540;
 
@@ -58,7 +58,7 @@ export default class LevelScene {
     this.scoutT = 0;
     this.hintT = 0;
     this.frost = this.mods.includes('blizzard') ? 0.65 : clamp((this.p.difficulty - 1) * 0.12 + (this.p.region === 'summit' ? 0.1 : 0), 0, 0.55);
-    this.snow = this.mods.includes('blizzard') ? makeSnow(140) : null;
+    this.weather = this.mods.includes('blizzard') ? 'blizzard' : (this.p.region === 'summit' && this.p.difficulty >= 3) ? 'snow' : null;
     this.mission = createMission(this.p.kind);
     this.mission.setup(this);
     this.cam = { x: 0, y: 0 };
@@ -154,7 +154,6 @@ export default class LevelScene {
   update(dt) {
     const g = this.game, inp = g.input;
     this.fx.update(dt);
-    if (this.snow) for (const s of this.snow) { s.x += s.vx * dt; s.y += s.vy * dt; if (s.y > H + 5) { s.y = -5; s.x = Math.random() * W; } if (s.x > W + 5) s.x = -5; if (s.x < -5) s.x = W + 5; }
     if (this.dialog.active) { this.dialog.update(dt); this.updateCamera(dt); return; }
     if (this.phase === 'intro' || this.phase === 'outro') { this.updateCamera(dt); return; }
 
@@ -240,8 +239,14 @@ export default class LevelScene {
 
     drawWater(ctx, this.arena.water, this.time, frost);
     for (const d of this.arena.deco) if (d.kind === 'bucket') drawBucket(ctx, d.x, d.y);
-    for (const z of this.zones) { drawZone(ctx, z); Sprites.drawProp(ctx, g, 'flowerbox', z.x, z.y + 6, { seed: z.seed, t: this.time, scale: Math.min(1, z.t * 4) }); }
-    for (const t of this.tele) drawTelegraph(ctx, t);
+    for (const z of this.zones) {
+      if (Sprites.drawZone) Sprites.drawZone(ctx, g, 'bloom', z.x, z.y, z.r, { t: z.t, life: 1 - z.t / z.dur });
+      else drawZoneFallback(ctx, z);
+      Sprites.drawProp(ctx, g, 'flowerbox', z.x, z.y + 6, { seed: z.seed, t: this.time, scale: Math.min(1, z.t * 4) }); }
+    for (const t of this.tele) {
+      if (t.kind === 'circle' && Sprites.drawZone) Sprites.drawZone(ctx, g, 'telegraph', t.x, t.y, t.r, { t: t.t, progress: Math.min(1, t.t / t.dur) });
+      else drawTelegraph(ctx, t);
+    }
     for (const w of this.waves) drawWave(ctx, w);
 
     // Y-sorted drawables (culled to the view).
@@ -262,7 +267,11 @@ export default class LevelScene {
     ctx.restore();
 
     // ---- screen space
-    if (this.snow) drawSnow(ctx, this.snow);
+    const wx = this.phase === 'won' ? Math.max(0, 1 - this.endT / 2) : 1;
+    if (this.weather && Sprites.drawWeather && wx > 0) Sprites.drawWeather(ctx, g, this.weather, W, H, { t: this.time, camX: cx, camY: cy, intensity: wx });
+    const h0 = this.hero;
+    const frostAmt = Math.max(this.weather === 'blizzard' ? 0.25 * wx : 0, h0 && h0.slowT > 0 ? Math.min(0.45, h0.slowT * 0.4) : 0);
+    if (frostAmt > 0 && Sprites.drawFrostOverlay) Sprites.drawFrostOverlay(ctx, W, H, frostAmt, { t: this.time });
     if (this.phase === 'won') {
       ctx.fillStyle = `rgba(255,201,74,${Math.min(0.22, this.endT * 0.1)})`;
       ctx.fillRect(0, 0, W, H);
@@ -285,7 +294,7 @@ export default class LevelScene {
     if (k === 0) {
       const p = o;
       if (p.rescue) drawFrozenNpc(ctx, g, p, this.time);
-      else Sprites.drawProp(ctx, g, p.kind, p.x, p.y, { frost: p.kind === 'iceblock' || p.kind === 'icewall' ? undefined : frost, seed: p.seed, t: this.time, flash: p.flash > 0 ? p.flash : 0 });
+      else Sprites.drawProp(ctx, g, p.kind, p.x, p.y, { frost: p.kind === 'iceblock' || p.kind === 'icewall' ? undefined : frost, seed: p.seed, t: this.time, flash: p.flash > 0 ? p.flash : 0, region: this.p.region, hpFrac: p.maxHp ? p.hp / p.maxHp : undefined });
       if ((p.rescue || p.isCart) && p.hp < p.maxHp && p.hp > 0) bar(ctx, p.x - 20, p.y - (p.isCart ? 62 : 52), 40, 5, p.hp / p.maxHp, p.isCart ? PALETTE.mint : PALETTE.ice);
     } else if (k === 1) {
       const e = o;
@@ -304,14 +313,15 @@ export default class LevelScene {
       if (Sprites.drawNPC) Sprites.drawNPC(ctx, g, 'townsfolk', o.x, o.y, { seed: o.seed, frozen: false, freed: Math.min(1, o.t / 1.5), anim: o.t < 1.2 ? 'wave' : 'idle', facing: o.t < 1.2 ? Math.PI / 2 : o.ang, t: o.t, region: this.p.region, alpha });
       else drawNpcPlaceholder(ctx, o.x, o.y, o.seed, o.t, alpha);
     } else if (k === 3) {
-      drawPickup(ctx, o, this.time);
+      if (Sprites.drawPickup) Sprites.drawPickup(ctx, g, o.kind, o.x, o.y - o.z, { t: this.time + (o.seed ?? 0), flavor: o.kind === 'scoop' ? 'mint' : undefined, seed: o.seed });
+      else drawPickupFallback(ctx, o, this.time);
     } else if (k === 4) {
       const s = o;
       if (s.lob) {
         ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.beginPath(); ctx.ellipse(s.x, s.y, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
       }
-      Sprites.drawProjectile(ctx, g, s.kind, s.x, s.y - (s.z || 0), { r: s.r, angle: Math.atan2(s.vy, s.vx), t: s.t, reflected: s.reflected });
+      Sprites.drawProjectile(ctx, g, s.kind, s.x, s.y - (s.z || 0), { r: s.r, angle: Math.atan2(s.vy, s.vx), vx: s.vx, vy: s.vy, t: s.t, reflected: s.reflected });
     } else if (k === 5) {
       const h = o;
       if (h.id === 'aaron' && h.atkT > 0) drawSweepArc(ctx, h, 1 - h.atkT / h.atkDur);

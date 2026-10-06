@@ -290,7 +290,7 @@ export function updateTelegraphs(L, dt) {
 // ---------------------------------------------------------------- pickups
 export function spawnPickup(L, kind, x, y) {
   const a = Math.random() * Math.PI * 2, v = 60 + Math.random() * 120;
-  L.pickups.push({ kind, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, z: 0, vz: 160 + Math.random() * 80, t: 0 });
+  L.pickups.push({ kind, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, z: 0, vz: 160 + Math.random() * 80, t: 0, seed: Math.floor(Math.random() * 1000) });
 }
 
 export function updatePickups(L, dt, vacuum = false) {
