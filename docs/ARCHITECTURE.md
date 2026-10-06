@@ -54,6 +54,9 @@ supervisor.
 ## Presentation contracts (frozen signatures, internals are placeholders to replace)
 - `src/art/sprites.js`: `drawHero`, `drawEnemy`, `drawPortrait`, `drawGround`, `drawProp`, `drawProjectile`.
   `(x,y)` is the feet/base point. The caller y-sorts and applies the camera.
+  **Units:** `o.facing` is the aim angle in **radians** (0 = right, PI = left), and `o.t` is an animation clock in **seconds**
+  (defaults to `game.time`). The optional `o.progress` (0..1) syncs attack/dash/hurt animations with gameplay.
+  The optional extras (`frost`, `seed`, `scale`, enemy `anim`/`phase`) are documented in `docs/teams/presentation.md`.
 - `src/art/fx.js`: the `Fx` class (`burst`, `floatText`, `addShake`, `shakeOffset`, `update`, `render`).
 - `src/ui/hud.js`: `drawHUD(ctx, game, hud)`. See the JSDoc for the `hud` shape.
 - `src/ui/dialog.js`: the `Dialog` class (`open(lines, onDone)`, `active`, `update`, `render`).
