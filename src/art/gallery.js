@@ -2,6 +2,8 @@
 import { Assets, MANIFEST } from '../core/assets.js';
 import * as S from './sprites.js';
 import { Fx } from './fx.js';
+import { Dialog } from '../ui/dialog.js';
+import * as W from '../ui/widgets.js';
 
 const q = new URLSearchParams(location.search);
 const page = q.get('page') ?? 'heroes';
@@ -16,6 +18,28 @@ function label(s, x, y) { ctx.fillStyle = '#fff6e5'; ctx.font = '12px sans-serif
 function bg(x, y, w, h, c = '#d8c79a') { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 const pages = {
+  ui() {
+    bg(0, 0, 1400, 1000, '#4f8fb3');
+    const lines = [
+      { who: 'aaron', text: 'Is that... a Frostling? It is SO small. And so angry.' },
+      { who: 'baron', text: 'Mwa-ha-brrr! Summer is CANCELLED, peasants. Bring me your sprinkles.' },
+      { who: 'narrator', text: 'Meanwhile, at the lakeside camp, the last scoop of mint chip began to tremble.' },
+      { who: 'townsfolk', text: 'Thank you! I thought I would be a popsicle forever!' },
+    ];
+    lines.forEach((l, i) => {
+      const d = new Dialog(game); d.open([l, l]); d.inT = 1; d.chars = 999; d.t = T;
+      ctx.save(); ctx.translate(0, -400 + i * 170); d.render(ctx); ctx.restore();
+    });
+    W.panel(ctx, 980, 40, 380, 300, { style: 'paper' });
+    W.button(ctx, game, 'New Game', 1010, 70, 200, 46, { primary: true, sub: 'Start a fresh summer' });
+    W.button(ctx, game, 'Continue', 1010, 130, 200, 44, { hotkey: 'C' });
+    W.button(ctx, game, 'Disabled', 1010, 190, 200, 44, { disabled: true });
+    W.button(ctx, game, 'Selected', 1010, 250, 200, 44, { selected: true, style: 'ice' });
+    W.bar(ctx, 1010, 310, 200, 12, 0.6, '#8cff9e', 'rgba(0,0,0,0.5)', { ghost: 0.8 });
+    W.ring(ctx, 1250, 100, 20, 0.4); W.ring(ctx, 1300, 100, 20, 0);
+    W.chip(ctx, 'NEW', 1250, 150); W.keycap(ctx, 'Q', 1320, 150);
+    W.drawScoopIcon(ctx, 1250, 200); W.drawSunIcon(ctx, 1290, 200);
+  },
   heroes() {
     bg(0, 0, 1400, 1000, '#cdbb8c');
     const anims = ['idle', 'walk', 'attack', 'dash', 'hurt', 'down'];
