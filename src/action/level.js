@@ -16,7 +16,7 @@ import { createEnemy, updateEnemies, enemyDrawOpts } from './enemies.js';
 import { updateShots, updateWaves, updateTelegraphs, updateZones, updatePickups, killEnemy } from './combat.js';
 import { createMission, resolveBossType } from './missions.js';
 import { introLines, victoryLines, defeatLines } from './banter.js';
-import { drawWater, drawTelegraph, drawWave, drawZone, drawPickup, drawNpcPlaceholder, drawSnow, makeSnow, drawShieldArc, drawSweepArc } from './draw.js';
+import { drawWater, drawTelegraph, drawWave, drawZone, drawPickup, drawNpcPlaceholder, drawSnow, makeSnow, drawSweepArc } from './draw.js';
 
 const W = 960, H = 540;
 
@@ -62,6 +62,7 @@ export default class LevelScene {
     this.mission = createMission(this.p.kind);
     this.mission.setup(this);
     this.cam = { x: 0, y: 0 };
+    try { Sprites.warmGround?.(this.p.region, 0, 0, this.arena.w, this.arena.h); } catch (e) { console.warn('warmGround', e); }
     this.snapCamera();
     playMusic(this.p.kind === 'boss' ? 'boss' : 'battle');
     const firstTime = !g.state?.flags?.['action.tutorialDone'];
@@ -271,7 +272,7 @@ export default class LevelScene {
     drawHUD(ctx, g, this.hudData());
     if (this.phase === 'play' && this.hintT > 0 && !this.paused) {
       ctx.globalAlpha = Math.min(1, this.hintT);
-      text(ctx, 'WASD move · Click/J attack · Shift/K ability · E special · Q swap · P pause', W / 2, H - 16, { align: 'center', font: FONT.small });
+      text(ctx, 'WASD move · Click/J attack · Shift/K ability · E special · Q swap · P pause', W / 2, this.mission.bossHp ? H - 46 : H - 16, { align: 'center', font: FONT.small });
       ctx.globalAlpha = 1;
     }
     if (this.phase === 'won' || this.phase === 'lost') this.drawBanner(ctx);
@@ -284,10 +285,7 @@ export default class LevelScene {
     if (k === 0) {
       const p = o;
       if (p.rescue) drawFrozenNpc(ctx, g, p, this.time);
-      ctx.save();
-      if (p.rescue) ctx.globalAlpha = 0.8;
-      Sprites.drawProp(ctx, g, p.kind, p.x, p.y, { frost: p.kind === 'iceblock' || p.kind === 'icewall' ? undefined : frost, seed: p.seed, t: this.time, flash: p.flash > 0 ? p.flash : 0 });
-      ctx.restore();
+      else Sprites.drawProp(ctx, g, p.kind, p.x, p.y, { frost: p.kind === 'iceblock' || p.kind === 'icewall' ? undefined : frost, seed: p.seed, t: this.time, flash: p.flash > 0 ? p.flash : 0 });
       if ((p.rescue || p.isCart) && p.hp < p.maxHp && p.hp > 0) bar(ctx, p.x - 20, p.y - (p.isCart ? 62 : 52), 40, 5, p.hp / p.maxHp, p.isCart ? PALETTE.mint : PALETTE.ice);
     } else if (k === 1) {
       const e = o;
@@ -301,10 +299,10 @@ export default class LevelScene {
       Sprites.drawEnemy(ctx, g, e.type, e.x, e.y - (e.z || 0), opts);
       ctx.restore();
       if (e.stun > 0) drawStars(ctx, e.x, e.y - e.h - 8 - (e.z || 0), this.time);
-      if (!e.boss && e.hp < e.maxHp && e.spawning <= 0) bar(ctx, e.x - 14, e.y - e.h - 14 - (e.z || 0), 28, 4, e.hp / e.maxHp, PALETTE.frostDeep);
     } else if (k === 2) {
-      if (Sprites.drawNPC) Sprites.drawNPC(ctx, g, 'townsfolk', o.x, o.y, { seed: o.seed, frozen: false, facing: o.ang, t: o.t, region: this.p.region });
-      else drawNpcPlaceholder(ctx, o.x, o.y, o.seed, o.t, 1 - Math.max(0, o.t - 4) / 2);
+      const alpha = clamp(1 - (o.t - 4) / 2, 0, 1);
+      if (Sprites.drawNPC) Sprites.drawNPC(ctx, g, 'townsfolk', o.x, o.y, { seed: o.seed, frozen: false, freed: Math.min(1, o.t / 1.5), anim: o.t < 1.2 ? 'wave' : 'idle', facing: o.t < 1.2 ? Math.PI / 2 : o.ang, t: o.t, region: this.p.region, alpha });
+      else drawNpcPlaceholder(ctx, o.x, o.y, o.seed, o.t, alpha);
     } else if (k === 3) {
       drawPickup(ctx, o, this.time);
     } else if (k === 4) {
@@ -318,7 +316,6 @@ export default class LevelScene {
       const h = o;
       if (h.id === 'aaron' && h.atkT > 0) drawSweepArc(ctx, h, 1 - h.atkT / h.atkDur);
       Sprites.drawHero(ctx, g, h.id, h.x, h.y, heroDrawOpts(this, h));
-      if (h.shieldT > 0) drawShieldArc(ctx, h, this.time);
       if (h.slowT > 0) { ctx.fillStyle = 'rgba(191,233,255,0.35)'; ctx.beginPath(); ctx.ellipse(h.x, h.y, 16, 6, 0, 0, Math.PI * 2); ctx.fill(); }
     }
   }
@@ -428,6 +425,7 @@ function drawBucket(ctx, x, y) {
 }
 
 function drawFrozenNpc(ctx, g, p, t) {
-  if (Sprites.drawNPC) Sprites.drawNPC(ctx, g, 'townsfolk', p.x, p.y - 2, { seed: p.npcSeed, frozen: true, thaw: 1 - p.hp / p.maxHp, t });
+  const frozen = 0.3 + 0.7 * Math.max(0, p.hp / p.maxHp);
+  if (Sprites.drawNPC) Sprites.drawNPC(ctx, g, 'townsfolk', p.x, p.y, { seed: p.npcSeed, frozen, t, flash: p.flash > 0 ? p.flash : 0 });
   else drawNpcPlaceholder(ctx, p.x, p.y - 2, p.npcSeed, 0, 0.9, true);
 }

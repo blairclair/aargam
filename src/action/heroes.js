@@ -228,5 +228,5 @@ export function heroDrawOpts(L, h) {
   else if (h.hurtT > 0) { anim = 'hurt'; progress = 1 - h.hurtT / 0.25; }
   else if (h.moving) anim = 'walk';
   const blink = h.invuln > 0 && h.dashT <= 0 && Math.floor(L.time * 20) % 2 === 0;
-  return { facing: h.facing, anim, progress, t: h.animT, flash: h.flash, alpha: blink ? 0.55 : 1 };
+  return { facing: h.facing, anim, progress, t: h.animT, flash: h.flash, alpha: blink ? 0.55 : 1, shield: h.shieldT > 0 ? Math.min(1, h.shieldT * 5) : 0 };
 }
