@@ -23,21 +23,21 @@ export const REGION_GOLEM = { lakeside: 'sandbar', oldcity: 'clocktower', summit
  */
 export const NODES = [
   // Lakeside Camp
-  { id: 'camp', name: 'Lakeside Camp', region: 'lakeside', kind: 'camp', x: 62, y: 392, frost: 0, blurb: 'Home base. Tents, cocoa, and one blue toy bucket.' },
+  { id: 'camp', name: 'Lakeside Camp', region: 'lakeside', kind: 'camp', x: 62, y: 384, frost: 0, blurb: 'Home base. Tents, cocoa, and one blue toy bucket.' },
   { id: 'pavilion', name: 'The Pavilion', region: 'lakeside', kind: 'skirmish', x: 150, y: 300, frost: 1, blurb: 'Frostlings have taken the octagonal pavilion.' },
-  { id: 'dock', name: 'Boat Dock', region: 'lakeside', kind: 'defend', x: 225, y: 418, frost: 1, blurb: 'Guard the ice-cream cart while the boats thaw.' },
+  { id: 'dock', name: 'Boat Dock', region: 'lakeside', kind: 'defend', x: 214, y: 398, frost: 1, blurb: 'Guard the ice-cream cart while the boats thaw.' },
   { id: 'picnic', name: 'Picnic Grove', region: 'lakeside', kind: 'rescue', x: 108, y: 168, frost: 2, blurb: 'Picnickers frozen mid-sandwich under the blue umbrella.' },
   { id: 'pines', name: 'Whispering Pines', region: 'lakeside', kind: 'skirmish', x: 222, y: 98, frost: 2, blurb: 'The pines are whispering. Mostly "brrr".' },
   { id: 'sandbar', name: 'Sandbar Showdown', region: 'lakeside', kind: 'boss', bossId: 'slush_golem', x: 284, y: 262, frost: 3, blurb: 'A Slush Golem blocks the road to the Old City.' },
   // Old City
   { id: 'elfreth', name: "Elfreth's Alley", region: 'oldcity', kind: 'skirmish', x: 378, y: 300, frost: 2, blurb: 'Colonial doors, brick, and far too many Frostlings.' },
   { id: 'lamplight', name: 'Lamplight Square', region: 'oldcity', kind: 'defend', x: 448, y: 176, frost: 2, blurb: 'Keep the cart safe under the iron lamp posts.' },
-  { id: 'flowerbox', name: 'Flower Box Row', region: 'oldcity', kind: 'rescue', x: 476, y: 392, frost: 1, blurb: 'The mums and pumpkins are frozen. So are the shopkeepers.' },
+  { id: 'flowerbox', name: 'Flower Box Row', region: 'oldcity', kind: 'rescue', x: 470, y: 386, frost: 1, blurb: 'The mums and pumpkins are frozen. So are the shopkeepers.' },
   { id: 'market', name: 'Old Market Hall', region: 'oldcity', kind: 'skirmish', x: 556, y: 110, frost: 3, blurb: 'Popsicle Knights guard the stolen sprinkles.' },
   { id: 'clocktower', name: 'Clocktower Courtyard', region: 'oldcity', kind: 'boss', bossId: 'slush_golem', x: 590, y: 290, frost: 3, blurb: 'A bigger, slushier Golem. The clock is frozen at 3:14.' },
   // Blue Ridge Summit
   { id: 'overlook', name: 'Overlook Trail', region: 'summit', kind: 'skirmish', x: 690, y: 336, frost: 2, blurb: 'Best view in the land, if you can see past the snow.' },
-  { id: 'switchback', name: 'Switchback Pines', region: 'summit', kind: 'rescue', x: 770, y: 430, frost: 2, blurb: 'Hikers frozen on the switchbacks. Aaron is outraged.' },
+  { id: 'switchback', name: 'Switchback Pines', region: 'summit', kind: 'rescue', x: 772, y: 404, frost: 2, blurb: 'Hikers frozen on the switchbacks. Aaron is outraged.' },
   { id: 'ranger', name: 'Ranger Lookout', region: 'summit', kind: 'defend', x: 772, y: 236, frost: 3, blurb: 'Hold the lookout while the cart climbs the ridge.' },
   { id: 'ridge', name: 'Hazy Ridge', region: 'summit', kind: 'skirmish', x: 880, y: 340, frost: 2, blurb: 'Blue haze, green pines, white frost. Mostly frost.' },
   { id: 'glacier_gate', name: 'Glacier Gate', region: 'summit', kind: 'boss', bossId: 'slush_golem', x: 852, y: 168, frost: 3, blurb: 'The last Slush Golem guards the fortress gate.' },
