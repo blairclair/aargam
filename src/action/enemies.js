@@ -176,7 +176,7 @@ const AI = {
         if (e.lunge) e.atkCd = 1.1 * L.scl.aggro;
       }
     }
-    contact(L, e, t, e.damage, 0.8);
+    contact(L, e, t, e.damage, t === L.cart ? 1.5 : 0.8);
   },
 
   // Floating cone: keeps its distance, strafes, lobs slush that slows.

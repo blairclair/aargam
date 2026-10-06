@@ -7,8 +7,8 @@ export function scaling(difficulty) {
   return {
     d,
     count: 1 + 0.22 * (d - 1),     // enemy count multiplier
-    hp: 1 + 0.15 * (d - 1),        // enemy hp multiplier
-    dmg: 1 + 0.1 * (d - 1),        // enemy damage multiplier
+    hp: 0.9 + 0.15 * (d - 1),      // enemy hp multiplier (d1 is a little generous: this is a gift)
+    dmg: 0.75 + 0.12 * (d - 1),    // enemy damage multiplier
     aggro: 1 - 0.09 * (d - 1),     // enemy cooldown multiplier (lower = more aggressive)
     speed: 1 + 0.04 * (d - 1),
   };

@@ -53,10 +53,10 @@ export function hurtHero(L, amount, sx, sy, o = {}) {
 export function hurtCart(L, amount) {
   const c = L.cart;
   if (!c || c.hp <= 0 || L.phase !== 'play') return;
-  c.hp = Math.max(0, c.hp - amount);
+  c.hp = Math.max(0, c.hp - amount * 0.6);
   c.flash = 0.15;
   L.fx.burst(c.x, c.y - 20, PALETTE.frost, 6, 90);
-  L.fx.floatText(c.x, c.y - 50, `-${Math.round(amount)}`, PALETTE.frostDeep);
+  L.fx.floatText(c.x, c.y - 50, `-${Math.round(amount * 0.6)}`, PALETTE.frostDeep);
   if (L.cartWarnT <= 0) { L.bark('victoria', 'They\'re going for the cart!', 2); L.cartWarnT = 9; }
 }
 

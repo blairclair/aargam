@@ -158,7 +158,8 @@ const defend = {
   setup(L) {
     const d = L.scl.d;
     const a = L.arena;
-    const cart = makeProp('cart', a.cart.x, a.cart.y, { hp: 300, maxHp: 300, isCart: true });
+    const cartHp = 520 - 40 * (d - 1);
+    const cart = makeProp('cart', a.cart.x, a.cart.y, { hp: cartHp, maxHp: cartHp, isCart: true });
     a.props.push(cart);
     L.cart = cart;
     this.dur = 35 + 7 * d;
