@@ -90,10 +90,13 @@ export function drawFurnitureFallback(ctx, p, t, game) {
   ctx.save();
   switch (p.kind) {
     case 'rug': {
-      ctx.fillStyle = top; ctx.globalAlpha = 0.75;
-      ctx.beginPath(); ctx.ellipse(x, y - p.d / 2, p.w / 2, p.d / 2, 0, 0, TAU); ctx.fill();
-      ctx.strokeStyle = PALETTE.paper; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
-      ctx.beginPath(); ctx.ellipse(x, y - p.d / 2, p.w / 2 - 12, p.d / 2 - 10, 0, 0, TAU); ctx.stroke();
+      // woven rectangle in calm tones (never red: red ellipses mean "danger" telegraphs)
+      const rx = x - p.w / 2, ry = y - p.d;
+      ctx.fillStyle = '#d9c7a3'; ctx.fillRect(rx, ry, p.w, p.d);
+      ctx.fillStyle = '#5f8f8a'; ctx.fillRect(rx + 10, ry + 8, p.w - 20, p.d - 16);
+      ctx.fillStyle = '#d9c7a3'; ctx.fillRect(rx + 22, ry + 18, p.w - 44, p.d - 36);
+      ctx.fillStyle = '#c98f5a';
+      for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(x - 50 + i * 25, y - p.d / 2); ctx.lineTo(x - 38 + i * 25, y - p.d / 2 - 10); ctx.lineTo(x - 26 + i * 25, y - p.d / 2); ctx.lineTo(x - 38 + i * 25, y - p.d / 2 + 10); ctx.closePath(); ctx.fill(); }
       break;
     }
     case 'plant': case 'tree': {
