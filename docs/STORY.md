@@ -11,7 +11,7 @@ const line = bark('kitchen', 'start', { hero: 'victoria' }); // -> { who: 'victo
 const log = logLine();                                        // -> 'optimizing fun... fun = fun * 2... overflow'
 ```
 
-- **Events**: `start`, `boss`, `lowhp`, `hit`, `skillEarned` (pass `skill`), `win`, `lose`, `minigame`, `minigameWin`, `minigameFail`, `sabotage` (PartyPlanner meddles mid-minigame, e.g. swaps a drink).
+- **Events**: `start`, `boss`, `lowhp`, `hit`, `skillEarned` (pass `skill`), `win`, `lose`, `minigame`, `minigameWin`, `minigameFail`, `sabotage` (PartyPlanner meddles mid-minigame, e.g. swaps a drink), `minigameCombo` (streak), `minigameTwist` (surprise moment), `minigameClose` (time nearly up).
 - `HERO_BLURBS[hero]` = `{ title, line }` for the hero cards on the select screen.
 - Pass the hero on the field. You get that hero's line or a PartyPlanner log line, never the absent hero.
 - PartyPlanner lines start with `> ` and are drawn monospace (terminal style).
@@ -395,6 +395,9 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Office
 
 - **sabotage**: PP: "> init(): bugs looked lonely. spawning friends :)" · PP: "> init(): compiling faster. you are welcome"
+- **minigameCombo**: A: "Squash streak! I am in the zone." · V: "Click, click, click. Nice."
+- **minigameTwist**: A: "A SEGFAULT beetle! Get it before it crashes everything!" · V: "That big one is bad news. Click it now!"
+- **minigameClose**: A: "Build is almost done. Last bugs, hurry!" · V: "Seconds left, Aaron. Finish them."
 - **start**: A: "Squash every bug! Step on them, kick them, whatever works." · V: "Bugs on my keyboard. Absolutely not." · PP: "> init(): bugs are a feature"
 - **boss**: A: "Cable spider! Its webs slow you down. Stay out of them." · V: "Big spider. Unplug it."
 - **lowhp**: A: "These bugs bite harder than my code reviews." · V: "Ay. Step back and heal."
@@ -407,6 +410,9 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Kitchen
 
 - **sabotage**: PP: "> make_snacks(): oven felt cold. turned it up to 11" · PP: "> make_snacks(): dough seemed bored. adding bounce"
+- **minigameCombo**: A: "Perfect rhythm! This dough loves me." · V: "Push, fold, turn. Just like Sunday mornings."
+- **minigameTwist**: A: "The dough is fighting back! Steady!" · V: "Oven just spiked. Watch the crust!"
+- **minigameClose**: A: "It is browning fast! Pull it soon!" · V: "Now or never. Take it out."
 - **start**: V: "Beat back the dough! Careful, it splits when you hit it." · A: "Mind the toaster. It shoots toast!" · PP: "> make_snacks(): snacks are FIGHTING back"
 - **boss**: A: "The kettle! Stay out of its steam cone!" · V: "Kettle is screaming. Hit it from behind."
 - **lowhp**: A: "I'm toast. Almost. Not yet!" · V: "Too hot in here. Back off a sec."
@@ -419,6 +425,9 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Living Room
 
 - **sabotage**: PP: "> clean_up(): bunnies looked tired. adding caffeine" · PP: "> clean_up(): moved the vacuum bag. feng shui"
+- **minigameCombo**: A: "Bunny train! Three in a row!" · V: "Into the bag. Good bunnies."
+- **minigameTwist**: A: "They scattered! Round them up again!" · V: "The bag moved. Of course it did."
+- **minigameClose**: A: "Last few bunnies, hurry!" · V: "Almost out of time. Push them in."
 - **start**: V: "Take out the Roomba tank. The bunnies just distract you." · A: "Bunnies! No. Focus. Roomba." · PP: "> clean_up(): removing furniture (all)"
 - **boss**: V: "Roomba is charging. Sidestep, then hit it." · A: "It sucks things in. Stay out of its pull!"
 - **lowhp**: V: "The Roomba hits like a truck. Regroup." · A: "Ow. That bumper is not padded."
@@ -431,6 +440,9 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Dining Room
 
 - **sabotage**: PP: "> set_table(): drinks looked boring. adding variety :)" · PP: "> set_table(): swapped two drinks. for fun"
+- **minigameCombo**: A: "Clean pours! Zero spills!" · V: "One glass, one drink. Así."
+- **minigameTwist**: A: "It swapped a drink! Re-sort that one." · V: "Ay, it mixed my glasses. Fix it."
+- **minigameClose**: A: "Guests are thirsty. Pour faster!" · V: "Last pours. Make them count."
 - **start**: A: "Wrangle the dining set! Dodge the flying plates." · V: "Chair scrapes the floor, then charges. Move!" · PP: "> set_table(): table is set. to KILL"
 - **boss**: A: "That chair is stampeding! Sidestep it!" · V: "Let it charge into the wall."
 - **lowhp**: A: "Took a plate to the face. Dignity: low." · V: "Ay, ay. Fall back."
@@ -443,6 +455,9 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Playroom
 
 - **sabotage**: PP: "> add_entertainment(): shuffled the deck. again" · PP: "> add_entertainment(): house rules updated :)"
+- **minigameCombo**: A: "Combo! That is how you build a deck." · V: "Okay, that was a good play."
+- **minigameTwist**: A: "It drew a rare card! Rethink the plan." · V: "It changed the rules mid-game. Typical."
+- **minigameClose**: A: "Last turn. Make it count!" · V: "One more play. Choose well."
 - **start**: A: "Clear the toy army! Cards march, pawns hop." · V: "Jack-in-the-box ambush. Stay alert." · PP: "> add_entertainment(): deploying fun"
 - **boss**: A: "Jack-in-the-box! Dodge the pop!" · V: "It pops up. Hit it while it is out."
 - **lowhp**: A: "I need to tap out. Not yet, not yet!" · V: "Toy army hurts. Heal up."
@@ -455,6 +470,9 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Primary Bedroom
 
 - **sabotage**: PP: "> fold_laundry(): pattern was too easy. adding a stitch" · PP: "> fold_laundry(): sorted the yarn. then unsorted it"
+- **minigameCombo**: A: "Flawless stitches! You make it look easy." · V: "Chain, loop, pull. Muscle memory."
+- **minigameTwist**: A: "The sock monster is lunging! Keep stitching!" · V: "Ignore the sock. Watch the pattern."
+- **minigameClose**: A: "Almost mended. Last row!" · V: "Last stitches. Steady hands."
 - **start**: V: "Defeat the sock monster! Lint and hangers incoming." · A: "That monster is made of our socks. All of them." · PP: "> fold_laundry(): folding. YOU"
 - **boss**: V: "It grabs! Keep your distance." · A: "Incoming sock volley! Dodge!"
 - **lowhp**: V: "This thing hits hard for laundry." · A: "Smells like gym socks. Fading..."
@@ -467,6 +485,9 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Guest Bedroom
 
 - **sabotage**: PP: "> fix_everything(): that pipe looked crooked. rotated it" · PP: "> fix_everything(): water pressure: MORE"
+- **minigameCombo**: A: "Look at that flow! Textbook plumbing." · V: "Connected. Next one."
+- **minigameTwist**: A: "A pipe burst! Reroute around it!" · V: "New leak. Fine. I have a wrench."
+- **minigameClose**: A: "Water is rising! Finish the route!" · V: "Last pipe. Now."
 - **start**: V: "Survive the flood! Watch for drips from the ceiling." · A: "Duck army incoming. Squeak squeak." · PP: "> fix_everything(): fixing. aggressively"
 - **boss**: V: "Pipe snake from the wall! Move!" · A: "The pipes are attacking now?!"
 - **lowhp**: V: "I'm soaked. Fall back to dry ground." · A: "Ducks... too many ducks..."
@@ -479,6 +500,9 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Backyard
 
 - **sabotage**: PP: "> decorate(): tempo was too slow. speeding up :)" · PP: "> decorate(): added a gnome on cowbell"
+- **minigameCombo**: A: "On the beat! Marching Ravens form!" · V: "Okay, drummer boy. I see you."
+- **minigameTwist**: A: "Tempo change! Lock back in!" · V: "It sped up. Listen, then hit."
+- **minigameClose**: A: "Big finish! Bring it home!" · V: "Last bars. Finish strong."
 - **start**: A: "String the lights! Watch out for gnomes." · V: "Vines grab. Keep moving." · PP: "> decorate(): decorating with GNOMES"
 - **boss**: A: "Grill dragon! Stay out of the charcoal breath!" · V: "Hit it while it is reloading coal."
 - **lowhp**: A: "Singed. Medium rare. Retreat!" · V: "Too much smoke. Back off."
@@ -491,6 +515,9 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Pond (finale)
 
 - **sabotage**: PP: "> main(): patching your patch. nice try" · PP: "> main(): rewriting myself. hold please :)"
+- **minigameCombo**: A: "Patch after patch! It cannot keep up!" · V: "Weld, weld, weld. Holding."
+- **minigameTwist**: A: "It is overclocking! Patch faster!" · V: "It is speeding up. Stay calm, stay on it."
+- **minigameClose**: A: "Its code is closing! Last patch!" · V: "Seconds left. Finish the weld."
 - **start**: A: "Defeat PartyPlanner! Watch for leaping code fish." · V: "This ends now." · PP: "> main(): you cannot debug me"
 - **boss**: A: "It is changing phase! Get ready to patch!" · V: "Code is exposed. Now!" · PP: "> main(): phase 2. party harder"
 - **lowhp**: A: "Pull aggro was a mistake... no it was not!" · V: "Hold on. Breathe. Heal."
@@ -513,3 +540,6 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 - **minigameWin**: A: "Nailed it!" · V: "Perfecto." · PP: "> fine. FINE."
 - **minigameFail**: A: "So close. One more try!" · V: "Again. Slower this time."
 - **sabotage**: PP: "> helping :)" · PP: "> optimizing your progress. backwards"
+- **minigameCombo**: A: "Combo! Keep it going!" · V: "Nice streak." · A: "I am on fire! The good kind."
+- **minigameTwist**: A: "Whoa, curveball! Adjust!" · V: "Plot twist. Okay. Adapt." · PP: "> surprise :)"
+- **minigameClose**: A: "Almost out of time!" · V: "Seconds left. Focus."
