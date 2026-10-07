@@ -7,6 +7,16 @@ import { drawEnemyImpl, drawNPCImpl, ENEMY_KINDS } from './enemies.js';
 import { drawGroundImpl, warmGround, groundKind } from './ground.js';
 import { drawPropImpl, drawProjectileImpl } from './props.js';
 export { drawDenimShield, warmGround, groundKind, ENEMY_KINDS };
+import { drawBust as drawBustImpl } from './busts.js';
+export { BUST_EXPRS, bustKey, drawCutoutHead } from './busts.js';
+
+/**
+ * Big photo-cutout bust (real face + hair, no circle) for cutscenes, dialog, select.
+ * (x, y) = bottom-centre; h = height. expr: 'smile'|'neutral'|'happy'|'surprised'|'annoyed'|'determined'
+ * (+ 'worried','sheepish','sad','thinking'). See docs/teams/art.md for options.
+ * Returns { faceX, faceY, top } screen coords.
+ */
+export function drawBust(ctx, game, hero, expr, x, y, h, o = {}) { return drawBustImpl(ctx, game, hero, expr, x, y, h, o); }
 export { PROP_KINDS, ZONE_KINDS, PICKUP_KINDS, drawZone, drawPickup, drawWeather, drawFrostOverlay } from './props.js';
 
 /**

@@ -18,6 +18,38 @@ function label(s, x, y) { ctx.fillStyle = '#fff6e5'; ctx.font = '12px sans-serif
 function bg(x, y, w, h, c = '#d8c79a') { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 const pages = {
+  busts() {
+    const g = ctx.createLinearGradient(0, 0, 0, 1000); g.addColorStop(0, '#f2c26b'); g.addColorStop(1, '#5a3a2a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 1400, 1000);
+    ctx.fillStyle = '#1b2238'; ctx.fillRect(700, 0, 700, 500);
+    const ex = ['smile', 'neutral', 'happy', 'surprised', 'annoyed', 'determined', 'worried', 'thinking'];
+    ex.forEach((e, i) => {
+      const x = 90 + i * 170;
+      S.drawBust(ctx, game, 'aaron', e, x, 300, 260, { t: T, exprT: 0.12, talking: true });
+      label('aaron ' + e, x, 320);
+      S.drawBust(ctx, game, 'victoria', e, x, 640, 260, { t: T, exprT: 0.12, side: -1 });
+      label('victoria ' + e, x, 660);
+    });
+    S.drawBust(ctx, game, 'aaron', 'smile', 200, 990, 300, { t: T, dim: 1 }); label('dim', 200, 985);
+    S.drawBust(ctx, game, 'victoria', 'smile', 500, 990, 300, { t: T }); 
+    S.drawBust(ctx, game, 'victoria', 'neutral', 800, 990, 300, { t: T, enter: 0.5 }); label('enter 0.5', 800, 985);
+    S.drawBust(ctx, game, 'aaron', 'smile', 1100, 990, 90, { t: T }); label('small', 1100, 985);
+    S.drawBust(ctx, game, 'victoria', 'smile', 1250, 990, 90, { t: T });
+  },
+  grid() {
+    bg(0, 0, 1400, 1000, '#ffffff');
+    const keys = (q.get('keys') ?? 'bust.aaron.smile,bust.victoria.smile,bust.victoria.neutral').split(',');
+    let x = 10;
+    for (const k of keys) {
+      const im = assets.image(k); if (!im) continue;
+      const sc = Number(q.get('sc') ?? 0.9);
+      ctx.drawImage(im, x, 10, im.naturalWidth * sc, im.naturalHeight * sc);
+      ctx.strokeStyle = 'rgba(255,0,0,0.35)'; ctx.fillStyle = 'red'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+      for (let v = 0; v <= im.naturalHeight; v += 25) { const yy = 10 + v * sc; ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + im.naturalWidth * sc, yy); ctx.stroke(); if (v % 50 === 0) ctx.fillText(v, x + 1, yy - 1); }
+      for (let u = 0; u <= im.naturalWidth; u += 25) { const xx = x + u * sc; ctx.beginPath(); ctx.moveTo(xx, 10); ctx.lineTo(xx, 10 + im.naturalHeight * sc); ctx.stroke(); if (u % 50 === 0) ctx.fillText(u, xx + 1, 20); }
+      x += im.naturalWidth * sc + 20;
+    }
+  },
   ui() {
     bg(0, 0, 1400, 1000, '#4f8fb3');
     const lines = [
