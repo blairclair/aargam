@@ -49,7 +49,8 @@ let seq = 0;
 export function makeProp(kind, x, y, extra = {}) {
   const def = FURNITURE[kind] ?? { r: 14, h: 30, shots: true };
   const p = { id: ++seq, kind, x, y, seed: (seq * 7919) % 1000, h: def.h ?? 30, blocksShots: !!def.shots, deco: !!def.deco, ...extra };
-  if (p.w == null && def.w != null) { p.w = def.w; p.d = def.d; }
+  if (p.w == null && def.w != null) p.w = def.w;
+  if (p.w != null && p.d == null) p.d = def.d ?? 30;
   if (p.r == null && def.r != null) p.r = def.r;
   p.solid = !p.deco && (p.w > 0 || p.r > 0);
   // approx radius for culling / generic checks
