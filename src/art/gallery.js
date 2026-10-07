@@ -20,6 +20,13 @@ function label(s, x, y) { ctx.fillStyle = '#fff6e5'; ctx.font = '12px sans-serif
 function bg(x, y, w, h, c = '#d8c79a') { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 const pages = {
+  fx2() {
+    bg(0, 0, 1400, 1000, '#b98a5c');
+    (S.PROJECTILE_KINDS ?? []).forEach((k, i) => { const x = 60 + (i % 12) * 110, y = 70 + Math.floor(i / 12) * 110; S.drawProjectile(ctx, game, k, x, y, { vx: 1, vy: 0.3, t: T + i * 0.1, r: k === 'shout' || k === 'shockwave' ? 40 : undefined }); label(k, x, y + 40); });
+    const zk = ['fire', 'net', 'puddle', 'web', 'boundaries', 'drumwave', 'aggro', 'mop', 'mark'];
+    zk.forEach((k, i) => { const x = 110 + (i % 5) * 260, y = 420 + Math.floor(i / 5) * 230; S.drawZone(ctx, game, k, x, y, 90, { t: T, life: 0.7, onBeat: true }); label(k, x, y + 80); });
+    ['hose', 'laser', 'steam', 'sizzle'].forEach((k, i) => { const x = 1060, y = 400 + i * 130; S.drawZone(ctx, game, k, x, y, 200, { t: T, angle: 0, arc: 0.6 }); label(k, x, y + 40); });
+  },
   hud() {
     bg(0, 0, 1400, 1000, '#10131f');
     const frames = [

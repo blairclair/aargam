@@ -215,7 +215,7 @@ const ZONE = {
   },
   puddle(ctx, r, o, t) { // Leak puddle
     ctx.scale(1, 0.55);
-    ctx.fillStyle = 'rgba(79,143,179,0.45)';
+    ctx.fillStyle = 'rgba(70,160,220,0.6)';
     ctx.beginPath();
     for (let i = 0; i <= 16; i++) { const a = i * TAU / 16, rr = r * (0.85 + 0.15 * Math.sin(i * 2.7 + (o.seed ?? 0))); ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
     ctx.closePath(); ctx.fill();

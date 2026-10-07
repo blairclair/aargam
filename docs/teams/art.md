@@ -53,3 +53,33 @@ v2 is detected by `hud.hero` (no `hud.heroes`). The legacy round-1 shape still w
 - Bottom-left: skill bar. Each slot shows the icon, a cooldown pie and ring, and a keycap. A white ring flashes when a skill comes off cooldown. Missing slots show a dashed circle.
 - Top-right: objective with a flag and a percentage progress bar.
 - Bottom-center: boss bar with phase ticks and "phase n/m". PartyPlanner gets a green terminal styling.
+
+## Heroes: `drawHero(ctx, game, id, x, y, o)` (signature unchanged)
+- Heads are the real photo cutouts with the real hair silhouette (no circle) and a thin soft outline. They are never mirrored or recolored. If the image is missing, the old round crop with drawn hair is used.
+- Bodies match the photos.
+  - Aaron: tall and lean (long legs), heather-grey tee with faint stripes, dark shorts, white sneakers, fitness watch.
+  - Victoria: light-wash denim jacket over a navy knit, mid-wash jeans with rolled cuffs, white sneakers, long hair continuing behind her shoulders, wrench in her back pocket.
+- `HERO_SCALE = 1.2` multiplies every hero draw so faces read at room scale. Pass `o.rawScale: true` to skip it.
+- `anim: 'attack'`: Aaron does a **karate kick** toward `o.facing`; Victoria does an overhand **wrench swing**. Both leave a swoosh.
+- `o.hold`: one of `HOLD_KINDS` (`wrench, pan, baguette, mop, hose, drumsticks, plate, pillow, card, sock, yarn, ball, laptop`). Puts the item in the front hand; with `anim: 'attack'` it becomes an overhand swing with that item. `o.kick: false` turns off Aaron's kick.
+- `o.shield` 0..1 with `o.shieldKind: 'plate'` draws the Plate Shield. The default is the round-1 denim shield. `drawPlateShield` is also exported.
+- Other `o` fields as before: `facing, anim (idle|walk|attack|dash|hurt|down), progress, t, flash, scale, alpha`.
+
+## Projectiles: `drawProjectile(ctx, game, kind, x, y, o)` and `PROJECTILE_KINDS`
+v2 kinds, named to match action's `shot.kind`:
+- **Skills:** `baguette`, `pillow`, `ball` (bouncy, hops), `sock` (`o.team: 'enemy'` makes it pink), `yarn` (thread trail), `wrench` (spinning boomerang), `card`, `drop`/`water`.
+- **Enemies:** `toast`, `web`, `ember`, `code` (PartyPlanner glyph; `o.glyph`), `plate`, `steam`, `dough`, `lint`.
+- **Aliases:** `bouncy_ball`, `throw_pillow`, `bread`.
+- **Legacy (round 1):** `mintscoop`, `slush`, `snowball`, `icicle`, `shout`, `shockwave`.
+- `o`: `vx/vy` or `angle` (direction and trail), `r`, `t`, `alpha`, `scale`.
+
+## Zones: `drawZone(ctx, game, kind, x, y, r, o)` and `ZONE_KINDS`
+Ground-level, drawn under entities. `r` is the radius, or the length for beams and cones.
+- **Area zones:** `fire` (charcoal flames), `net`/`crochet_net`, `puddle`/`leak`, `web`, `boundaries`/`ring` (Victoria's ultimate), `drumwave` (`o.life`; `o.onBeat` makes it gold), `aggro` (Pull Aggro aura), `mop` (Mop Spin swirl), `mark` (Debug mark).
+- **Directional (`o.angle`):** `hose` (`o.width`), `laser` (PartyPlanner; `o.width`), `steam` (kettle cone; `o.arc`), `sizzle` (Hot Pan arc; `o.arc`, `o.life`).
+- **Legacy:** `bloom`, `telegraph`, `frostpatch`, `shield`.
+
+## Facade re-exports from art-world (`src/art/world`)
+`drawRoom, drawWater, drawStringLights, ROOM_KINDS, FURNITURE_KINDS, FURNITURE_SIZE, FURNITURE_ALIASES, WALL_H, roomGeometry`.
+- `drawEnemy` tries `drawWorldEnemy` first; `drawProp` tries `drawFurniture` first.
+- `ENEMY_KINDS` and `PROP_KINDS` are the merged lists.

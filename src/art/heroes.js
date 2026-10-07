@@ -474,10 +474,12 @@ function fallbackHead(ctx, game, hid, L, hx, chinY, t, sway, o) {
  *   o.kick: force (true) / suppress (false) Aaron's kick on 'attack' (default: kick when no o.hold)
  *   o.shieldKind: 'denim' (default) | 'plate'
  */
+/** Global in-world hero size multiplier (faces need to read at room scale). Multiplies o.scale; o.rawScale skips it. */
+export const HERO_SCALE = 1.2;
 export function drawHeroImpl(ctx, game, id, x, y, o = {}) {
   const L = LOOK[id] ?? LOOK.aaron;
   const hid = LOOK[id] ? id : 'aaron';
-  const s = o.scale ?? 1;
+  const s = (o.scale ?? 1) * (o.rawScale ? 1 : HERO_SCALE);
   const anim = o.anim ?? 'idle';
   const t = o.t ?? game?.time ?? 0;
   const loopDur = anim === 'attack' ? 0.4 : 0.35;

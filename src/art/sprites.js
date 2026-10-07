@@ -2,7 +2,8 @@
 // internals are a placeholder for the art team to replace.
 // Coordinates: (x, y) is the entity's FEET / ground point in world or screen space; the caller
 // has already applied any camera transform.
-import { drawHeroImpl, drawPortrait as drawPortraitImpl, drawDenimShield } from './heroes.js';
+import { drawHeroImpl, drawPortrait as drawPortraitImpl, drawDenimShield, drawPlateShield, HERO_SCALE, HOLD_KINDS } from './heroes.js';
+export { drawPlateShield, HERO_SCALE, HOLD_KINDS };
 import { drawEnemyImpl, drawNPCImpl, ENEMY_KINDS as LEGACY_ENEMY_KINDS } from './enemies.js';
 import { drawGroundImpl, warmGround, groundKind } from './ground.js';
 import { drawPropImpl, drawProjectileImpl, PROP_KINDS as LEGACY_PROP_KINDS, ZONE_KINDS as LEGACY_ZONE_KINDS, drawZone as drawZoneLegacy } from './props.js';
@@ -10,7 +11,7 @@ import { drawSkillProjectile, drawSkillZone, PROJECTILE_KINDS_V2, ZONE_KINDS_V2 
 import { drawWorldEnemy, drawFurniture, WORLD_ENEMY_KINDS, FURNITURE_KINDS } from './world/index.js';
 export { drawDenimShield, warmGround, groundKind };
 // Room interiors + furniture sizes come from art-world (src/art/world); re-exported here so everyone imports one module.
-export { drawRoom, drawWater, ROOM_KINDS, FURNITURE_KINDS, FURNITURE_SIZE, FURNITURE_ALIASES, WALL_H, roomGeometry } from './world/index.js';
+export { drawRoom, drawWater, drawStringLights, ROOM_KINDS, FURNITURE_KINDS, FURNITURE_SIZE, FURNITURE_ALIASES, WALL_H, roomGeometry } from './world/index.js';
 
 /** Enemy type ids drawEnemy really draws (v2 roster from art-world + legacy). Anything else falls back. */
 export const ENEMY_KINDS = [...new Set([...(WORLD_ENEMY_KINDS ?? []), ...LEGACY_ENEMY_KINDS])];
