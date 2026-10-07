@@ -33,7 +33,5 @@ export const FURNITURE_KINDS = [];
 /** Draw furniture at base point (x, y). Returns false for unknown kinds (all kinds, for now). */
 export function drawFurniture(ctx, game, kind, x, y, o = {}) { return false; }
 
-export const WORLD_ENEMY_KINDS = [];
-
-/** Draw a v2 enemy at its feet point. Returns false when not drawn (all, for now). */
-export function drawWorldEnemy(ctx, game, type, x, y, o = {}) { return false; }
+// Enemies: drawWorldEnemy(ctx, game, type, x, y, {facing, t, flash, anim, progress, phase, hpFrac, scale, seed, alpha, hpBar})
+export { WORLD_ENEMY_KINDS, drawWorldEnemy } from './enemies.js';
