@@ -4,6 +4,8 @@ import * as S from './sprites.js';
 import { Fx } from './fx.js';
 import { Dialog } from '../ui/dialog.js';
 import * as W from '../ui/widgets.js';
+import * as HUD from '../ui/hud.js';
+import { SKILLS } from '../core/theme.js';
 
 const q = new URLSearchParams(location.search);
 const page = q.get('page') ?? 'heroes';
@@ -18,6 +20,29 @@ function label(s, x, y) { ctx.fillStyle = '#fff6e5'; ctx.font = '12px sans-serif
 function bg(x, y, w, h, c = '#d8c79a') { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 const pages = {
+  hud() {
+    bg(0, 0, 1400, 1000, '#10131f');
+    const frames = [
+      { hero: 'aaron', hp: 92, maxHp: 120, basic: { id: 'kick', cd: 0.3, key: 'J' }, skills: [{ id: 'debug', cd: 0.6, key: 'K' }, { id: 'bread_toss', cd: 0, key: 'E' }], ultimate: { id: 'pull_aggro', cd: 0, ready: true, key: 'Space' }, objective: 'Squash the bugs (7 left)', progress: 0.4, favored: true },
+      { hero: 'victoria', hp: 22, maxHp: 105, basic: { id: 'wrench', cd: 0, key: 'J' }, skills: [{ id: 'crochet_net', cd: 0.2, key: 'K' }], objective: 'Defeat PartyPlanner', progress: 0.7, bossHp: { name: 'PartyPlanner.exe', frac: 0.55, phases: 3 } },
+    ];
+    frames.forEach((hd, n) => {
+      ctx.save(); ctx.translate(0, n * 545); ctx.scale(0.98, 0.98);
+      ctx.beginPath(); ctx.rect(0, 0, 960, 540); ctx.clip();
+      ctx.fillStyle = '#b98a5c'; ctx.fillRect(0, 0, 960, 540);
+      HUD.drawHUD(ctx, game, hd);
+      ctx.restore();
+    });
+    Object.keys(SKILLS).forEach((id, i) => {
+      const x = 1010 + (i % 4) * 95, y = 50 + Math.floor(i / 4) * 95;
+      S.drawSkillIcon(ctx, id, x, y, 56, { t: T });
+      label(id, x, y + 42);
+    });
+    S.drawSkillIcon(ctx, 'boundaries', 1030, 700, 40, { locked: true }); label('locked', 1030, 735);
+    S.drawSkillIcon(ctx, 'debug', 1120, 700, 40, { dim: true }); label('dim', 1120, 735);
+    S.drawSkillIcon(ctx, 'kick', 1200, 700, 24); S.drawSkillIcon(ctx, 'wrench', 1240, 700, 24); label('24px', 1220, 735);
+    S.drawSkillIcon(ctx, 'drumline', 1320, 700, 96); 
+  },
   heads() {
     bg(0, 0, 1400, 1000, '#b98a5c');
     [30, 46, 70, 120, 240].forEach((h, i) => {

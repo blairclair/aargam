@@ -36,3 +36,20 @@ Big transparent photo cutouts (real face + hair, no circle), with a soft paper-c
 - `who: 'partyplanner'` (SPEAKERS style `terminal`) renders a green-on-black terminal window titled `PartyPlanner.exe — party.log`, with a `> ` prompt (added automatically unless the text already starts with `>`), a blinking block cursor, scanlines, and a short glitch when each line starts. It plays the `type` sfx.
 - `narrator` draws the paper box (no busts). Other names draw a name plate only. Legacy `baron` and `townsfolk` speakers still work.
 - `open(lines, onDone, { busts: false })` gives a compact version with no busts.
+
+## Skill icons: `drawSkillIcon(ctx, skillId, x, y, size, o)`
+A round badge with the hero-colored rim (gold double rim for ultimates) and a glyph, centered on (x, y). `size` is the diameter. Every `theme.SKILLS` id has one (`SKILL_ICON_IDS`).
+`o`:
+- `badge`: false draws the glyph only.
+- `locked`: grey with a padlock.
+- `dim`: desaturated, for cooldown.
+- `ready`: pulsing gold glow.
+- `alpha`, `t`.
+
+## HUD v2: `drawHUD(ctx, game, hud)` + `HUD_VERSION = 2` (`src/ui/hud.js`)
+v2 is detected by `hud.hero` (no `hud.heroes`). The legacy round-1 shape still works.
+`{ hero, hp, maxHp, basic: {id, cd, key} | id, skills: [{id, cd /*0..1 remaining*/, key}], ultimate?: {id, cd, ready, key}, objective, progress?: 0..1, favored?: bool, bossHp?: {name, frac, phases?: n | number[] (hp fracs)} }`
+- Top-left: hero card with the in-world cutout head, HP bar with trailing ghost, a low-HP pulse, and a "★ favored" chip.
+- Bottom-left: skill bar. Each slot shows the icon, a cooldown pie and ring, and a keycap. A white ring flashes when a skill comes off cooldown. Missing slots show a dashed circle.
+- Top-right: objective with a flag and a percentage progress bar.
+- Bottom-center: boss bar with phase ticks and "phase n/m". PartyPlanner gets a green terminal styling.

@@ -17,6 +17,8 @@ export const ENEMY_KINDS = [...new Set([...(WORLD_ENEMY_KINDS ?? []), ...LEGACY_
 export const PROP_KINDS = [...new Set([...(FURNITURE_KINDS ?? []), ...LEGACY_PROP_KINDS])];
 import { drawBust as drawBustImpl } from './busts.js';
 export { BUST_EXPRS, bustKey, drawCutoutHead } from './busts.js';
+/** drawSkillIcon(ctx, skillId, x, y, size, o): round badge + glyph for every theme.SKILLS id. See docs/teams/art.md. */
+export { drawSkillIcon, SKILL_ICON_IDS } from './icons.js';
 
 /**
  * Big photo-cutout bust (real face + hair, no circle) for cutscenes, dialog, select.
