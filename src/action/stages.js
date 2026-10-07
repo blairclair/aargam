@@ -25,7 +25,7 @@ function waveRunner(waves) {
     update(L, dt) {
       if (this.i >= waves.length) return;
       const w = waves[this.i];
-      if (L.aliveCounted() > (w.at ?? 0)) { this.wait = 0; return; }
+      if (L.aliveCounted() > (w.at ?? (this.i === 0 ? Infinity : 0))) { this.wait = 0; return; }
       this.wait += dt;
       if (this.wait < (w.delay ?? 0.8)) return;
       this.wait = 0;
@@ -119,9 +119,9 @@ export const STAGES = {
     setup(L) { L.spawnEnemy('toaster', 250, 240, { spawnDelay: 1 }); },
     waves: [
       { spawn: [['dough_blob', 3]], from: { x: 1150, y: 300, spread: 50 } },
-      { spawn: [['dough_blob', 3], ['kettle', 1, {}]], from: { x: 1150, y: 300, spread: 60 }, at: 1, delay: 1.5 },
-      { spawn: [['toaster', 1]], from: { x: 900, y: 240, spread: 0 }, at: 2, delay: 0.5 },
-      { spawn: [['dough_blob', 4], ['kettle', 1]], from: { x: 1150, y: 300, spread: 70 }, delay: 1.5 },
+      { spawn: [['dough_blob', 3], ['kettle', 1]], from: { x: 1150, y: 300, spread: 60 }, at: 2, delay: 1.5 },
+      { spawn: [['toaster', 1]], from: { x: 900, y: 240, spread: 0 }, at: 3, delay: 0.5 },
+      { spawn: [['dough_blob', 4], ['kettle', 1]], from: { x: 1150, y: 300, spread: 70 }, at: 1, delay: 1.5 },
     ],
   }),
 

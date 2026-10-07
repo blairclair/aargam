@@ -8,8 +8,9 @@ import { clamp, lerp } from '../core/math.js';
 import * as Sprites from '../art/sprites.js';
 import { Fx } from '../art/fx.js';
 import * as HUD from '../ui/hud.js';
-import { panel, text, button, bar, ring, keycap } from '../ui/widgets.js';
+import { panel, text, button, bar, ring, keycap, wrapText } from '../ui/widgets.js';
 import { playSfx, playMusic } from '../audio/sfx.js';
+import { bark } from '../story/lines.js';
 import { buildArena } from './arena.js';
 import { createHero, updateHero, heroDrawOpts, SLOT_KEYS } from './heroes.js';
 import { SKILL_DEF, updateBoundary, beatPhase } from './skills.js';
@@ -25,6 +26,8 @@ const W = 960, H = 540;
 const INTRO = 2.4;      // stage card length (hero can already move)
 const WIN_BEAT = 2.8;   // victory beat before handing off
 const LOSE_BEAT = 2.4;
+// the room's headline threat: its first appearance triggers the 'boss' bark
+const HEADLINER = { cable_spider: 1, kettle: 1, roomba: 1, chair: 1, jack_box: 1, sock_monster: 1, pipe_snake: 1, grill_dragon: 1, partyplanner: 1 };
 
 export default class RoomScene {
   constructor(game) { this.game = game; }
@@ -58,8 +61,8 @@ export default class RoomScene {
     this.mouseAimT = 0; this.lastMouse = { x: g.input.mouse.x, y: g.input.mouse.y };
     this.paused = false; this.finished = false;
     this.phase = 'intro'; this.introT = 0; this.endT = 0;
-    this.bannerData = null; this.logData = null;
-    this.basicUses = 0;
+    this.bannerData = null; this.logData = null; this.barkData = null; this.barkCd = 0; this.saidBoss = false; this.saidLow = false;
+    this.basicUses = 0; this.lastKills = 0;
     this.cam = { x: 0, y: 0 };
     this.snapCamera();
     this.setupTutorial();
@@ -81,17 +84,33 @@ export default class RoomScene {
   startPlay() {
     this.phase = 'play';
     this.stage.setup?.(this);
+    this.later(0.6, () => this.say('start', true));
     if (this.p.attempt > 1 && this.stage === STAGES.office) this.tut.moved = true;
   }
 
   // ------------------------------------------------------------ world API used by modules
   aliveCount() { let n = 0; for (const e of this.enemies) if (!e.dead) n++; return n; }
   aliveCounted() { let n = 0; for (const e of this.enemies) if (!e.dead && e.counts !== false) n++; return n; }
-  spawnEnemy(type, x, y, opts = {}) { const e = createEnemy(this, type, x, y, opts); this.enemies.push(e); return e; }
+  spawnEnemy(type, x, y, opts = {}) {
+    const e = createEnemy(this, type, x, y, opts);
+    this.enemies.push(e);
+    if (HEADLINER[type] && !this.saidBoss) { this.saidBoss = true; this.later((opts.spawnDelay ?? 0.7) + 0.3, () => this.say('boss', true)); }
+    return e;
+  }
   killEnemy(e) { killEnemy(this, e); }
   later(delay, fn) { this.timers.push({ t: delay, fn }); }
   banner(textStr, color = PALETTE.sun, dur = 2.2) { this.bannerData = { text: textStr, color, t: dur, max: dur }; }
   log(line) { this.logData = { text: line, t: 3.2 }; playSfx('type'); }
+
+  /** Short story bark (story/lines.js), used sparingly. PartyPlanner lines go to the terminal box. */
+  say(event, force = false) {
+    if (!force && this.barkCd > 0) return;
+    const r = bark(this.roomId, event, { hero: this.hero.id });
+    if (!r?.text) return;
+    this.barkCd = 9;
+    if (r.who === 'partyplanner' || r.text.startsWith('> ')) this.log(r.text.split('\n')[0].replace(/^> ?/, '> '));
+    else this.barkData = { who: r.who, text: r.text, t: 3.2 };
+  }
 
   onSkillUsed(id) {
     this.game.events.emit('skill:used', { id });
@@ -119,6 +138,7 @@ export default class RoomScene {
     this.fx.confetti?.(this.hero.x, this.hero.y - 60, 60);
     const fixed = this.roomId === 'pond' ? 'PartyPlanner.exe is down. Patch it!' : `${this.room.name}: fixed!`;
     this.banner(fixed, PALETTE.sun, WIN_BEAT);
+    this.barkData = null; this.say('win', true);
   }
 
   lose() {
@@ -126,6 +146,7 @@ export default class RoomScene {
     this.phase = 'lost'; this.endT = 0;
     playSfx('defeat');
     this.banner('Knocked out! Catch your breath and try again.', PALETTE.danger, LOSE_BEAT);
+    this.say('lose', true);
   }
 
   finish(victory) {
@@ -214,6 +235,8 @@ export default class RoomScene {
 
     if (this.bannerData) { this.bannerData.t -= dt; if (this.bannerData.t <= 0) this.bannerData = null; }
     if (this.logData) { this.logData.t -= dt; if (this.logData.t <= 0) this.logData = null; }
+    if (this.barkData) { this.barkData.t -= dt; if (this.barkData.t <= 0) this.barkData = null; }
+    this.barkCd = Math.max(0, this.barkCd - dt);
     for (const v of this.vfx) v.t += dt;
     this.vfx = this.vfx.filter((v) => v.t < v.dur);
     for (const p of this.arena.props) if (p.flash > 0) p.flash -= dt;
@@ -247,6 +270,9 @@ export default class RoomScene {
     if (playing) {
       this.updatePrompts(dt);
       this.stage.update?.(this, dt);
+      const h = this.hero;
+      if (!this.saidLow && h.hp < h.maxHp * 0.3 && !h.down) { this.saidLow = true; this.say('lowhp', true); }
+      if (this.kills > this.lastKills) { this.lastKills = this.kills; if (Math.random() < 0.12) this.say('hit'); }
       if (this.stage.done(this)) this.win();
     } else if (this.phase === 'won') {
       this.endT += dt;
@@ -307,6 +333,7 @@ export default class RoomScene {
     this.drawOffscreenMarkers(ctx, cx, cy);
     this.drawHud(ctx);
     if (this.logData) this.drawLog(ctx);
+    if (this.barkData) this.drawBark(ctx);
     if (this.phase === 'intro') this.drawStageCard(ctx);
     this.drawPrompt(ctx);
     if (this.bannerData) this.drawBanner(ctx);
@@ -428,9 +455,30 @@ export default class RoomScene {
     const hud = this.hudData();
     if ((HUD.HUD_VERSION ?? 1) >= 2) { HUD.drawHUD(ctx, this.game, hud); return; }
     // Legacy HUD: let it draw objective + boss bar; action draws the hero card + skill bar itself.
-    HUD.drawHUD(ctx, this.game, { objective: hud.objective, progress: hud.progress, bossHp: hud.bossHp, scoops: 0 });
+    this.drawObjective(ctx, hud);
+    if (hud.bossHp) this.drawBossBar(ctx, hud.bossHp);
     this.drawHeroCard(ctx, hud);
     this.drawSkillBar(ctx, hud);
+  }
+
+  drawObjective(ctx, hud) {
+    ctx.save(); ctx.font = 'bold 15px "Trebuchet MS", system-ui, sans-serif';
+    const tw = Math.min(420, Math.max(200, ctx.measureText(hud.objective).width + 50));
+    ctx.restore();
+    const x = W - tw - 12, y = 12;
+    panel(ctx, x, y, tw, 52, { radius: 14, alpha: 0.9, stroke: this.accent });
+    ctx.fillStyle = this.accent; ctx.fillRect(x + 14, y + 10, 2, 18);
+    ctx.beginPath(); ctx.moveTo(x + 16, y + 10); ctx.lineTo(x + 27, y + 14); ctx.lineTo(x + 16, y + 18); ctx.closePath(); ctx.fill();
+    text(ctx, hud.objective, x + 34, y + 25, { font: 'bold 15px "Trebuchet MS", system-ui, sans-serif', maxWidth: tw - 44 });
+    bar(ctx, x + 34, y + 34, tw - 48, 8, hud.progress, PALETTE.sun, 'rgba(0,0,0,0.5)');
+  }
+
+  drawBossBar(ctx, b) {
+    const w = 520, x = (W - w) / 2, y = H - 38;
+    panel(ctx, x - 12, y - 22, w + 24, 46, { radius: 14, alpha: 0.92, stroke: PALETTE.danger });
+    bar(ctx, x, y + 2, w, 14, b.frac, PALETTE.danger, 'rgba(8,10,18,0.7)');
+    if (b.phases) { ctx.fillStyle = 'rgba(255,246,229,0.8)'; for (let i = 1; i < b.phases; i++) ctx.fillRect(x + w * i / b.phases - 1, y + 2, 2, 14); }
+    text(ctx, b.name, W / 2, y - 6, { align: 'center', font: 'bold 14px "Trebuchet MS", system-ui, sans-serif' });
   }
 
   drawHeroCard(ctx, hud) {
@@ -506,6 +554,19 @@ export default class RoomScene {
     const tw = Math.min(900, ctx.measureText(b.text).width + 60);
     panel(ctx, W / 2 - tw / 2, 188, tw, 72, { radius: 18, stroke: b.color });
     text(ctx, b.text, W / 2, 238, { align: 'center', font: tw > 880 ? 'bold 28px "Trebuchet MS", system-ui, sans-serif' : FONT.big, color: b.color, maxWidth: tw - 30 });
+    ctx.restore();
+  }
+
+  drawBark(ctx) {
+    const b = this.barkData, g = this.game;
+    const lines = wrapText(ctx, b.text, 270, FONT.ui).slice(0, 3);
+    const bh = 22 + lines.length * 19;
+    const x = 14, y = H - 14 - bh;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, b.t * 3, (3.2 - b.t) * 6);
+    panel(ctx, x, y, 336, bh, { radius: 14, stroke: b.who === 'aaron' ? PALETTE.sun : PALETTE.mint });
+    if (HEROES[b.who]) Sprites.drawPortrait(ctx, g, b.who, x + 26, y + bh / 2, 18, {});
+    lines.forEach((l, i) => text(ctx, l, x + 52, y + 26 + i * 19));
     ctx.restore();
   }
 
