@@ -1,7 +1,6 @@
 // ART-WORLD public API: room interiors, furniture, v2 enemies. Owned by: art-world.
 // Wired into the game by the art team's src/art/sprites.js facade. See docs/teams/art-world.md.
-// STUB (v0): signatures are final; real art lands in follow-up ships. Consumers must handle
-// `false` returns (draw their own fallback) and empty kind lists.
+// Consumers must handle `false` returns (draw their own fallback) and check ROOM_KINDS.
 import { ROOMS } from '../../core/theme.js';
 
 /**
@@ -26,12 +25,19 @@ export function drawRoom(ctx, game, roomId, camX, camY, w, h, o = {}) {
   ctx.restore();
 }
 
-/** Footprint per furniture kind: { w, h } in world px (filled in as furniture ships). */
-export const FURNITURE_SIZE = {};
-export const FURNITURE_KINDS = [];
+// Furniture: drawFurniture(ctx, game, kind, x, y, {t, weird, seed, room, flip, lit, alpha, scale}) -> boolean
+// (x, y) = FRONT-CENTRE ground point; footprint [x-w/2, x+w/2] x [y-h, y]; FURNITURE_SIZE[kind] = {w, h (floor depth), vh (visual height), solid?}.
+export { FURNITURE_KINDS, FURNITURE_SIZE, FURNITURE_ALIASES, drawFurniture } from './furniture.js';
 
-/** Draw furniture at base point (x, y). Returns false for unknown kinds (all kinds, for now). */
-export function drawFurniture(ctx, game, kind, x, y, o = {}) { return false; }
+/** Room ids drawRoom renders for real (others: placeholder fill; use your own fallback). */
+export const ROOM_KINDS = [];
+/** Height of the back-wall face drawn above y = 0 (not playable). */
+export const WALL_H = 120;
+/** Per-room geometry for collision/AI. pond: central water ellipse {cx, cy, rx, ry} (world px). */
+export function roomGeometry(roomId, arenaW, arenaH) {
+  if (roomId === 'pond') return { wallH: WALL_H, water: { cx: arenaW / 2, cy: arenaH * 0.5, rx: arenaW * 0.34, ry: arenaH * 0.3 } };
+  return { wallH: WALL_H };
+}
 
 // Enemies: drawWorldEnemy(ctx, game, type, x, y, {facing, t, flash, anim, progress, phase, hpFrac, scale, seed, alpha, hpBar})
 export { WORLD_ENEMY_KINDS, drawWorldEnemy } from './enemies.js';
