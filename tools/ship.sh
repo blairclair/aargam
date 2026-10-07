@@ -23,7 +23,7 @@ for attempt in 1 2 3 4 5; do
     fi
   fi
   node tools/check.mjs --team "$TEAM"
-  case "$TEAM" in action) PORT=8101;; hub) PORT=8102;; art) PORT=8103;; story) PORT=8104;; games-a) PORT=8105;; games-b) PORT=8106;; *) PORT=8100;; esac
+  case "$TEAM" in action) PORT=8101;; hub) PORT=8102;; art) PORT=8103;; story) PORT=8104;; games-a) PORT=8105;; games-b) PORT=8106;; art-world) PORT=8107;; *) PORT=8100;; esac
   node tools/smoke.mjs --port "$PORT"
   if git push -q origin HEAD:main; then
     echo "ship: pushed $(git rev-parse --short HEAD) to origin/main"

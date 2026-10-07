@@ -1,10 +1,62 @@
 {
   "_comment": "Path ownership. Only the owning team edits these paths. Need a change elsewhere? Message the supervisor.",
-  "supervisor": ["index.html", "package.json", "OWNERS.json", ".gitignore", "CLAUDE.md", "AGENTS.md", "src/main.js", "src/scenes.js", "src/core/**", "src/minigames/index.js", "src/minigames/host.js", "tools/**", "docs/DESIGN.md", "docs/ARCHITECTURE.md", "docs/WORKFLOW.md", "assets/**"],
-  "story": ["src/story/**", "src/audio/**", "docs/STORY.md", "docs/teams/story.md"],
-  "hub": ["src/hub/**", "docs/teams/hub.md"],
-  "action": ["src/action/**", "docs/teams/action.md"],
-  "games-a": ["src/minigames/office.js", "src/minigames/kitchen.js", "src/minigames/dining.js", "src/minigames/living.js", "src/minigames/playroom.js", "src/minigames/a/**", "docs/teams/games-a.md"],
-  "games-b": ["src/minigames/primary.js", "src/minigames/guest.js", "src/minigames/backyard.js", "src/minigames/pond.js", "src/minigames/b/**", "docs/teams/games-b.md"],
-  "art": ["src/art/**", "src/ui/**", "docs/teams/art.md", "docs/teams/presentation.md"]
+  "supervisor": [
+    "index.html",
+    "package.json",
+    "OWNERS.json",
+    ".gitignore",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "src/main.js",
+    "src/scenes.js",
+    "src/core/**",
+    "src/minigames/index.js",
+    "src/minigames/host.js",
+    "tools/**",
+    "docs/DESIGN.md",
+    "docs/ARCHITECTURE.md",
+    "docs/WORKFLOW.md",
+    "assets/**"
+  ],
+  "story": [
+    "src/story/**",
+    "src/audio/**",
+    "docs/STORY.md",
+    "docs/teams/story.md"
+  ],
+  "hub": [
+    "src/hub/**",
+    "docs/teams/hub.md"
+  ],
+  "action": [
+    "src/action/**",
+    "docs/teams/action.md"
+  ],
+  "games-a": [
+    "src/minigames/office.js",
+    "src/minigames/kitchen.js",
+    "src/minigames/dining.js",
+    "src/minigames/living.js",
+    "src/minigames/playroom.js",
+    "src/minigames/a/**",
+    "docs/teams/games-a.md"
+  ],
+  "games-b": [
+    "src/minigames/primary.js",
+    "src/minigames/guest.js",
+    "src/minigames/backyard.js",
+    "src/minigames/pond.js",
+    "src/minigames/b/**",
+    "docs/teams/games-b.md"
+  ],
+  "art": [
+    "src/art/**",
+    "src/ui/**",
+    "docs/teams/art.md",
+    "docs/teams/presentation.md"
+  ],
+  "art-world": [
+    "src/art/world/**",
+    "docs/teams/art-world.md"
+  ]
 }

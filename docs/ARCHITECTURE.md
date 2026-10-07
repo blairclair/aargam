@@ -14,7 +14,8 @@ Round 1 lives on the `first-pass` branch / `v0.1-first-pass` tag — read it for
 | **action** | `src/action/**` | room action stages: heroes, skills, enemies, 9 room arenas + objectives |
 | **games-a** | `src/minigames/{office,kitchen,dining,living,playroom}.js`, `src/minigames/a/**` | Bug Hunt, Bread Bake, Pour the Drinks, Bunny Roundup, Card Duel |
 | **games-b** | `src/minigames/{primary,guest,backyard,pond}.js`, `src/minigames/b/**` | Crochet Pattern, Pipe Fixer, Drumline, Final Patch |
-| **art** | `src/art/**`, `src/ui/**` | hero/enemy/prop sprites, room interiors, portraits & busts, Fx, HUD, widgets, dialog |
+| **art** | `src/art/**` (except `src/art/world/**`), `src/ui/**` | heroes, busts & portraits, skill icons, projectiles/zones, Fx, HUD, widgets, dialog; owns the `sprites.js` facade and wires in `art/world` |
+| **art-world** | `src/art/world/**` | room interiors (`drawRoom`), furniture props, all v2 enemies (incl. PartyPlanner koi) — exported from `src/art/world/index.js` |
 
 ## Flow (`src/core/flow.js`) — the only way teams hand off to each other
 ```
