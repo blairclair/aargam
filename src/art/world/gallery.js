@@ -19,8 +19,10 @@ function size(w, h) { cv.width = w; cv.height = h; }
 function label(s, x, y, color = '#fff6e5', font = '12px sans-serif', align = 'center') {
   ctx.fillStyle = color; ctx.font = font; ctx.textAlign = align; ctx.fillText(s, x, y);
 }
-const ARENA = { backyard: [2600, 1700], pond: [1900, 1400] };
-const arenaOf = (id) => [Number(q.get('aw')) || (ARENA[id]?.[0] ?? 1500), Number(q.get('ah')) || (ARENA[id]?.[1] ?? 1100)];
+// action's arena sizes (floor only: h - wallH) + wallH
+const ARENA = { office: [1000, 480, 130], kitchen: [1300, 630, 130], living: [1300, 670, 130], dining: [1240, 630, 130], playroom: [1240, 650, 130], primary: [1300, 670, 130], guest: [1200, 650, 130], backyard: [1500, 810, 110], pond: [1400, 810, 110] };
+const arenaOf = (id) => [Number(q.get('aw')) || (ARENA[id]?.[0] ?? 1200), Number(q.get('ah')) || (ARENA[id]?.[1] ?? 700), ARENA[id]?.[2] ?? 130];
+const water = (id) => { if (id === 'pond') W.drawWater(ctx, game, 700, 360, 270, 150, { t: T, weird }); };
 
 const pages = {
   rooms() {
@@ -28,27 +30,29 @@ const pages = {
     size(cw * cols, chh * 3);
     ctx.fillStyle = '#10131f'; ctx.fillRect(0, 0, cv.width, cv.height);
     ROOM_IDS.forEach((id, i) => {
-      const [aw, ah] = arenaOf(id);
-      const pad = 60, wall = W.WALL_H ?? 120;
+      const [aw, ah, wall] = arenaOf(id);
+      const pad = 60;
       const vw = aw + pad * 2, vh = ah + wall + pad * 2;
       const k = Math.min((cw - 10) / vw, (chh - 30) / vh);
       const ox = (i % cols) * cw + 5, oy = Math.floor(i / cols) * chh + 22;
       ctx.save();
       ctx.beginPath(); ctx.rect(ox, oy, vw * k, vh * k); ctx.clip();
       ctx.translate(ox, oy); ctx.scale(k, k); ctx.translate(pad, wall + pad);
-      W.drawRoom(ctx, game, id, -pad, -wall - pad, vw, vh, { weird, t: T, arenaW: aw, arenaH: ah });
+      W.drawRoom(ctx, game, id, -pad, -wall - pad, vw, vh, { weird, t: T, arenaW: aw, arenaH: ah, wallH: wall });
+      water(id);
       ctx.restore();
       label(`${ROOMS[id].name} (${aw}x${ah}) weird=${weird}`, ox + 4, oy - 6, '#fff6e5', '13px sans-serif', 'left');
     });
   },
   room() {
     const id = q.get('room') ?? 'office';
-    const [aw, ah] = arenaOf(id);
+    const [aw, ah, wall] = arenaOf(id);
     const w = Number(q.get('w') ?? 960), h = Number(q.get('h') ?? 540);
-    const cx = Number(q.get('cx') ?? -40), cy = Number(q.get('cy') ?? -(W.WALL_H ?? 120) - 20);
+    const cx = Number(q.get('cx') ?? -40), cy = Number(q.get('cy') ?? -wall - 20);
     size(w, h);
     ctx.save(); ctx.translate(-cx, -cy);
-    W.drawRoom(ctx, game, id, cx, cy, w, h, { weird, t: T, arenaW: aw, arenaH: ah });
+    W.drawRoom(ctx, game, id, cx, cy, w, h, { weird, t: T, arenaW: aw, arenaH: ah, wallH: wall });
+    water(id);
     // optional furniture/enemy preview list: &f=couch@300,400;plant@100,200  &e=dust_bunny@500,300
     for (const spec of (q.get('f') ?? '').split(';').filter(Boolean)) {
       const [k, p] = spec.split('@'); const [x, y] = p.split(',').map(Number);
