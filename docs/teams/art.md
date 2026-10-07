@@ -29,3 +29,10 @@ Big transparent photo cutouts (real face + hair, no circle), with a soft paper-c
 ## Kinds lists
 - `ENEMY_KINDS`: the enemy ids `drawEnemy` really draws. Anything else falls back to the frostling, so draw your own fallback.
 - `PROP_KINDS`, `ZONE_KINDS`, `PICKUP_KINDS`: same idea.
+
+## Dialog v2: `new Dialog(game)` (`src/ui/dialog.js`, API unchanged)
+- Lines are `{ who, text, expr?, mood?: 'shout', speed?, bust?: false }`. `expr` is any drawBust expression; the default is smile.
+- Heroes appear as large cutout busts behind the text box: **Aaron on the left, Victoria on the right**. A hero who already spoke in this conversation stays on screen as a dimmed listener.
+- `who: 'partyplanner'` (SPEAKERS style `terminal`) renders a green-on-black terminal window titled `PartyPlanner.exe — party.log`, with a `> ` prompt (added automatically unless the text already starts with `>`), a blinking block cursor, scanlines, and a short glitch when each line starts. It plays the `type` sfx.
+- `narrator` draws the paper box (no busts). Other names draw a name plate only. Legacy `baron` and `townsfolk` speakers still work.
+- `open(lines, onDone, { busts: false })` gives a compact version with no busts.

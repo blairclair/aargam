@@ -18,6 +18,28 @@ function label(s, x, y) { ctx.fillStyle = '#fff6e5'; ctx.font = '12px sans-serif
 function bg(x, y, w, h, c = '#d8c79a') { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 const pages = {
+  dialog() {
+    const conv = [
+      { who: 'aaron', text: 'I wrote PartyPlanner.exe to automate the prep. What could go wrong?', expr: 'happy' },
+      { who: 'partyplanner', text: 'make_snacks(): sourdough starter granted sentience. You are welcome.' },
+      { who: 'victoria', text: 'Aaron. ¿Qué hiciste?', expr: 'annoyed' },
+      { who: 'narrator', text: 'Meanwhile, the sourdough starter began to grow.' },
+    ];
+    const steps = [0, 1, 2, 3];
+    steps.forEach((st, n) => {
+      const ox = (n % 2) * 700, oy = Math.floor(n / 2) * 400;
+      ctx.save(); ctx.translate(ox, oy); ctx.scale(0.72, 0.72);
+      ctx.beginPath(); ctx.rect(0, 0, 960, 540); ctx.clip();
+      const gg = ctx.createLinearGradient(0, 0, 0, 540); gg.addColorStop(0, '#c98a5a'); gg.addColorStop(1, '#6e4a2c');
+      ctx.fillStyle = gg; ctx.fillRect(0, 0, 960, 540);
+      const d = new Dialog(game); d.open(conv);
+      for (let k = 0; k < st; k++) { d.i = k + 1; d._noteSpeaker(); }
+      for (const c of Object.values(d.cast)) c.inT = 1;
+      d.inT = 1; d.chars = n === 1 ? 30 : 999; d.t = 0.15; d.clock = T;
+      d.render(ctx);
+      ctx.restore();
+    });
+  },
   busts() {
     const g = ctx.createLinearGradient(0, 0, 0, 1000); g.addColorStop(0, '#f2c26b'); g.addColorStop(1, '#5a3a2a');
     ctx.fillStyle = g; ctx.fillRect(0, 0, 1400, 1000);
