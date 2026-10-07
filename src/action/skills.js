@@ -339,6 +339,7 @@ export function castSkill(L, h, id) {
   const def = SKILL_DEF[id];
   if (!def) return;
   def.cast(L, h);
+  h.holdId = id; h.holdT = 0.5;
   h.cd[id] = def.cd;
   h.cdMax[id] = def.cd;
   L.onSkillUsed(id);

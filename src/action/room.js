@@ -300,13 +300,24 @@ export default class RoomScene {
     // ground layer: deco furniture (rugs, lily pads), water, zones, telegraphs, rings
     for (const p of A.props) if (p.deco) this.drawFurniture(ctx, p);
     this.drawWater(ctx);
-    for (const z of this.zones) drawZone(ctx, z, this.time);
-    if (this.boundary) drawBoundary(ctx, this.boundary, this.time);
+    for (const z of this.zones) {
+      if (artZone(z.kind)) Sprites.drawZone(ctx, this.game, z.kind, z.x, z.y, z.r * Math.min(1, z.t * 5), { t: this.time, life: Math.max(0, 1 - z.t / z.dur), seed: z.x });
+      else drawZone(ctx, z, this.time);
+    }
+    if (this.boundary) {
+      const b = this.boundary;
+      if (artZone('boundaries')) Sprites.drawZone(ctx, this.game, 'boundaries', b.x, b.y, b.r, { t: this.time, life: Math.max(0, 1 - b.t / b.dur) });
+      else drawBoundary(ctx, b, this.time);
+    }
     for (const t of this.tele) drawTelegraph(ctx, t);
-    for (const w of this.waves) drawWave(ctx, w);
+    for (const w of this.waves) {
+      if (w.team === 'hero' && artZone('drumwave')) Sprites.drawZone(ctx, this.game, 'drumwave', w.x, w.y, w.r, { t: this.time, life: 1 - w.r / w.maxR, onBeat: w.color === PALETTE.sun });
+      else drawWave(ctx, w);
+    }
     const h = this.hero;
     if (this.slots.s1 === 'drumline' || this.slots.s2 === 'drumline') if (!h.down) drawBeatRing(ctx, h, beatPhase(this));
-    if (h.aggroT > 0) { ctx.save(); ctx.globalAlpha = 0.3 + Math.sin(this.time * 10) * 0.1; ctx.fillStyle = PALETTE.danger; ctx.beginPath(); ctx.ellipse(h.x, h.y, 34, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+    if (h.aggroT > 0 && artZone('aggro')) Sprites.drawZone(ctx, this.game, 'aggro', h.x, h.y, 40, { t: this.time, life: Math.min(1, h.aggroT / 6) });
+    else if (h.aggroT > 0) { ctx.save(); ctx.globalAlpha = 0.3 + Math.sin(this.time * 10) * 0.1; ctx.fillStyle = PALETTE.danger; ctx.beginPath(); ctx.ellipse(h.x, h.y, 34, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
 
     // Y-sorted drawables (culled to the view).
     const vx0 = cx - 160, vx1 = cx + W + 160, vy0 = cy - 120, vy1 = cy + H + 200;
@@ -321,8 +332,16 @@ export default class RoomScene {
     for (const it of list) this.drawItem(ctx, it.k, it.o);
 
     this.drawLights(ctx);
-    if (this.laser) drawLaser(ctx, this.laser, this.time);
-    if (this.hoseVfx && h.channel) drawHose(ctx, this.hoseVfx, this.time);
+    if (this.laser) {
+      const l = this.laser;
+      if (artZone('laser')) Sprites.drawZone(ctx, this.game, 'laser', l.x, l.y, l.len, { t: this.time, angle: l.ang, width: 32 });
+      else drawLaser(ctx, l, this.time);
+    }
+    if (this.hoseVfx && h.channel) {
+      const v = this.hoseVfx;
+      if (artZone('hose')) Sprites.drawZone(ctx, this.game, 'hose', v.x, v.y, v.len, { t: this.time, angle: v.ang, width: 20 });
+      else drawHose(ctx, v, this.time);
+    }
     for (const v of this.vfx) drawVfx(ctx, v);
     for (const e of this.enemies) if (!e.dead && e.markT > 0 && !e.hidden) drawMark(ctx, e, this.time);
     this.fx.render(ctx);
@@ -408,12 +427,13 @@ export default class RoomScene {
     } else if (k === 4) {
       const s = o;
       if (s.lob) { ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(s.x, s.y, 8, 3, 0, 0, Math.PI * 2); ctx.fill(); }
-      drawShotFallback(ctx, s, this.time);
+      if (Sprites.PROJECTILE_KINDS?.includes?.(s.kind)) Sprites.drawProjectile(ctx, g, s.kind, s.x, s.y - (s.z || 0), { r: s.r, vx: s.lob ? (s.lob.tx - s.lob.sx) : s.vx, vy: s.lob ? (s.lob.ty - s.lob.sy) : s.vy, t: s.t, team: s.team, glyph: s.glyph, reflected: s.reflected });
+      else drawShotFallback(ctx, s, this.time);
     } else if (k === 5) {
       const h = o;
       const opts = heroDrawOpts(this, h);
       Sprites.drawHero(ctx, g, h.id, h.x, h.y, opts);
-      if (h.shieldT > 0) drawPlate(ctx, h, this.time);
+      if (h.shieldT > 0 && !Sprites.HOLD_KINDS) drawPlate(ctx, h, this.time);
       if (h.slowT > 0) { ctx.fillStyle = 'rgba(255,246,229,0.3)'; ctx.beginPath(); ctx.ellipse(h.x, h.y, 16, 6, 0, 0, Math.PI * 2); ctx.fill(); }
       if (h.rootT > 0) { ctx.save(); ctx.strokeStyle = PALETTE.pine; ctx.lineWidth = 4; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(h.x + i * 8, h.y); ctx.quadraticCurveTo(h.x + i * 14, h.y - 12, h.x + i * 4, h.y - 22); ctx.stroke(); } ctx.restore(); }
     }
@@ -627,7 +647,7 @@ export default class RoomScene {
     ctx.font = 'bold 15px monospace';
     const shown = l.text.slice(0, Math.floor((3.2 - l.t) * 40));
     const tw = Math.max(260, ctx.measureText(l.text).width + 40);
-    const x = W / 2 - tw / 2, y = H - 190;
+    const x = W / 2 - tw / 2, y = 150;
     ctx.fillStyle = 'rgba(10,14,20,0.88)'; ctx.fillRect(x, y, tw, 34);
     ctx.strokeStyle = PALETTE.mint; ctx.lineWidth = 1.5; ctx.strokeRect(x, y, tw, 34);
     ctx.fillStyle = PALETTE.mint; ctx.textBaseline = 'middle';
@@ -654,6 +674,8 @@ export default class RoomScene {
 }
 
 // ------------------------------------------------------------ tiny local drawings
+const artZone = (kind) => Sprites.ZONE_KINDS?.includes?.(kind) && typeof Sprites.drawZone === 'function';
+
 function drawStars(ctx, x, y, t) {
   ctx.fillStyle = PALETTE.sun;
   for (let i = 0; i < 3; i++) {

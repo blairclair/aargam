@@ -1,6 +1,7 @@
 // The hero on the field (one per room — no tag swap). Owned by: action team.
 // Movement/aim/knockback feel is carried over unchanged from round 1 — keep it that way.
 import { HEROES, ROOMS } from '../core/theme.js';
+import * as Sprites from '../art/sprites.js';
 import { angleTo } from '../core/math.js';
 import { collide } from './arena.js';
 import { castSkill, updateChannel, SKILL_DEF } from './skills.js';
@@ -69,6 +70,7 @@ export function updateHero(L, dt) {
   h.shieldT = Math.max(0, h.shieldT - dt);
   h.aggroT = Math.max(0, h.aggroT - dt);
   h.growT = Math.max(0, h.growT - dt);
+  h.holdT = Math.max(0, (h.holdT ?? 0) - dt);
 
   const ax = inp.axis();
   h.moving = (ax.x !== 0 || ax.y !== 0) && h.rootT <= 0;
@@ -105,6 +107,12 @@ export function updateHero(L, dt) {
   }
 }
 
+/** Prop drawn in the hero's hand while a skill is used. */
+const HOLD = {
+  hot_pan: 'pan', bread_toss: 'baguette', mop_spin: 'mop', garden_hose: 'hose', drumline: 'drumsticks',
+  throw_pillow: 'pillow', tap_card: 'card', sock_sling: 'sock', crochet_net: 'yarn', bouncy_ball: 'ball', debug: 'laptop', unplug: 'wrench',
+};
+
 /** HUD key labels per slot. */
 export const SLOT_KEYS = { basic: 'J', s1: 'K', s2: 'E', ult: 'Space' };
 
@@ -118,7 +126,13 @@ export function heroDrawOpts(L, h) {
   const blink = h.invuln > 0 && Math.floor(L.time * 20) % 2 === 0;
   let facing = h.facing;
   if (h.spinT > 0) facing = h.facing + L.time * 28;
-  return { facing, anim, progress, t: h.animT, flash: h.flash, alpha: blink ? 0.55 : 1, shield: h.shieldT > 0 ? Math.min(1, h.shieldT * 5) : 0, scale: HERO_SCALE * (h.growT > 0 ? 1.3 : 1) };
+  // the skill's prop in hand while it's being used (art HOLD_KINDS)
+  let hold;
+  const id = h.channel ? h.channel.id : h.holdT > 0 ? h.holdId : null;
+  if (id && HOLD[id] && Sprites.HOLD_KINDS?.includes?.(HOLD[id])) hold = HOLD[id];
+  if (h.shieldT > 0 && Sprites.HOLD_KINDS) hold = undefined;
+  if (hold && h.holdT > 0.25 && !h.channel && anim !== 'hurt') { anim = 'attack'; progress = 1 - (h.holdT - 0.25) / 0.25; }
+  return { hold, shieldKind: 'plate', facing, anim, progress, t: h.animT, flash: h.flash, alpha: blink ? 0.55 : 1, shield: h.shieldT > 0 ? Math.min(1, h.shieldT * 5) : 0, scale: HERO_SCALE * (h.growT > 0 ? 1.3 : 1) };
 }
 
 export { SKILL_DEF };
