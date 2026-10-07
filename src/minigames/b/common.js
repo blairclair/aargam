@@ -2,8 +2,7 @@
 import { PALETTE, ROOMS } from '../../core/theme.js';
 import { finishMinigame } from '../../core/flow.js';
 import { text, keycap } from '../../ui/widgets.js';
-// story's bark(roomId, event) from src/story/lines.js is wired in once it lands on main.
-const storyBark = () => null;
+import { bark as storyBark } from '../../story/lines.js';
 
 const TAU = Math.PI * 2;
 export const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -27,13 +26,15 @@ export function finishOnce(self, success, score) {
   finishMinigame(self.game, { roomId: self.p.roomId, success: !!success, score: clamp01(score), attempt: self.p.attempt });
 }
 
-/** Story reaction line for (roomId, event), or null. */
-export function bark(roomId, event) {
+// our moments -> story's minigame events (story owns every reaction line; we never invent dialogue)
+const BARK_EVENTS = { start: 'minigame', win: 'minigameWin', fail: 'minigameFail' };
+/** Story reaction line for (roomId, moment) spoken by `hero`, or null. */
+export function bark(roomId, moment, hero) {
   try {
-    const r = storyBark(roomId, event);
-    if (!r) return null;
-    if (typeof r === 'string') return r;
-    return r.text ?? r.line ?? null;
+    const ev = BARK_EVENTS[moment] ?? moment;
+    const r = storyBark(roomId, ev, { hero });
+    if (!r || (hero && r.who !== hero)) return null;
+    return r.text ?? null;
   } catch { return null; }
 }
 

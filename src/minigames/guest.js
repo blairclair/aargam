@@ -88,7 +88,7 @@ export default class PipeFixer {
     this.taught = false;
     this.loadBoard(0);
     playMusic('minigame');
-    this.bust.say(bark('guest', 'start'));
+    this.bust.say(bark('guest', 'start', this.p.hero));
   }
 
   exit() {}
@@ -195,7 +195,7 @@ export default class PipeFixer {
       this.level = Math.min(1, this.level + dt / this.fillTime);
       this.peak = Math.max(this.peak, this.level);
       this.bust.tense = clamp01((this.level - 0.6) / 0.35);
-      if (this.level > 0.75 && !this.warned) { this.warned = true; this.bust.react('worried'); this.bust.say(bark('guest', 'danger')); playSfx('error'); }
+      if (this.level > 0.75 && !this.warned) { this.warned = true; this.bust.react('worried'); this.bust.say(bark('guest', 'danger', this.p.hero)); playSfx('error'); }
       if (this.level >= 1) { this.lose(); return; }
 
       // input
@@ -219,7 +219,7 @@ export default class PipeFixer {
       this.level = Math.max(this.levelAfter, this.level - dt * 0.35);
       if (this.stateT > 1.6) {
         if (this.boardIdx + 1 < BOARDS.length) { this.loadBoard(this.boardIdx + 1); this.state = 'play'; this.stateT = 0; }
-        else { this.state = 'won'; this.stateT = 0; this.fx.confetti(480, 300, 70); playSfx('victory'); this.bust.react('wow'); this.bust.say(bark('guest', 'win')); }
+        else { this.state = 'won'; this.stateT = 0; this.fx.confetti(480, 300, 70); playSfx('victory'); this.bust.react('wow'); this.bust.say(bark('guest', 'win', this.p.hero)); }
       }
     } else if (this.state === 'won') {
       this.level = Math.max(0, this.level - dt * 0.4);
@@ -244,13 +244,13 @@ export default class PipeFixer {
     this.fx.floatText(dx, dy - 40, 'Fixed!', PALETTE.sun, { big: true });
     playSfx('splash'); playSfx('star');
     this.bust.react('happy');
-    this.bust.say(bark('guest', 'progress'));
+    this.bust.say(bark('guest', 'progress', this.p.hero));
   }
 
   lose() {
     this.state = 'lost'; this.stateT = 0;
     playSfx('splash'); playSfx('defeat');
-    this.bust.react('oops'); this.bust.say(bark('guest', 'fail'));
+    this.bust.react('oops'); this.bust.say(bark('guest', 'fail', this.p.hero));
     this.fx.addShake(8);
     for (let i = 0; i < 6; i++) this.fx.splat(120 + i * 140, 520, WATER, 10);
   }
