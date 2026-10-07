@@ -4,9 +4,9 @@
 //   math:     TAU, clamp(v,a,b), lerp(a,b,t), ease(t), easeInOut(t), BOLD(px), MONO(px), rr(ctx,x,y,w,h,r)
 //   params:   normParams(p) -> {...p, hero, attempt:number, perks:string[]}, timeMul(p) (1.2 w/ 'playlist'),
 //             ease_level(p) (0|1|2 by attempt)
-//   voice:    setBark(fn), line(roomId, event, hero)   events: start|good|great|bad|win|lose
+//   voice:    setBark(fn), line(roomId, event, hero)   events: start|good|great|bad|win|lose (+ story ids), ppLine(seed?)
 //   bust:     new Cheer(game, p, {x,y,h,side}) .react(mood 'cheer'|'oops'|'idle', event?, force?) .say(str,dur) .update(dt) .render(ctx)
-//   end card: new Outro(game, p) .start(success, score0to1, headline, sub?) .update(dt) .render(ctx) .active
+//   end card: new Outro(game, p, {y?=250}) .start(success, score0to1, headline, sub?) .update(dt) .render(ctx) .active
 //             (calls finishMinigame after 3.2s or click/Enter)
 //   tutorial: drawHand(ctx,x,y,press0to1,{alpha}), drawHighlight(ctx,x,y,w,h,t,color?), drawArrow(ctx,ax,ay,bx,by,t,color?,bend?),
 //             prompt(ctx,str,y?,{font,x,alpha,fill,stroke,color,bob})
@@ -18,6 +18,7 @@ import { PALETTE, FONT, ROOMS, HEROES } from '../../core/theme.js';
 import { finishMinigame } from '../../core/flow.js';
 import { text, panel, chip } from '../../ui/widgets.js';
 import { playSfx } from '../../audio/sfx.js';
+import { bark, logLine } from '../../story/lines.js';
 
 export const TAU = Math.PI * 2;
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -45,20 +46,24 @@ export const timeMul = (p) => (p.perks.includes('playlist') ? 1.2 : 1);
 export const ease_level = (p) => Math.min(2, p.attempt - 1);
 
 // ---------------------------------------------------------------- reaction lines
-// Story ships src/story/lines.js with bark(roomId, event). Until it is wired in, games fall back to
-// tiny generic exclamations (UI-level, not story dialogue).
-// Story API: bark(roomId, event, { hero }) -> { who, text } | null; minigame events are
-// 'minigame' (start), 'minigameWin', 'minigameFail'. Our short in-game events map onto those.
-let barkFn = null;
-export function setBark(fn) { barkFn = typeof fn === 'function' ? fn : null; }
+// Story owns all dialogue: src/story/lines.js bark(roomId, event, { hero }) -> { who, text } | null.
+// Our short in-game events map onto story's minigame events; story event ids ('hit', ...) pass through.
+// good/great/bad fall back to tiny UI-level exclamations (not story dialogue).
+let barkFn = bark;
+export function setBark(fn) { barkFn = typeof fn === 'function' ? fn : bark; }
 const STORY_EVENT = { start: 'minigame', win: 'minigameWin', lose: 'minigameFail' };
+const STORY_EVENTS = new Set(['start', 'boss', 'lowhp', 'hit', 'win', 'lose', 'minigame', 'minigameWin', 'minigameFail']);
 const FALLBACK = { start: 'Here we go!', good: 'Nice!', great: 'Yes!', bad: 'Oops!', win: 'We did it!', lose: 'One more try.' };
 export function line(roomId, event, hero) {
-  const ev = STORY_EVENT[event];
+  const ev = STORY_EVENT[event] ?? (STORY_EVENTS.has(event) ? event : null);
   if (ev && barkFn) {
     try { const s = barkFn(roomId, ev, { hero }); if (s) return typeof s === 'string' ? s : s.text ?? null; } catch { /* ignore */ }
   }
   return FALLBACK[event] ?? null;
+}
+/** A PartyPlanner terminal line (story's log lines), with the '> ' prompt. */
+export function ppLine(seed) {
+  try { return `> ${logLine(seed)}`; } catch { return '> optimizing...'; }
 }
 
 // ---------------------------------------------------------------- hero cheer bust
@@ -228,7 +233,7 @@ export function timeBar(ctx, frac, x = 330, y = 76, w = 300, h = 12) {
  * After a short beat (or click/Enter after 0.8s) it calls finishMinigame.
  */
 export class Outro {
-  constructor(game, p) { this.game = game; this.p = p; this.active = false; this.t = 0; this.sent = false; }
+  constructor(game, p, o = {}) { this.game = game; this.p = p; this.y = o.y ?? 250; this.active = false; this.t = 0; this.sent = false; }
   start(success, score, headline, sub) {
     if (this.active) return;
     this.active = true; this.t = 0; this.success = success; this.score = clamp(score, 0, 1);
@@ -251,7 +256,7 @@ export class Outro {
     ctx.save();
     ctx.fillStyle = `rgba(16,19,31,${0.45 * a})`; ctx.fillRect(0, 0, 960, 540);
     const s = 0.7 + 0.3 * a;
-    ctx.translate(480, 250); ctx.scale(s, s); ctx.globalAlpha = a;
+    ctx.translate(480, this.y); ctx.scale(s, s); ctx.globalAlpha = a;
     panel(ctx, -210, -90, 420, 180, { style: this.success ? 'dark' : 'ice', radius: 22 });
     text(ctx, this.headline, 0, -40, { align: 'center', baseline: 'middle', font: BOLD(34), color: this.success ? PALETTE.sun : PALETTE.frost });
     if (this.success) {
