@@ -9,13 +9,7 @@ import { drawPropImpl, drawProjectileImpl, PROP_KINDS as LEGACY_PROP_KINDS } fro
 import { drawWorldEnemy, drawFurniture, WORLD_ENEMY_KINDS, FURNITURE_KINDS } from './world/index.js';
 export { drawDenimShield, warmGround, groundKind };
 // Room interiors + furniture sizes come from art-world (src/art/world); re-exported here so everyone imports one module.
-export { drawRoom, FURNITURE_SIZE } from './world/index.js';
-import * as World from './world/index.js';
-// Namespace reads so names art-world hasn't shipped yet are simply undefined (feature-detect them).
-export const ROOM_KINDS = World.ROOM_KINDS;
-export const drawWater = World.drawWater;
-export const WALL_H = World.WALL_H;
-export const FURNITURE_ALIASES = World.FURNITURE_ALIASES;
+export { drawRoom, drawWater, ROOM_KINDS, FURNITURE_KINDS, FURNITURE_SIZE, FURNITURE_ALIASES, WALL_H, roomGeometry } from './world/index.js';
 
 /** Enemy type ids drawEnemy really draws (v2 roster from art-world + legacy). Anything else falls back. */
 export const ENEMY_KINDS = [...new Set([...(WORLD_ENEMY_KINDS ?? []), ...LEGACY_ENEMY_KINDS])];
