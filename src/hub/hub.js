@@ -369,7 +369,7 @@ export default class HubScene {
 
     // name label
     const lx = isPond ? c.x : b.x + b.w / 2;
-    const ly = isPond ? POND.cy - POND.ry - 10 : b.y + 14;
+    const ly = isPond ? POND.cy - POND.ry - 20 : b.y + 14;
     if (id === 'backyard') {
       chip(ctx, room.name, YARD.x + YARD.w / 2, YARD.y + 50, { align: 'center', fill: st === 'locked' ? '#4a4f60' : st === 'done' ? PALETTE.sun : room.accent, color: st === 'locked' ? '#b8bccb' : PALETTE.ink, font: BOLD(13) });
     } else {
