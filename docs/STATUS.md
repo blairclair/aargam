@@ -35,6 +35,12 @@ Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~
 - Dining minigame = Pour the Drinks (color-sort logic). Kitchen = Bread Bake (they make bread).
 - Round 1: loved colors + character movement; story/dialogue made no sense; too many skills up front.
 
+## Backlog for finished teams (supervisor or a follow-up agent)
+- Wire story's mid-minigame barks (`minigameCombo/Twist/Close`, `sabotage`) into guest/primary/pond (games-b), office/living (games-c), playroom/backyard (games-d).
+- Hub: use `HERO_BLURBS` from lines.js for select-screen role lines.
+- Minigames: optional switch to shared a/common.js helpers for visual consistency.
+- Human playtest timings: Bunny Roundup 80s, Bug Hunt ramp, Pipe flood ~66s, Final Patch 75s, Card Duel maybe too easy.
+
 ## Known issues / next for the supervisor
 - Integration playthrough of the full loop once art-world rooms + HUD v2 land.
 - Fallback rugs drawn as red dashed ellipses read as attack telegraphs (action fixing).
