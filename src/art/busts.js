@@ -332,8 +332,8 @@ export function headCanvas(game, hero, px) {
     }
     // outline
     const sil = makeCanvas(W, H), sg = sil.getContext('2d');
-    sg.drawImage(tmp, 0, 0); sg.globalCompositeOperation = 'source-in'; sg.fillStyle = 'rgba(40,28,24,0.75)'; sg.fillRect(0, 0, W, H);
-    const r = Math.max(0.8, px / 70);
+    sg.drawImage(tmp, 0, 0); sg.globalCompositeOperation = 'source-in'; sg.fillStyle = 'rgba(52,36,30,0.6)'; sg.fillRect(0, 0, W, H);
+    const r = Math.max(0.6, px / 110);
     for (let k = 0; k < 8; k++) { const a = k * TAU / 8; g.drawImage(sil, Math.cos(a) * r, Math.sin(a) * r); }
     g.drawImage(tmp, 0, 0);
     const meta = BUST_META[spec.key];
@@ -364,7 +364,7 @@ export function drawCutoutHead(ctx, game, hero, x, y, h, o = {}) {
   ctx.translate(x, y);
   if (o.rot) ctx.rotate(o.rot);
   ctx.scale(k, k);
-  if (o.grey) ctx.filter = 'saturate(0.35) brightness(0.8)';
+  if (o.grey) ctx.filter = 'saturate(0.55)';
   ctx.drawImage(c, -c.ax, -c.ay);
   ctx.filter = 'none';
   ctx.restore();
