@@ -33,18 +33,14 @@
     "docs/teams/action.md"
   ],
   "games-a": [
-    "src/minigames/office.js",
-    "src/minigames/kitchen.js",
     "src/minigames/dining.js",
-    "src/minigames/living.js",
-    "src/minigames/playroom.js",
+    "src/minigames/kitchen.js",
     "src/minigames/a/**",
     "docs/teams/games-a.md"
   ],
   "games-b": [
     "src/minigames/primary.js",
     "src/minigames/guest.js",
-    "src/minigames/backyard.js",
     "src/minigames/pond.js",
     "src/minigames/b/**",
     "docs/teams/games-b.md"
@@ -58,5 +54,17 @@
   "art-world": [
     "src/art/world/**",
     "docs/teams/art-world.md"
+  ],
+  "games-c": [
+    "src/minigames/office.js",
+    "src/minigames/living.js",
+    "src/minigames/c/**",
+    "docs/teams/games-c.md"
+  ],
+  "games-d": [
+    "src/minigames/playroom.js",
+    "src/minigames/backyard.js",
+    "src/minigames/d/**",
+    "docs/teams/games-d.md"
   ]
 }

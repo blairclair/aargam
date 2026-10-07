@@ -12,8 +12,10 @@ Round 1 lives on the `first-pass` branch / `v0.1-first-pass` tag — read it for
 | **story** | `src/story/**`, `src/audio/**`, `docs/STORY.md` | full script, cutscene player, title, party ending, all music + sfx |
 | **hub** | `src/hub/**` | house floor-plan hub, unlock UX, hero+loadout select, results, Party Touch shop |
 | **action** | `src/action/**` | room action stages: heroes, skills, enemies, 9 room arenas + objectives |
-| **games-a** | `src/minigames/{office,kitchen,dining,living,playroom}.js`, `src/minigames/a/**` | Bug Hunt, Bread Bake, Pour the Drinks, Bunny Roundup, Card Duel |
-| **games-b** | `src/minigames/{primary,guest,backyard,pond}.js`, `src/minigames/b/**` | Crochet Pattern, Pipe Fixer, Drumline, Final Patch |
+| **games-a** | `src/minigames/{dining,kitchen}.js`, `src/minigames/a/**` | Pour the Drinks, Bread Bake |
+| **games-b** | `src/minigames/{guest,primary,pond}.js`, `src/minigames/b/**` | Pipe Fixer, Crochet Pattern, Final Patch |
+| **games-c** | `src/minigames/{office,living}.js`, `src/minigames/c/**` | Bug Hunt, Bunny Roundup |
+| **games-d** | `src/minigames/{playroom,backyard}.js`, `src/minigames/d/**` | Card Duel, Drumline |
 | **art** | `src/art/**` (except `src/art/world/**`), `src/ui/**` | heroes, busts & portraits, skill icons, projectiles/zones, Fx, HUD, widgets, dialog; owns the `sprites.js` facade and wires in `art/world` |
 | **art-world** | `src/art/world/**` | room interiors (`drawRoom`), furniture props, all v2 enemies (incl. PartyPlanner koi) — exported from `src/art/world/index.js` |
 
