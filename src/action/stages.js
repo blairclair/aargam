@@ -93,11 +93,11 @@ function waveStage(o) {
 export const STAGES = {
   // 1 ── Office (tutorial): slow bugs, teaches movement + basic attack.
   office: waveStage({
-    w: 1000, h: 660, wallH: 130, floor: 'wood', start: { x: 500, y: 470 },
+    w: 1000, h: 610, wallH: 130, floor: 'wood', start: { x: 500, y: 440 },
     props: [
-      ['rug', 500, 520, { w: 320, d: 170 }],
+      ['rug', 500, 500, { w: 320, d: 170 }],
       ['bookshelf', 170, 168], ['desk', 500, 215, { laptop: true }], ['office_chair', 500, 250],
-      ['server_rack', 840, 172], ['plant', 60, 175], ['plant', 945, 610],
+      ['server_rack', 840, 172], ['plant', 60, 175], ['plant', 945, 570],
       ['bookshelf', 330, 168, { w: 90 }],
     ],
     gate: (L) => L.tut.moved,
