@@ -413,6 +413,7 @@ export default class CutsceneScene {
   }
 
   advanceHint(ctx, x, y, col) {
+    if (this.i === this.data.shots.length - 1) return; // the "Next: ..." chip replaces the arrow
     const b = Math.sin(this.t * 6) * 3;
     ctx.save(); ctx.fillStyle = col;
     ctx.beginPath(); ctx.moveTo(x - 8, y - 5 + b); ctx.lineTo(x + 8, y - 5 + b); ctx.lineTo(x, y + 4 + b); ctx.closePath(); ctx.fill();

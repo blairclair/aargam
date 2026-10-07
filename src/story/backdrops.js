@@ -293,12 +293,12 @@ function pond(ctx, W, H, t) {
   ctx.fillStyle = '#24402e'; ctx.fillRect(0, gy, W, H - gy);
   partyLights(ctx, 60, 60, 900, 60, t, 18);
   // pond
-  ctx.fillStyle = '#1b3a4f'; ctx.beginPath(); ctx.ellipse(W / 2, gy + 110, 330, 90, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#1b3a4f'; ctx.beginPath(); ctx.ellipse(W / 2, gy + 50, 330, 80, 0, 0, TAU); ctx.fill();
   ctx.strokeStyle = 'rgba(111,183,232,0.5)'; ctx.lineWidth = 2;
-  for (let i = 0; i < 3; i++) { const r = ((t * 30 + i * 40) % 120); ctx.globalAlpha = 1 - r / 120; ctx.beginPath(); ctx.ellipse(W / 2, gy + 110, r * 2.4, r * 0.6, 0, 0, TAU); ctx.stroke(); }
+  for (let i = 0; i < 3; i++) { const r = ((t * 30 + i * 40) % 120); ctx.globalAlpha = 1 - r / 120; ctx.beginPath(); ctx.ellipse(W / 2, gy + 50, r * 2.4, r * 0.6, 0, 0, TAU); ctx.stroke(); }
   ctx.globalAlpha = 1;
   // the code koi (made of glowing glyphs)
-  const kx = W / 2 + Math.sin(t * 0.7) * 80, ky = gy + 100 + Math.sin(t * 1.3) * 8;
+  const kx = W / 2 + Math.sin(t * 0.7) * 80, ky = gy + 45 + Math.sin(t * 1.3) * 8;
   glow(ctx, kx, ky, 140, '#7fd8a6', 0.35);
   ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
   const glyphs = '{}();=><01fn';
