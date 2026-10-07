@@ -130,7 +130,7 @@ function floorCarpet(g, id, S, r, aw, ah) {
   g.fillStyle = cA; g.fillRect(r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0);
   // soft plush: low-freq blotches + fine speckle
   for (let x = Math.floor(r.x0 / 40) * 40; x < r.x1; x += 40) for (let y = Math.floor(r.y0 / 40) * 40; y < r.y1; y += 40) {
-    g.fillStyle = rgba(cB, 0.25 + H(x, y, 2) * 0.35); g.beginPath(); g.arc(x + H(x, y, 3) * 40, y + H(x, y, 4) * 40, 18 + H(x, y, 5) * 16, 0, TAU); g.fill();
+    g.fillStyle = rgba(cB, 0.08 + H(x, y, 2) * 0.14); g.beginPath(); g.ellipse(x + H(x, y, 3) * 40, y + H(x, y, 4) * 40, 30 + H(x, y, 5) * 20, 18 + H(x, y, 6) * 10, 0, 0, TAU); g.fill();
   }
   for (let x = Math.floor(r.x0 / 6) * 6; x < r.x1; x += 6) for (let y = Math.floor(r.y0 / 6) * 6; y < r.y1; y += 6) {
     const h = H(x, y, 7); if (h < 0.5) continue;
@@ -428,7 +428,7 @@ function walls(g, id, S, aw, ah, wh, r) {
 function weirdDecals(g, id, S, aw, ah, wh, r) {
   const R = rng(9000 + id.length * 31 + aw * 7 + ah);
   const pts = (n) => Array.from({ length: n }, () => ({ x: SIDE + 20 + R() * (aw - SIDE * 2 - 40), y: 20 + R() * (ah - 60), a: R() * TAU, s: 0.7 + R() * 0.6, k: R() }));
-  const area = (aw * ah) / 100000;
+  const area = (aw * ah) / 100000 * 0.2;
   const vis = (p, pad = 60) => p.x > r.x0 - pad && p.x < r.x1 + pad && p.y > r.y0 - pad && p.y < r.y1 + pad;
   const a = acc(id);
   switch (S.weird) {
@@ -444,7 +444,7 @@ function weirdDecals(g, id, S, aw, ah, wh, r) {
     }
     case 'dough': {
       for (const p of pts(Math.round(18 * area))) { if (!vis(p)) continue; splat(g, p.x, p.y, 14 * p.s, '#f3e3c3', p.k); }
-      for (const p of pts(Math.round(14 * area))) { if (!vis(p)) continue; g.fillStyle = rgba('#ffffff', 0.35); g.beginPath(); g.ellipse(p.x, p.y, 30 * p.s, 16 * p.s, p.a, 0, TAU); g.fill(); g.fillStyle = rgba('#ffffff', 0.5); for (let i = 0; i < 8; i++) { g.beginPath(); g.arc(p.x + (R() - 0.5) * 50, p.y + (R() - 0.5) * 24, 1 + R() * 1.5, 0, TAU); g.fill(); } }
+      for (const p of pts(Math.round(6 * area))) { if (!vis(p)) continue; g.fillStyle = rgba('#ffffff', 0.3); g.beginPath(); g.ellipse(p.x, p.y, 30 * p.s, 16 * p.s, p.a, 0, TAU); g.fill(); g.fillStyle = rgba('#ffffff', 0.5); for (let i = 0; i < 8; i++) { g.beginPath(); g.arc(p.x + (R() - 0.5) * 50, p.y + (R() - 0.5) * 24, 1 + R() * 1.5, 0, TAU); g.fill(); } }
       for (let i = 0; i < Math.round(aw / 140); i++) { const x = R() * aw, y = -wh + 30 + R() * 60; splat(g, x, y, 9, '#f3e3c3', R()); g.fillStyle = '#f3e3c3'; g.fillRect(x - 2, y, 4, 12 + R() * 16); }
       break;
     }
@@ -496,17 +496,19 @@ function weirdDecals(g, id, S, aw, ah, wh, r) {
     case 'code': {
       g.font = '11px monospace'; g.textAlign = 'center';
       const glyphs = ['main()', '{', '}', '0', '1', ';', '>>', 'fn', 'koi', '//', '=>'];
-      for (const p of pts(Math.round(46 * area))) { if (!vis(p)) continue; g.fillStyle = rgba(PALETTE.mint, 0.3 + p.k * 0.35); g.fillText(glyphs[Math.floor(p.k * glyphs.length)], p.x, p.y); }
+      for (const p of pts(Math.round(110 * area))) { if (!vis(p)) continue; g.fillStyle = rgba(PALETTE.mint, 0.5 + p.k * 0.4); g.fillText(glyphs[Math.floor(p.k * glyphs.length)], p.x, p.y); }
       for (const p of pts(Math.round(10 * area))) { if (!vis(p, 100)) continue; g.strokeStyle = rgba(PALETTE.mint, 0.25); g.lineWidth = 2; g.beginPath(); g.ellipse(p.x, p.y, 40 * p.s, 16 * p.s, 0, 0, TAU); g.stroke(); }
       break;
     }
   }
 }
 function splat(g, x, y, r, c, k) {
+  g.save(); g.translate(x, y); g.scale(1, 0.6); x = 0; y = 0;
+  g.fillStyle = rgba('#a8875a', 0.45); g.beginPath(); g.arc(x + 1.5, y + 2, r + 1.5, 0, TAU); g.fill();
   g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
   for (let i = 0; i < 7; i++) { const a = i * 0.9 + k * 6, d = r * (1 + ((i * 37 + k * 100) % 10) / 10); g.beginPath(); g.arc(x + Math.cos(a) * d, y + Math.sin(a) * d * 0.7, r * 0.3, 0, TAU); g.fill(); }
-  g.fillStyle = rgba('#ffffff', 0.6); g.beginPath(); g.arc(x - r * 0.3, y - r * 0.3, r * 0.25, 0, TAU); g.fill();
-  g.fillStyle = rgba('#c9a676', 0.6); for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(x + (i - 1) * r * 0.4, y + r * 0.2, r * 0.12, 0, TAU); g.fill(); }
+  g.fillStyle = rgba('#ffffff', 0.6); g.beginPath(); g.ellipse(x - r * 0.3, y - r * 0.3, r * 0.4, r * 0.2, -0.4, 0, TAU); g.fill();
+  g.restore();
 }
 function fluff(g, x, y, r, R) {
   g.fillStyle = rgba('#9a948a', 0.7); for (let i = 0; i < 6; i++) { g.beginPath(); g.arc(x + (R() - 0.5) * r * 2, y + (R() - 0.5) * r, r * (0.5 + R() * 0.5), 0, TAU); g.fill(); }

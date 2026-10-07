@@ -703,6 +703,7 @@ F.light_post.anim = (ctx, o, t) => {
 };
 
 export const FURNITURE_KINDS = Object.keys(FURNITURE_SIZE);
+const TILED = new Set(['counter', 'hedge', 'fence', 'garden_bed']);
 
 /**
  * Draw a furniture piece. (x, y) = base point. o: { t?, weird? 0..1, seed? 0..1 (variant), room? (tints fabrics
@@ -725,7 +726,13 @@ export function drawFurniture(ctx, game, kind, x, y, o = {}) {
   const s = o.scale ?? 1; if (s !== 1) ctx.scale(s, s);
   if (o.flip) ctx.scale(-1, 1);
   if (o.alpha != null) ctx.globalAlpha *= o.alpha;
-  ctx.drawImage(canvas, -cw / 2, -chH);
+  const fs = FURNITURE_SIZE[kind];
+  if (kind === 'rug' && (o.w || o.d)) { // stretch the flat rug to any footprint
+    ctx.scale((o.w ?? fs.w) / fs.w, (o.d ?? fs.h) / fs.h); ctx.drawImage(canvas, -cw / 2, -chH);
+  } else if (TILED.has(kind) && o.w && Math.abs(o.w - fs.w) > 4) { // repeat sections across a custom width
+    const n = Math.max(1, Math.round(o.w / fs.w)), sw = o.w / n;
+    for (let i = 0; i < n; i++) { ctx.save(); ctx.translate(-o.w / 2 + sw * (i + 0.5), 0); ctx.scale(sw / fs.w, 1); ctx.drawImage(canvas, -cw / 2, -chH); ctx.restore(); }
+  } else ctx.drawImage(canvas, -cw / 2, -chH);
   if (def.anim) def.anim(ctx, o, o.t ?? game?.time ?? 0);
   ctx.restore();
   return true;
