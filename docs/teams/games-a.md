@@ -17,6 +17,8 @@ seconds with an animated hand or arrow, a highlighted target and one short promp
 | Room | Game | Notes |
 |---|---|---|
 | dining | Pour the Drinks | 3 levels (fewest pours 5 / 8 / 15, BFS-verified in `a/pour-logic.js`). Wobble and fizz, a flow streak for quick pours, PartyPlanner swaps two top layers once in rounds 2 and 3 (BFS-checked to stay solvable, +0..3 to the fewest-pours count), and a clinking "Cheers!" finale. Score = 0.85·min(1, 1.15·fewest/used) + 0.15·speed. Never fails. Keys: 1–7 pick a glass, U/Z undo, R restart. |
-| kitchen | Bread Bake | Knead (rhythm, 2 demo beats + 10 scored), shape (trace an ellipse; coverage + accuracy), proof (stop the gauge in the gold zone, after a ghost demo run), bake (pull at golden on a color strip). Score = mean of the four steps. Attempt 2+ widens windows; 'playlist' slows proof and bake and lengthens shape. Never fails. |
+| kitchen | Bread Bake | Knead (rhythm, 2 demo beats + 10 scored), shape (trace an ellipse; coverage + accuracy), proof (stop the gauge in the gold zone, after a ghost demo run), bake (pull at golden on a color strip). Twist: PartyPlanner turns the oven up a few seconds into the bake (story 'sabotage' line; baking pauses while it types, then runs 1.6x). Score = mean of the four steps. Attempt 2+ widens windows; 'playlist' slows proof and bake and lengthens shape. Never fails. |
 
 Office, Living and Playroom moved to games-c and games-d.
+
+Story events used: minigame/minigameWin (start and end bubbles), minigameCombo (streaks), minigameTwist (the swap and the oven), minigameClose (shape timer, bake past golden), hit (8-beat knead combo), sabotage (PartyPlanner terminal line).
