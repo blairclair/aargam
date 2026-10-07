@@ -143,4 +143,67 @@ export function drawCheck(ctx, x, y, r) {
   ctx.restore();
 }
 
-export const fmtTime = (s) => { s = Math.max(0, Math.ceil(s)); return `${(s / 60) | 0}:${String(s % 60).padStart(2, '0')}`; };
+/** Speech bubble for story barks ({who, text} from story/lines.js bark()). PartyPlanner lines render as a terminal. */
+export class Speech {
+  constructor() { this.line = null; this.life = 0; this.max = 1; }
+  say(line, dur = 2.8) { if (!line?.text) return; this.line = line; this.life = this.max = dur; }
+  update(dt) { this.life = Math.max(0, this.life - dt); }
+  /** (x, y) = bubble tail tip. */
+  render(ctx, x, y, maxW = 220) {
+    if (!this.line || this.life <= 0) return;
+    const age = this.max - this.life;
+    const a = Math.min(1, this.life * 3, age * 6);
+    const pop = age < 0.15 ? 0.7 + (age / 0.15) * 0.3 : 1;
+    const term = this.line.who === 'partyplanner';
+    ctx.save();
+    ctx.globalAlpha *= a;
+    ctx.font = term ? 'bold 13px Menlo, Consolas, monospace' : 'bold 15px "Trebuchet MS", sans-serif';
+    const lines = wrapLines(ctx, this.line.text, maxW - 24);
+    const w = Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 24), h = lines.length * 19 + 16;
+    ctx.translate(x, y); ctx.scale(pop, pop);
+    const bx = -24, by = -h - 12;
+    ctx.fillStyle = term ? '#12161f' : PALETTE.paper;
+    ctx.strokeStyle = term ? PALETTE.mint : PALETTE.sunDeep; ctx.lineWidth = 2.5;
+    rr(ctx, bx, by, w, h, 12); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-6, by + h - 1); ctx.lineTo(0, 0); ctx.lineTo(10, by + h - 1); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-6, by + h); ctx.lineTo(0, 0); ctx.lineTo(10, by + h); ctx.stroke();
+    ctx.fillStyle = term ? PALETTE.mint : PALETTE.ink; ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    lines.forEach((l, i) => ctx.fillText(l, bx + 12, by + 9 + i * 19));
+    ctx.restore();
+  }
+}
+function wrapLines(ctx, str, maxW) {
+  const out = []; let line = '';
+  for (const word of String(str).split(/\s+/)) {
+    const t = line ? line + ' ' + word : word;
+    if (ctx.measureText(t).width > maxW && line) { out.push(line); line = word; } else line = t;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
+/** Combo tracker: hits within `window` seconds chain. */
+export class Combo {
+  constructor(window = 1.5) { this.window = window; this.n = 0; this.t = 0; this.best = 0; this.pop = 0; }
+  hit() { this.n = this.t > 0 ? this.n + 1 : 1; this.t = this.window; this.best = Math.max(this.best, this.n); this.pop = 1; return this.n; }
+  break() { const had = this.n; this.n = 0; this.t = 0; return had; }
+  update(dt) { this.pop = Math.max(0, this.pop - dt * 4); if (this.t > 0) { this.t -= dt; if (this.t <= 0) this.n = 0; } }
+  /** Draw "xN COMBO" centered at (x, y) when n >= 2. */
+  render(ctx, x, y) {
+    if (this.n < 2) return;
+    const s = 1 + this.pop * 0.4;
+    const hot = this.n >= 8 ? PALETTE.danger : this.n >= 5 ? PALETTE.sunDeep : PALETTE.sun;
+    ctx.save();
+    ctx.translate(x, y); ctx.scale(s, s); ctx.rotate(-0.06);
+    ctx.font = 'bold 28px "Trebuchet MS", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round'; ctx.strokeStyle = PALETTE.ink; ctx.lineWidth = 6;
+    const str = `x${this.n} COMBO!`;
+    ctx.strokeText(str, 0, 0); ctx.fillStyle = hot; ctx.fillText(str, 0, 0);
+    // window timer underline
+    ctx.fillStyle = 'rgba(16,19,31,0.7)'; ctx.fillRect(-60, 18, 120, 5);
+    ctx.fillStyle = hot; ctx.fillRect(-60, 18, 120 * clamp(this.t / this.window, 0, 1), 5);
+    ctx.restore();
+  }
+}
+
+export const fmtTime =(s) => { s = Math.max(0, Math.ceil(s)); return `${(s / 60) | 0}:${String(s % 60).padStart(2, '0')}`; };

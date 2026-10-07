@@ -7,7 +7,8 @@ import { finishMinigame } from '../core/flow.js';
 import { text, panel } from '../ui/widgets.js';
 import { Fx } from '../art/fx.js';
 import { playSfx, playMusic } from '../audio/sfx.js';
-import { Bust, clamp, lerp, rand, pick, rr, timeMul, drawHand, drawPulseRing, drawArrowDown, drawCheck, fmtTime } from './c/common.js';
+import { bark } from '../story/lines.js';
+import { Bust, Speech, Combo, star, clamp, lerp, rand, pick, rr, timeMul, drawHand, drawPulseRing, drawArrowDown, drawCheck, fmtTime } from './c/common.js';
 
 const TAU = Math.PI * 2;
 const MONO = '15px Menlo, Consolas, "Courier New", monospace';
@@ -46,8 +47,8 @@ def set_table():
     chairs.charge = False  # they are chairs
 
 def fix_everything():
-    assert aaron.glasses is not None
-    victoria.patience -= 0  # unlimited
+    assert house.wifi.works()  # it never works
+    victoria.fixes_everything = True  # always has
     return "fixed (probably)"
 
 def decorate():
@@ -86,6 +87,8 @@ const BUG_KINDS = {
   beetle: { r: 16, hp: 1, speed: 30, color: '#e0564a', spot: '#3a1d1d' },
   fly: { r: 14, hp: 1, speed: 48, color: '#9b7fd6', spot: '#2c2140' },
   tank: { r: 20, hp: 2, speed: 22, color: '#5fae6e', spot: '#1f4a2a' },
+  gold: { r: 15, hp: 1, speed: 0, color: '#ffd34a', spot: '#a87a10' },
+  boss: { r: 42, hp: 9, speed: 12, color: '#b33a4a', spot: '#2a0f14' },
 };
 
 export default class Minigame {
@@ -104,8 +107,13 @@ export default class Minigame {
     this.bugs = []; this.spawnT = 1.2;
     this.fx = new Fx();
     this.bust = new Bust(p.hero);
+    this.speech = new Speech();
+    this.combo = new Combo(1.6);
+    this.bossSpawned = false; this.bossBanner = 0; this.alarm = 0;
+    this.goldT = rand(13, 17);
     this.buildFlash = 0; this.missFlash = 0;
     this.done = false;
+    this._boomed = false;
     this.endLines = [];
     // code rows flowing down the screen
     this.rows = [];
@@ -119,17 +127,20 @@ export default class Minigame {
 
   exit() {}
 
+  _say(event) { this.speech.say(bark('office', event, { hero: this.p.hero })); }
+
   _takeLine() { const i = this.nextLine; this.nextLine = (this.nextLine - 1 + SOURCE.length) % SOURCE.length; return i; }
 
   _makeBug(kind, x, y, o = {}) {
     const k = BUG_KINDS[kind];
-    return { kind, x, y, r: k.r, hp: k.hp, maxHp: k.hp, vy: k.speed, t: rand(0, 10), wob: rand(0.8, 1.6), dir: Math.random() < 0.5 ? -1 : 1, hit: 0, ...o };
+    return { kind, x, y, r: k.r, hp: k.hp, maxHp: k.hp, vy: k.speed, vx: 0, t: rand(0, 10), wob: rand(0.8, 1.6), dir: Math.random() < 0.5 ? -1 : 1, hit: 0, kb: 0, hatch: 2.4, ...o };
   }
 
   _difficulty() {
     const e = this.playT;
+    const boss = this.bugs.some((b) => b.kind === 'boss');
     return {
-      interval: lerp(2.3, 0.75, clamp(e / 45, 0, 1)) / this.speedMul,
+      interval: lerp(2.3, 0.75, clamp(e / 45, 0, 1)) / this.speedMul * (boss ? 1.7 : 1),
       speed: lerp(1, 2.1, clamp(e / 55, 0, 1)) * this.speedMul,
       maxBugs: Math.round(lerp(3, 8, clamp(e / 40, 0, 1))),
     };
@@ -145,11 +156,29 @@ export default class Minigame {
     this.bugs.push(this._makeBug(kind, x, CODE_TOP - 10));
   }
 
+  _spawnBoss() {
+    this.bossSpawned = true;
+    this.bossBanner = 2.8; this.alarm = 1;
+    this.bugs.push(this._makeBug('boss', SCREEN.x + SCREEN.w / 2 + 20, CODE_TOP - 30, { hatch: 2.6 }));
+    playSfx('shout'); playSfx('error');
+    this.fx.addShake(10);
+    this.bust.react('bad');
+  }
+
+  _spawnGold() {
+    const fromLeft = Math.random() < 0.5;
+    const x = fromLeft ? SCREEN.x + GUTTER - 10 : SCREEN.x + SCREEN.w + 10;
+    this.bugs.push(this._makeBug('gold', x, rand(CODE_TOP + 40, BUILD_Y - 120), { vx: (fromLeft ? 1 : -1) * 190 }));
+    playSfx('blip');
+  }
+
   update(dt) {
     this.t += dt; this.phaseT += dt;
-    this.fx.update(dt); this.bust.update(dt);
+    this.fx.update(dt); this.bust.update(dt); this.speech.update(dt); this.combo.update(dt);
     this.buildFlash = Math.max(0, this.buildFlash - dt * 2);
     this.missFlash = Math.max(0, this.missFlash - dt * 3);
+    this.bossBanner = Math.max(0, this.bossBanner - dt);
+    this.alarm = Math.max(0, this.alarm - dt * 0.4);
     const m = this.game.input.mouse;
 
     if (this.phase === 'win' || this.phase === 'fail') { this._updateEnd(dt, m); return; }
@@ -163,6 +192,7 @@ export default class Minigame {
     while (this.rows[0].y > CODE_TOP - LH + 2) this.rows.unshift({ y: this.rows[0].y - LH, i: this._takeLine(), born: this.t });
 
     // bugs crawl
+    const born = [];
     for (const b of this.bugs) {
       b.t += dt; b.hit = Math.max(0, b.hit - dt * 4);
       if (b.tutorial) {
@@ -171,18 +201,36 @@ export default class Minigame {
         b.x += Math.sin(b.t * 2) * 10 * dt;
         continue;
       }
-      const zig = b.kind === 'fly' ? 70 : 22;
-      b.y += b.vy * diff.speed * dt;
-      b.x += Math.sin(b.t * 2.4 * b.wob) * zig * dt * b.dir * 1.6;
+      if (b.kind === 'gold') {
+        b.x += b.vx * dt; b.y += Math.sin(b.t * 5) * 40 * dt;
+        if (b.x < SCREEN.x - 30 || b.x > SCREEN.x + SCREEN.w + 30) b.dead = true; // got away, no penalty
+        continue;
+      }
+      if (b.kind === 'boss') {
+        b.kb = Math.max(0, b.kb - dt * 5);
+        b.y += (b.vy * Math.min(diff.speed, 1.5) - b.kb * 90) * dt;
+        b.y = Math.max(CODE_TOP - 30, b.y);
+        b.x = SCREEN.x + SCREEN.w / 2 + 20 + Math.sin(b.t * 0.9) * 150;
+        b.hatch -= dt;
+        if (b.hatch <= 0 && b.y > CODE_TOP + 10) { b.hatch = 2.6; born.push(this._makeBug(Math.random() < 0.5 ? 'beetle' : 'fly', b.x + rand(-20, 20), b.y + 30)); this.fx.burst(b.x, b.y + 30, BUG_KINDS.boss.color, 6, 60); }
+      } else {
+        const zig = b.kind === 'fly' ? 70 : 22;
+        b.y += b.vy * diff.speed * dt;
+        b.x += Math.sin(b.t * 2.4 * b.wob) * zig * dt * b.dir * 1.6;
+      }
       b.x = clamp(b.x, SCREEN.x + GUTTER + 14, SCREEN.x + SCREEN.w - 14);
       if (b.y >= BUILD_Y) { b.dead = true; this._escaped(b); }
     }
+    this.bugs.push(...born);
 
     if (playing) {
       this.playT += dt;
       this.timeLeft -= dt;
       this.spawnT -= dt;
       if (this.spawnT <= 0 && this.bugs.length < diff.maxBugs) { this._spawn(); this.spawnT = diff.interval * rand(0.75, 1.25); }
+      if (!this.bossSpawned && this.squashed >= Math.floor(this.quota * 0.45)) this._spawnBoss();
+      if (this.playT > 10) { this.goldT -= dt; if (this.goldT <= 0) { this._spawnGold(); this.goldT = rand(11, 16); } }
+      if (this.phaseT > 2.2 && !this._saidStart) { this._saidStart = true; this._say('minigame'); }
       if (this.timeLeft <= 0) { this.timeLeft = 0; this._end(false); }
     }
 
@@ -194,52 +242,96 @@ export default class Minigame {
     if (x < SCREEN.x || x > SCREEN.x + SCREEN.w || y < SCREEN.y || y > SCREEN.y + SCREEN.h) return;
     let best = null, bd = Infinity;
     for (const b of this.bugs) {
-      const d = Math.hypot(b.x - x, b.y - y);
-      if (d < b.r + 14 && d < bd) { best = b; bd = d; }
+      const d = Math.hypot(b.x - x, b.y - y) - b.r;
+      if (d < 14 && d < bd) { best = b; bd = d; }
     }
-    if (best) { this._hitBug(best); return; }
+    if (best) { this._hitBug(best, x, y); return; }
     if (this.phase !== 'play') { this.fx.floatText(x, y - 10, 'try the bug!', PALETTE.sun); return; }
     // clicked clean code
     this.misses++;
     this.timeLeft = Math.max(0, this.timeLeft - 1);
     this.missFlash = 1;
+    this._breakCombo(x, y + 30);
     playSfx('error');
     this.fx.floatText(x, y - 8, '-1s', PALETTE.danger, { size: 18 });
     this.fx.floatText(x, y + 14, pick(['that was fine code!', 'SyntaxError', 'not a bug']), '#ffb3b3', { size: 12 });
     this.fx.addShake(2);
   }
 
-  _hitBug(b) {
+  _breakCombo(x, y) {
+    if (this.combo.break() >= 3) this.fx.floatText(x, y, 'combo lost', '#ffb3b3', { size: 13 });
+  }
+
+  _bonus(sec, x, y, label) {
+    this.timeLeft = Math.min(this.timeTotal, this.timeLeft + sec);
+    this.fx.floatText(x, y, `${label} +${sec}s`, PALETTE.sun, { size: 18 });
+  }
+
+  _hitBug(b, cx, cy) {
     b.hp--; b.hit = 1;
+    if (!b.tutorial) {
+      const n = this.combo.hit();
+      if (n % 5 === 0) { this._bonus(2, SCREEN.x + SCREEN.w - 90, SCREEN.y + 84, `x${n} combo`); playSfx('star'); }
+    }
+    if (b.kind === 'boss' && b.hp > 0) {
+      b.kb = 1;
+      playSfx('hit');
+      this.fx.burst(cx, cy, PALETTE.sun, 8, 140);
+      this.fx.floatText(cx, cy - 20, pick(['bonk!', 'thwack!', 'patch!', 'refactor!']), PALETTE.paper);
+      this.fx.addShake(3);
+      return;
+    }
     if (b.hp > 0) { playSfx('boing'); this.fx.burst(b.x, b.y, BUG_KINDS[b.kind].color, 6, 80); this.fx.floatText(b.x, b.y - 18, 'crack!', PALETTE.paper); return; }
     b.dead = true;
-    this.squashed++;
     playSfx('squish');
     this.fx.splat(b.x, b.y, PALETTE.mint, 8);
     this.fx.burst(b.x, b.y, BUG_KINDS[b.kind].color, 10, 140);
-    this.fx.floatText(b.x, b.y - 20, pick(SQUASH_WORDS), PALETTE.mint);
     this.fx.addShake(2);
     this.bust.react('good');
     if (b.tutorial) {
-      this.squashed = 0; // the demo bug is a freebie
       this.phase = 'play'; this.phaseT = 0;
       this.fx.floatText(b.x, b.y - 44, 'You got it!', PALETTE.sun, { big: true });
       this.fx.sparkle(b.x, b.y, PALETTE.sun, 12, 26);
       playSfx('star');
       return;
     }
+    if (b.kind === 'boss') {
+      this.squashed += 3;
+      this.alarm = 0; this.bossBanner = 0;
+      this.fx.thaw(b.x, b.y, 70);
+      this.fx.confetti(b.x, b.y, 30);
+      this.fx.floatText(b.x, b.y - 50, 'SEGFAULT FIXED!', PALETTE.sun, { big: true });
+      this._bonus(5, b.x, b.y - 20, 'boss');
+      this.fx.addShake(9);
+      this.bust.react('cheer');
+      playSfx('star'); playSfx('victory');
+      this._say('hit');
+    } else if (b.kind === 'gold') {
+      this.squashed += 2;
+      this.fx.sparkle(b.x, b.y, PALETTE.sun, 16, 30);
+      this._bonus(3, b.x, b.y - 22, 'golden bug!');
+      playSfx('star');
+      this.bust.react('cheer');
+    } else {
+      this.squashed++;
+      this.fx.floatText(b.x, b.y - 20, pick(SQUASH_WORDS), PALETTE.mint);
+    }
     if (this.squashed >= this.quota) this._end(true);
   }
 
   _escaped(b) {
-    this.escaped++;
-    this.timeLeft = Math.max(0, this.timeLeft - 4);
+    const boss = b.kind === 'boss';
+    const cost = boss ? 10 : 4;
+    this.escaped += boss ? 3 : 1;
+    this.timeLeft = Math.max(0, this.timeLeft - cost);
     this.buildFlash = 1;
+    this._breakCombo(b.x, BUILD_Y - 44);
     playSfx('error');
-    this.fx.burst(b.x, BUILD_Y, PALETTE.danger, 12, 120);
-    this.fx.floatText(b.x, BUILD_Y - 22, 'bug compiled! -4s', PALETTE.danger, { size: 16 });
-    this.fx.addShake(6);
+    this.fx.burst(b.x, BUILD_Y, PALETTE.danger, boss ? 30 : 12, 120);
+    this.fx.floatText(b.x, BUILD_Y - 22, `${boss ? 'SEGFAULT compiled!' : 'bug compiled!'} -${cost}s`, PALETTE.danger, { size: 16 });
+    this.fx.addShake(boss ? 12 : 6);
     this.bust.react('bad');
+    if (boss) this.alarm = 0;
   }
 
   _end(win) {
@@ -251,14 +343,17 @@ export default class Minigame {
       const timeFrac = clamp(this.timeLeft / (this.timeTotal * 0.5), 0, 1);
       const clean = 1 - clamp(this.escaped / 6, 0, 1);
       const acc = this.squashed / (this.squashed + this.misses);
-      this.score = clamp(0.4 * timeFrac + 0.35 * clean + 0.25 * acc, 0.1, 1);
-      this.endLines = ['$ python party_planner.py --build', `  ${this.squashed} bugs fixed. ${this.escaped} snuck in.`, '  1 warning: party may be too fun'];
+      const combo = clamp(this.combo.best / 8, 0, 1);
+      this.score = clamp(0.35 * timeFrac + 0.3 * clean + 0.2 * acc + 0.15 * combo, 0.1, 1);
+      this._say('minigameWin');
+      this.endLines = ['$ python party_planner.py --build', `  ${Math.min(this.squashed, this.quota)} bugs fixed. ${this.escaped} snuck in. best combo x${this.combo.best}`, '  1 warning: party may be too fun'];
       playSfx('victory');
       this.bust.react('cheer');
     } else {
       this.score = 0;
-      this.endLines = ['$ python party_planner.py --build', `  Error: ${this.quota - this.squashed} bugs still loose`, '  Retrying build...'];
+      this.endLines = ['$ python party_planner.py --build', `  Error: ${Math.max(0, this.quota - this.squashed)} bugs still loose`, '  Retrying build...'];
       playSfx('defeat');
+      this._say('minigameFail');
       this.bust.react('bad');
     }
   }
@@ -296,7 +391,16 @@ export default class Minigame {
     this._drawSticky(ctx);
     this._drawOverlay(ctx);
     this.fx.render(ctx);
+    if (this.phase === 'play') this.combo.render(ctx, SCREEN.x + SCREEN.w - 90, SCREEN.y + 52);
+    this.speech.render(ctx, 120, 196, 250);
     ctx.restore();
+    // boss alarm: pulsing red vignette
+    if (this.alarm > 0) {
+      const a = this.alarm * (0.5 + 0.5 * Math.sin(this.t * 10));
+      const v = ctx.createRadialGradient(480, 270, 200, 480, 270, 560);
+      v.addColorStop(0, 'rgba(255,60,60,0)'); v.addColorStop(1, `rgba(255,60,60,${0.45 * a})`);
+      ctx.fillStyle = v; ctx.fillRect(0, 0, g.width, g.height);
+    }
   }
 
   _drawRoom(ctx) {
@@ -402,12 +506,14 @@ export default class Minigame {
   _drawBug(ctx, b) {
     const k = BUG_KINDS[b.kind];
     const r = b.r * (1 + b.hit * 0.25);
-    const ang = Math.atan2(1, Math.cos(b.t * 2.4 * b.wob) * 0.6 * b.dir) - Math.PI / 2;
+    const ang = b.kind === 'gold' ? (b.vx > 0 ? -Math.PI / 2 : Math.PI / 2)
+      : b.kind === 'boss' ? Math.sin(b.t * 0.9) * 0.25
+      : Math.atan2(1, Math.cos(b.t * 2.4 * b.wob) * 0.6 * b.dir) - Math.PI / 2;
     ctx.save();
     ctx.translate(b.x, b.y);
     // warm halo so bugs pop off the busy code
     const halo = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 2.4);
-    halo.addColorStop(0, 'rgba(255,201,74,0.38)'); halo.addColorStop(1, 'rgba(255,201,74,0)');
+    halo.addColorStop(0, b.kind === 'boss' ? 'rgba(255,93,93,0.45)' : b.kind === 'gold' ? 'rgba(255,230,120,0.8)' : 'rgba(255,201,74,0.38)'); halo.addColorStop(1, 'rgba(255,201,74,0)');
     ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, TAU); ctx.fill();
     // soft shadow
     ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(2, 4, r, r * 0.8, 0, 0, TAU); ctx.fill();
@@ -441,6 +547,12 @@ export default class Minigame {
     for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * r * 0.2, r * 1.05, r * 0.16, 0, TAU); ctx.fill(); }
     ctx.fillStyle = '#000';
     for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * r * 0.2, r * 1.1, r * 0.08, 0, TAU); ctx.fill(); }
+    if (b.kind === 'boss') {
+      // angry brows (it's a very rude bug)
+      ctx.strokeStyle = '#ffd0d0'; ctx.lineWidth = 3;
+      for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * r * 0.08, r * 0.92); ctx.lineTo(s * r * 0.36, r * 0.82); ctx.stroke(); }
+    }
+    if (b.kind === 'gold') { ctx.fillStyle = '#fff'; star(ctx, -r * 0.3, -r * 0.3, 3 + Math.sin(b.t * 9) * 1.5); }
     // antennae
     ctx.strokeStyle = '#1a1420'; ctx.lineWidth = 1.5;
     for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * r * 0.15, r * 1.3); ctx.quadraticCurveTo(s * r * 0.5, r * 1.8, s * r * 0.7, r * 1.7 + Math.sin(b.t * 6) * 2); ctx.stroke(); }
@@ -490,6 +602,22 @@ export default class Minigame {
 
   _drawOverlay(ctx) {
     const S = SCREEN;
+    const boss = this.bugs.find((q) => q.kind === 'boss');
+    if (boss && this.phase === 'play') {
+      const w = 110, x = boss.x - w / 2, y = Math.max(boss.y - boss.r - 26, CODE_TOP + 16);
+      ctx.fillStyle = 'rgba(16,19,31,0.85)'; rr(ctx, x - 2, y - 2, w + 4, 12, 6); ctx.fill();
+      ctx.fillStyle = PALETTE.danger; rr(ctx, x, y, w * boss.hp / boss.maxHp, 8, 4); ctx.fill();
+      text(ctx, 'SEGFAULT', boss.x, y - 6, { align: 'center', font: 'bold 12px Menlo, Consolas, monospace', color: '#ffd0d0', outline: PALETTE.ink, outlineWidth: 3 });
+    }
+    if (this.bossBanner > 0) {
+      const k = this.bossBanner, a = Math.min(1, k * 2), sc = k > 2.5 ? 1 + (k - 2.5) * 2 : 1;
+      ctx.save(); ctx.globalAlpha = a;
+      ctx.translate(S.x + S.w / 2, S.y + S.h / 2 + 30); ctx.scale(sc, sc);
+      panel(ctx, -200, -36, 400, 72, { fill: '#4a1f22', stroke: PALETTE.danger, lineWidth: 3, radius: 14 });
+      text(ctx, '⚠ CRITICAL BUG ⚠', 0, -4, { align: 'center', font: 'bold 28px "Trebuchet MS", sans-serif', color: '#ffd0d0' });
+      text(ctx, 'Click it again and again!', 0, 22, { align: 'center', font: 'bold 15px "Trebuchet MS", sans-serif', color: PALETTE.paper });
+      ctx.restore();
+    }
     if (this.phase === 'intro') {
       const b = this.bugs.find((q) => q.tutorial);
       if (b) {
