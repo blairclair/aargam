@@ -1,6 +1,6 @@
 # Hub team: house floor plan, select, results, Party Touch shop
 
-Scenes: `hub`, `select`, `results` (all in `src/hub/`). Exported perk table: `PERKS` in `src/hub/perks.js`.
+Scenes: `hub`, `select`, `results` (all in `src/hub/`). Canonical perk table: `PERKS` in `src/core/theme.js` (the shop is built from it).
 
 ## Party Touches (perks), recorded in `state.purchases` (array of ids)
 
