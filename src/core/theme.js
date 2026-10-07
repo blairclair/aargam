@@ -136,16 +136,17 @@ export const ENEMIES = {
   baron_brrr: { id: 'baron_brrr', name: 'Baron von Brrr', hp: 900, speed: 80, damage: 30, role: 'final boss', legacy: true },
 };
 
-// Party Touches — bought in the hub with Party Points (state.purchases). Canonical ids; hub sells them,
-// `who` says which team applies the effect. Unknown ids must be ignored everywhere.
+// Party Touches — bought in the hub with Party Points (state.purchases). Canonical ids (match docs/teams/hub.md).
+// Stat perks: the HUB writes state.party[hero] at purchase time — action just reads party, never re-applies.
+// 'playlist': minigames honor via params.perks. Cosmetics: hub only. Unknown ids must be ignored everywhere.
 export const PERKS = {
-  good_coffee:  { id: 'good_coffee', name: 'Good Coffee', cost: 20, who: 'action', desc: '+10% move speed in rooms' },
-  snack_table:  { id: 'snack_table', name: 'Snack Table', cost: 30, who: 'action', desc: '+20 max HP in rooms' },
-  playlist:     { id: 'playlist', name: 'The Playlist', cost: 20, who: 'minigames', desc: '+20% time in minigames' },
-  comfy_shoes:  { id: 'comfy_shoes', name: 'Comfy Shoes', cost: 30, who: 'action', desc: 'Skills recharge 15% faster' },
-  extra_chairs: { id: 'extra_chairs', name: 'Extra Chairs', cost: 10, who: 'hub', desc: 'Cosmetic: more seats for guests' },
-  fairy_lights: { id: 'fairy_lights', name: 'Fairy Lights', cost: 15, who: 'hub', desc: 'Cosmetic: the house twinkles' },
-  welcome_mat:  { id: 'welcome_mat', name: 'Welcome Mat', cost: 10, who: 'hub', desc: 'Cosmetic: a punny doormat' },
+  good_coffee:   { id: 'good_coffee', name: 'Good Coffee', cost: 30, kind: 'stat', desc: '+10% move speed (both heroes)' },
+  snack_table:   { id: 'snack_table', name: 'Snack Table', cost: 30, kind: 'stat', desc: '+20 max HP (both heroes)' },
+  house_shoes:   { id: 'house_shoes', name: 'House Shoes', cost: 40, kind: 'stat', desc: '+10% damage (both heroes)' },
+  playlist:      { id: 'playlist', name: 'The Playlist', cost: 25, kind: 'minigame', desc: '+20% time in minigames' },
+  fairy_lights:  { id: 'fairy_lights', name: 'Fairy Lights', cost: 15, kind: 'cosmetic', desc: 'The house twinkles' },
+  extra_chairs:  { id: 'extra_chairs', name: 'Extra Chairs', cost: 10, kind: 'cosmetic', desc: 'More seats for guests' },
+  fresh_flowers: { id: 'fresh_flowers', name: 'Fresh Flowers', cost: 10, kind: 'cosmetic', desc: 'Flowers in every room' },
 };
 
 // Dialog speakers that aren't heroes. Dialog shows `name` on the plate; narrator has no plate.
