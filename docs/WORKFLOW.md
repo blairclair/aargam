@@ -34,6 +34,7 @@ Several agents build this game at the same time. These rules keep us out of each
   to test a single URL. `ship.sh` runs it automatically.
 - Serve manually with `python3 -m http.server <port>`, using **your own port** so you don't collide with other agents:
   action 8101, hub 8102, art 8103, story 8104, games-a 8105, games-b 8106. Kill your server when you're done.
+- **Scratch files go in `<scratchpad>/<your-team>/` only.** All agents share one scratchpad directory; never write outside your subfolder.
 - **Always launch any browser with `--mute-audio`.** Sound from test runs plays out loud on the user's machine.
 - Use deep links (see docs/ARCHITECTURE.md) to test your scene directly, e.g. `?scene=room&roomId=kitchen&hero=victoria&dev=allskills`.
 - If you have a headless browser available, use it to confirm there are no console errors. If you don't,
