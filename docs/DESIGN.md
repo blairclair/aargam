@@ -1,102 +1,103 @@
-# Aaron & Victoria: The Great Scoop Heist — Design Bible
+# Aaron & Victoria: Housewarming — Design Bible (v2)
 
-This is the creative source of truth. Every team builds toward it. If something you want to
-add doesn't fit here, ask the supervisor before building it.
+The creative source of truth. Round 1 (`first-pass` branch) taught us one rule above all others:
+**the player must always know what is happening, why, and what to do next.** If a line of dialogue,
+a mechanic, or a screen would confuse someone who has never seen this doc, it is wrong.
 
-## Pitch
+## The people (real — be affectionate, be accurate)
 
-A warm, funny, slightly cozy **top-down action-adventure with a light strategy layer**, starring
-Aaron and Victoria (real people; the player's brother and sister-in-law). The game is a gift, so
-it should feel affectionate. The jokes are gentle and nobody is mean-spirited. It should be fun to
-play for 20–40 minutes.
+**Aaron** — the user's little brother. A good guy. Programmer. Did karate as a kid. As a teen: World
+of Warcraft and Magic: The Gathering. Played drums in the **Marching Ravens** (Baltimore Ravens
+marching band). Tall, lean, strawberry-blond swoop, dark rectangular glasses, huge grin, grey tees.
+Voice: earnest, enthusiastic, explains things in programmer terms, a little goofy, owns his mistakes.
 
-**Story:** It's the last week of summer. **Baron von Brrr** and his **Sorbet Syndicate** have
-stolen every scoop of ice cream in the land and are spreading an unseasonal frost from their
-fortress on Blue Ridge Summit. Aaron and Victoria set out from their lakeside camp to take back
-the scoops, thaw the land, and save summer. Victoria is especially offended, because the Baron
-took the mint chocolate chip.
+**Victoria** — Aaron's wife. Strong, kind. Social worker for teens. Blonde, blue-eyed, speaks Spanish.
+A fix-it girl. Crochets. Does not take any shit. Long wavy honey-blond hair, denim jacket, jeans,
+white sneakers. Voice: warm, dry, competent, calm under pressure, drops into Spanish when exasperated
+("Aaron. ¿Qué hiciste?"), never mean.
 
-## The heroes (taken from their photos; keep them recognizable)
+Together: they just bought a really nice house, and they make bread together.
 
-| | **Aaron, "The Trail Guide"** | **Victoria, "The Old City Explorer"** |
+## Story (the whole premise fits in four lines — the opening cutscene says exactly this)
+
+> It's party day. Aaron and Victoria's housewarming starts at **7 PM**.
+> Aaron wrote **PartyPlanner.exe** to automate the prep. "What could go wrong?"
+> He hits Run. The laptop sparks — and the program crashes *into the house*.
+> Every room it tried to "prepare" has gone haywire. Fix them all before the guests arrive.
+
+PartyPlanner is literal-minded and well-meaning. Each room is one of its functions gone wrong
+(`make_snacks()` brought the sourdough starter to life). Its log lines are a running joke.
+Cutscenes between rooms advance the plot: they find the crash log (office), they realize
+PartyPlanner is *learning* (mid-game), it retreats to the pond and assembles itself (pre-finale),
+and finally the party (ending, shaped by how well you did).
+
+## The house = the game (all 9 areas must be beaten to win)
+
+| # | Area | PartyPlanner called | What went weird | Objective (action) | Minigame (unique) | Favored |
+|---|---|---|---|---|---|---|
+| 1 | **Office** (tutorial) | `init()` | Laptop bugs became **real bugs** | Squash the bugs | **Bug Hunt** — click the bugs crawling through scrolling code before they compile | Aaron |
+| 2 | **Kitchen** | `make_snacks()` | The **sourdough starter is alive**; dough blobs split when hit; toaster fires toast; kettle screams steam | Beat back the dough | **Bread Bake** — knead (rhythm), shape (trace), proof (timing), bake (pull it out golden) | — |
+| 3 | **Dining room** | `set_table()` | Plates fly like frisbees; chairs charge like bulls | Wrangle the dining set | **Pour the Drinks** — color-sort logic: pour between glasses until each holds one drink | — |
+| 4 | **Living room** | `clean_up()` | The Roomba is a tank; dust bunnies are actual bunnies | Defeat the Roomba | **Bunny Roundup** — herd dust bunnies into the vacuum bag | Victoria |
+| 5 | **Playroom** | `add_entertainment()` | Board games came alive; playing cards march as soldiers | Clear the toy army | **Card Duel** — tiny card battle (a Magic: The Gathering nod) | Aaron |
+| 6 | **Primary bedroom** | `fold_laundry()` | Laundry knotted into a **sock monster** | Defeat the sock monster | **Crochet Pattern** — repeat the stitch sequence to mend the quilt | Victoria |
+| 7 | **Guest bedroom** | `fix_everything()` | Plumbing went rogue; ceiling leaks; rubber-duck army | Survive the flood | **Pipe Fixer** — rotate pipe tiles to route the water out | Victoria |
+| 8 | **Backyard** | `decorate()` | Lawn is a jungle; garden-gnome army; the grill is a dragon | String the lights | **Drumline** — rhythm game drumming the gnomes into a marching band (Marching Ravens nod) | Aaron |
+| 9 | **Pond** (finale) | `main()` | PartyPlanner assembles itself as a **giant koi made of code** | Defeat PartyPlanner | **Final Patch** — between boss phases, patch its exposed code (Aaron debugs, Victoria welds) | — |
+
+**Unlocking (the strategy of order):** the hub is the house floor plan. A room is playable when
+ANY room it requires is done. The Pond needs all 8 others. Designed so there are almost always
+**2–3 choices**:
+office → kitchen, living · kitchen → dining · living → playroom, primary · dining|primary → guest ·
+playroom|guest → backyard · all 8 → pond.
+
+**Party clock:** starts 10 AM, each room takes an hour → the pond ends at 7 PM. Narrative, not a fail state.
+
+## How a room plays (always the same rhythm — the player learns it once)
+1. **Intro cutscene** (≤ 6 lines): what went weird, what the goal is.
+2. **Choose your hero** (Aaron or Victoria) + **loadout** (2 skill slots from earned skills).
+   The room's favored hero gets a small bonus (shown on the select screen).
+3. **Action stage**: top-down fight in that room. Objective always on screen.
+4. **Minigame**: the room's unique puzzle/game. Taught by a 1-screen visual demo, no walls of text.
+5. **Results**: 1–3 ⭐ (action performance + minigame score), Party Points, **new skill earned**.
+6. **Outro cutscene** (≤ 4 lines) → back to the house, room now warm and lit.
+Fail the action stage → retry (or swap hero). Fail the minigame → retry minigame only.
+
+## Heroes & skills (earned — the player starts with ONE attack)
+Movement, animation, and color from round 1 are loved — **keep them**. One hero on the field per room
+(no tag-swap). Controls: WASD/arrows move, mouse aim, **click/J** basic attack, **K/Shift** skill 1,
+**E/L** skill 2, **Space** ultimate (once unlocked), **Esc/P** pause.
+
+| Earned in | Aaron | Victoria |
 |---|---|---|
-| Look | Tall, lean, short strawberry-blond hair, **dark rectangular glasses**, big grin, grey/striped tee, dark shorts or jeans, sneakers | Long **wavy light-blond/honey hair**, warm smile, **denim jacket**, dark sweater or white tee, light-blue jeans, white sneakers |
-| Vibe | Enthusiastic hiker, earnest, a bit of a goof, loves a summit view | Curious, clever, unflappable, loves old cities, history and ice cream (mint chip!) |
-| Combat role | **Melee bruiser.** Higher HP | **Ranged tactician.** Lower HP, faster |
-| Attack | *Pole Sweep*: arc swing with a hiking pole | *Mint-Chip Fling*: throws mint-chip scoops (projectiles) |
-| Ability | *Compass Dash*: short invulnerable dash that knocks enemies aside | *Denim Shield*: brief frontal block that reflects slush shots |
-| Special | *Summit Shout*: radial stun and knockback | *Flower Box Bloom*: plants a flower box that makes a healing/thawing zone |
+| start | **Karate Kick** (basic) | **Wrench Whack** (basic) |
+| Office | **Debug** — reveal & mark hidden enemies (crit on marked) | **Unplug** — stun electronic enemies in a cone |
+| Kitchen | **Bread Toss** — lob a baguette (ranged) | **Hot Pan** — wide sizzling swing, burns |
+| Dining | **Plate Shield** — block & reflect | **Plate Shield** — block & reflect |
+| Living | **Karate Sweep** — spinning kick, knockback | **Throw Pillow** — ricocheting ranged |
+| Playroom | **Tap a Card** — summon a random spell card | **Bouncy Ball** — bounces between enemies |
+| Primary | **Sock Sling** — slow-on-hit ranged | **Crochet Net** — snare enemies in an area |
+| Guest | **Mop Spin** — spinning, pushes water/enemies | **Wrench Throw** — boomerang wrench |
+| Backyard | **Drumline** — rhythm shockwave, stronger on beat | **Garden Hose** — knockback stream |
+| Pre-finale | ⚡ **Pull Aggro** (ultimate) — all enemies target you, you take half dmg (WoW tank nod) | ⚡ **Boundaries** (ultimate) — a ring nothing hostile can cross; everything inside is stunned |
 
-**Tag-team:** One hero is on the field at a time. Press **Q/Tab** to swap. The benched hero slowly
-regenerates HP. If the active hero is knocked out, the other one auto-swaps in. The mission is lost
-only when both are down. Swapping should feel snappy (a puff of particles and a "swap" sfx).
+## Strategy layer (light, meaningful)
+Room order (unlock graph) · hero choice per room · 2-slot loadout · **Party Points** (from stars) spent
+in the hub on **Party Touches** (small perks: "Good Coffee" +10% speed, "Playlist" +minigame time,
+"Snack Table" heal per room, "Extra Chairs"...) · final **party score** = total stars → ending variant.
 
-**Portrait rule:** The heroes' **heads are their real photo faces** (circular crops in
-`assets/portraits/`) on stylized chibi bodies ("big-head mode"). Use `drawPortrait` / `drawHero`.
-Never distort or recolor the faces. Never use them for enemies or as a joke target.
+## Presentation
+- Keep round-1 palette warmth and hero animation feel. The house is cozy, real-feeling: wood floors,
+  rugs, plants, warm lamps; each room's "weird" has its own accent color.
+- **Likeness**: big **photo cutout busts** (real face + real hair, transparent background) in cutscenes,
+  dialogue, select screen. In-world sprites keep chibi bodies with tight face crops; bodies drawn to match
+  real outfits (Aaron: grey tee, dark shorts / jeans, sneakers; Victoria: denim jacket or white tee, jeans,
+  white sneakers). Expressions are conveyed by bust animation (bounce, shake, lean, sweat drop, sparkle),
+  never by altering faces.
+- PartyPlanner "speaks" in monospace log lines with a blinking cursor.
 
-## World: three regions (from the photos)
-
-1. **Lakeside Camp** (home base, the first region): sandy paths, a lake, the octagonal wooden
-   **pavilion**, picnic tables, a blue patio umbrella, pines. A blue toy bucket is a tiny Easter egg.
-2. **Old City**: red brick sidewalks and alleys, iron lamp posts, red-and-black bollards, colonial
-   doors, **flower boxes with mums and pumpkins** (autumn creeping in), flags.
-3. **Blue Ridge Summit**: bright green pines over hazy blue mountain ridges under a vivid sky, rising
-   to the **Baron's ice fortress** at the top (final boss).
-
-Frost visually takes over a region as its frost level rises: blue tint, icicles, frozen props.
-Thawing should look and feel great: warm colors return and flowers pop.
-
-## Enemies: the Sorbet Syndicate (ids in `src/core/theme.js` `ENEMIES`)
-
-- **Frostling**: small hopping ice blob in swarms. Cute.
-- **Brain Freezer**: a floating cone that lobs slush balls. Getting hit gives a short "brain freeze" slow.
-- **Popsicle Knight**: a stick-legged popsicle with a wafer shield. Blocks from the front, so flank it.
-- **Slush Golem**: mini-boss, slow, ground-pound shockwave.
-- **Baron von Brrr**: the final boss. A pompous frozen aristocrat with an ice-cream-scoop scepter
-  and a monocle. Several phases.
-
-## Game loop
-
-```
-Title → Overworld map (strategy) ⇄ Camp (upgrades)
-           │ pick a node
-           ▼
-       Mission (action) → outcome → back to Overworld (rewards, frost spreads, day advances)
-           ... thaw all three regions → Baron's fortress → Ending
-```
-
-**Strategy layer (Overworld + Camp):**
-- A node map across the 3 regions (roughly 4–6 nodes per region plus the final fortress). Nodes
-  connect, and you can only attack nodes adjacent to thawed ones.
-- Each node has a **frost level 0–3**. Every day (that is, after every mission), frost **spreads**:
-  some frozen nodes next to thawed ones gain frost, and a level-3 node can re-freeze a neighbor.
-  This creates prioritization pressure: which fire do you put out first?
-- Missions pay out **Scoops** (currency) and **Sunshine** (spend it on the map to lower a node's
-  frost without fighting, or to shield a node for a day).
-- **Camp** spends Scoops on upgrades for each hero (HP, damage, cooldowns, a new ability twist) and
-  on camp buildings that give passive perks or mission modifiers (for example "Warm Cocoa Stand": start
-  missions with an HP buffer).
-- High frost on a node → harder mission (difficulty, `blizzard` modifier) but better rewards.
-
-**Action layer (Missions):** Top-down arenas, procedurally laid out per region from a seed.
-Mission kinds: `skirmish`, `rescue`, `defend`, `boss` (see `MISSION_KINDS`). A mission lasts
-1–4 minutes. Scoops drop from enemies and can be picked up. Winning gives a satisfying
-"SUMMER RESTORED" thaw moment.
-
-## Tone & presentation
-
-- Palette: warm late-summer colors (sun gold, mint, brick, lake blue, pine) against the villain's
-  icy blues and whites. Use `PALETTE` from theme.js. Don't invent random colors.
-- Juicy feedback: hit flashes, small screen shake, particles, damage numbers, punchy WebAudio sfx.
-- Light banter between Aaron and Victoria at mission start and end, and the Baron monologues
-  pompously. Keep lines short (under 90 characters each) and good-natured.
-- Controls: WASD/arrows to move, mouse to aim, **left click/J** to attack, **Shift/right-click/K**
-  for ability, **E/L** for special, **Q/Tab** to swap, **Esc/P** to pause. Everything should
-  also be playable with keyboard only (aim follows movement direction when the mouse is idle).
-- Everything is generated procedurally on Canvas 2D and synthesized with WebAudio. The only
-  image files are the two portraits.
-
-## Out of scope for the first pass
-Multiplayer, mobile touch controls, external libraries or build steps, and loading any external
-assets other than the portraits.
+## Writing rules (the round-1 failure — non-negotiable)
+- Every line either tells the player what to do or shows who these two are. No unexplained references.
+- Lines ≤ 90 chars, ≤ 6 lines per cutscene beat. Humor is gentle and specific to them.
+- First time any mechanic appears, a one-line prompt + visual shows how ("Press K: Debug").
+- Spanish from Victoria is short and obvious from context.

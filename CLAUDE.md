@@ -6,7 +6,7 @@ Before investigating any bug or error, your FIRST tool call must be `mcp__errata
 
 <!-- ERRATA:END -->
 
-## Project: Aaron & Victoria — The Great Scoop Heist
+## Project: Aaron & Victoria — Housewarming
 
 Browser action/adventure/strategy game, vanilla JS + Canvas, no build step. Read before working:
 - `docs/DESIGN.md` — creative bible (theme, heroes, regions, enemies, loop)

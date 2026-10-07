@@ -1,33 +1,27 @@
 // Persistent game state + save/load. Owned by: supervisor (schema), see docs/ARCHITECTURE.md.
-// Top-level keys are fixed. Each team owns the CONTENTS of its namespace:
-//   party     -> shared (strategy writes upgrades, action reads stats)
-//   resources -> strategy
-//   map       -> strategy (node graph, frost levels, statuses)
-//   camp      -> strategy
-//   flags     -> anyone, but prefix keys with your team: 'action.tutorialDone', 'ui.seenIntro'
-import { HEROES } from './theme.js';
+// Who writes what:
+//   rooms, clock, partyPoints, stars  -> core/flow.js (via finishRoom); hub may READ
+//   skills                            -> core/flow.js grants on room completion; hub/action READ
+//   loadout, purchases                -> hub
+//   party                             -> hub (permanent stat perks); action READS
+//   flags                             -> anyone, keys prefixed by team: 'story.seenOpening', 'action.tutKick'
+import { HEROES, ROOM_IDS, START_HOUR } from './theme.js';
 
-const SAVE_KEY = 'aargam.save.v1';
-export const STATE_VERSION = 1;
+const SAVE_KEY = 'aargam.save.v2';
+export const STATE_VERSION = 2;
 
 export function newGame() {
   return {
     version: STATE_VERSION,
-    day: 1,
-    resources: { scoops: 0, sunshine: 0 },
-    party: Object.fromEntries(Object.values(HEROES).map((h) => [h.id, {
-      level: 1,
-      xp: 0,
-      maxHp: h.base.maxHp,
-      hp: h.base.maxHp,
-      damage: h.base.damage,
-      speed: h.base.speed,
-      upgrades: [], // string ids, defined by strategy (camp shop), interpreted by action
-    }])),
-    map: null,  // strategy initializes on first overworld enter
-    camp: null, // strategy initializes on first camp enter
+    clock: START_HOUR,                 // hour of day; +1 per room completed
+    partyPoints: 0,                    // currency earned from stars, spent in hub
+    rooms: Object.fromEntries(ROOM_IDS.map((id) => [id, { done: false, stars: 0, attempts: 0, playedAs: null }])),
+    skills: { aaron: [HEROES.aaron.basic], victoria: [HEROES.victoria.basic] }, // earned skill ids
+    loadout: { aaron: [], victoria: [] }, // up to 2 equipped 'skill' ids each (basic + ultimate are automatic)
+    party: Object.fromEntries(Object.values(HEROES).map((h) => [h.id, { maxHp: h.base.maxHp, damage: h.base.damage, speed: h.base.speed }])),
+    purchases: [],                     // Party Touch ids bought in hub
     flags: {},
-    stats: { missionsWon: 0, missionsLost: 0, enemiesDefeated: 0 },
+    stats: { enemiesDefeated: 0, roomsFailed: 0, minigamesFailed: 0 },
   };
 }
 
@@ -46,3 +40,14 @@ export function loadGame() {
 
 export function hasSave() { return loadGame() !== null; }
 export function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ } }
+
+/** Rooms currently playable: not done, and ANY requirement done ('*' = all other rooms done). */
+export function availableRooms(state, ROOMS) {
+  const done = (id) => state.rooms[id]?.done;
+  return Object.values(ROOMS).filter((r) => {
+    if (done(r.id)) return false;
+    if (!r.requires.length) return true;
+    if (r.requires.includes('*')) return Object.keys(ROOMS).every((id) => id === r.id || done(id));
+    return r.requires.some(done);
+  }).map((r) => r.id);
+}

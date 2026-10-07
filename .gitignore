@@ -6,3 +6,8 @@
 .claude/worktrees/
 .DS_Store
 node_modules/
+
+# errata-managed agent skills (daemon-synced; namespaced)
+.agents/skills/errata-*/
+.claude/skills/errata-*/
+.cursor/skills/errata-*/

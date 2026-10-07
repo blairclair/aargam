@@ -5,7 +5,7 @@ Several agents build this game at the same time. These rules keep us out of each
 ## Roles
 - **Supervisor** (the main Claude session): owns `src/core/**`, the contracts, the theme, and the docs.
   Answers questions, approves contract changes, reviews integration, and checks in about every 10 minutes.
-- **Teams**: `action`, `strategy`, `presentation`. Each team owns the directories listed in `OWNERS.json`.
+- **Teams**: `story`, `hub`, `action`, `games-a`, `games-b`, `art`. Each team owns the paths listed in `OWNERS.json`.
 
 ## Git
 1. Each agent works in **its own git worktree on its own branch**. Never touch another agent's worktree.
@@ -33,7 +33,8 @@ Several agents build this game at the same time. These rules keep us out of each
   Add `--shots <dir>` for screenshots, which you can Read to *look* at your work. Use `ONLY="scene=level&region=summit"`
   to test a single URL. `ship.sh` runs it automatically.
 - Serve manually with `python3 -m http.server <port>`, using **your own port** so you don't collide with other agents:
-  action 8101, strategy 8102, presentation 8103. Kill your server when you're done.
-- Use deep links (`?scene=level&region=summit&kind=boss&difficulty=5`) to test your scene directly.
+  action 8101, hub 8102, art 8103, story 8104, games-a 8105, games-b 8106. Kill your server when you're done.
+- **Always launch any browser with `--mute-audio`.** Sound from test runs plays out loud on the user's machine.
+- Use deep links (see docs/ARCHITECTURE.md) to test your scene directly, e.g. `?scene=room&roomId=kitchen&hero=victoria&dev=allskills`.
 - If you have a headless browser available, use it to confirm there are no console errors. If you don't,
   reason carefully about runtime errors, because a broken `main` blocks everyone.

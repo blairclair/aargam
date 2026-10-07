@@ -17,5 +17,5 @@ content. Committing it would prime your teammates with your graph.
 
 <!-- ERRATA:END -->
 
-## Project: Aaron & Victoria — The Great Scoop Heist
+## Project: Aaron & Victoria — Housewarming
 Read `docs/DESIGN.md`, `docs/ARCHITECTURE.md`, `docs/WORKFLOW.md` before working. Edit only paths your team owns (`OWNERS.json`); ship with `tools/ship.sh <team>`.

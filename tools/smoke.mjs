@@ -17,13 +17,17 @@ const port = Number(opt('--port', 8100));
 const shots = opt('--shots', null);
 const cdpPort = port + 1000;
 
+const ROOMS = ['office', 'kitchen', 'living', 'dining', 'playroom', 'primary', 'guest', 'backyard', 'pond'];
 const urls = process.env.ONLY ? [process.env.ONLY] : [
   '',
-  'scene=overworld',
-  'scene=camp',
-  ...['lakeside', 'oldcity', 'summit'].flatMap((r) => ['skirmish', 'rescue', 'defend'].map((k) => `scene=level&region=${r}&kind=${k}&difficulty=2&seed=3`)),
-  'scene=level&region=summit&kind=boss&difficulty=5&seed=1&bossId=baron_brrr',
-  'scene=ending&victory=1',
+  'scene=cutscene&id=opening',
+  'scene=hub',
+  'scene=hub&dev=unlock5',
+  'scene=select&roomId=kitchen&dev=allskills',
+  ...ROOMS.map((r, i) => `scene=room&roomId=${r}&hero=${i % 2 ? 'victoria' : 'aaron'}&dev=allskills`),
+  ...ROOMS.map((r) => `scene=minigame&roomId=${r}`),
+  'scene=results&roomId=kitchen&hero=victoria&stars=3',
+  'scene=cutscene&id=party&partyScore=0.8',
   ...args,
 ];
 
