@@ -1,7 +1,7 @@
 // v2 enemy dispatcher. Owned by: art-world.
 // Each painter module exports PAINTERS = { type: [boxW, boxH, fn(c, P)] } with the origin at the
 // enemy's FEET (ground point). The box is only used for hit-flash compositing: the sprite must fit
-// in [-boxW/2, boxW/2] x [-(boxH-8), 8].
+// in [-boxW/2, boxW/2] x [-(boxH-8), 8 + meta.below]. Optional 4th element meta = { barY (HP bar y), below }.
 import { PALETTE } from '../../core/theme.js';
 import { withFlash, rrect, facingOf, clamp01 } from './kit.js';
 import { PAINTERS as HOUSE } from './foes_house.js';
@@ -19,7 +19,8 @@ export const WORLD_ENEMY_KINDS = Object.keys(PAINTERS);
 export function drawWorldEnemy(ctx, game, type, x, y, o = {}) {
   const def = PAINTERS[type];
   if (!def) return false;
-  const [bw, bh, fn] = def;
+  const [bw, bh, fn, meta] = def;
+  const below = meta?.below ?? 0;
   const { ang, dir } = facingOf(o.facing);
   const t = o.t ?? game?.time ?? 0;
   const anim = o.anim === 'walk' ? 'move' : (o.anim ?? 'move');
@@ -37,9 +38,9 @@ export function drawWorldEnemy(ctx, game, type, x, y, o = {}) {
   if (o.alpha != null) ctx.globalAlpha *= o.alpha;
   const hurt = anim === 'hurt' ? 1 - P.prog : 0;
   if (hurt) ctx.translate(Math.sin(t * 60) * 1.6 * hurt, 0);
-  withFlash(ctx, bw, bh, bw / 2, bh - 8, o.flash, (c) => fn(c, P));
+  withFlash(ctx, bw, bh + below, bw / 2, bh - 8, o.flash, (c) => fn(c, P));
   if (o.hpFrac != null && o.hpFrac < 1 && o.hpFrac > 0 && o.hpBar !== false && !BOSS_IDS.has(type)) {
-    const w = Math.min(36, bw * 0.6), yy = -bh + 12;
+    const w = Math.min(36, bw * 0.6), yy = meta?.barY ?? -bh + 12;
     ctx.fillStyle = 'rgba(16,19,31,0.6)'; rrect(ctx, -w / 2 - 1, yy - 1, w + 2, 5, 2); ctx.fill();
     ctx.fillStyle = o.hpFrac > 0.35 ? PALETTE.heal : PALETTE.danger;
     rrect(ctx, -w / 2, yy, w * o.hpFrac, 3, 1.5); ctx.fill();

@@ -825,5 +825,5 @@ export const PAINTERS = {
   roomba: [140, 96, roomba],
   card_soldier: [64, 58, card_soldier],
   pawn: [52, 60, pawn],
-  jack_box: [64, 84, jack_box],
+  jack_box: [64, 108, jack_box, { barY: -64 }],
 };
