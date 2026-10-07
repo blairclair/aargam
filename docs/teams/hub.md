@@ -28,3 +28,16 @@ Rules:
 ## Flags written by hub
 - `hub.lastHero`: hero last picked on the select screen.
 - `hub.seenShop`: player opened the Party Touch shop at least once.
+
+## Scenes at a glance
+- **hub** `{justFinished?}`: floor plan (bedrooms + office top, living + playroom middle, dining + kitchen bottom,
+  backyard with pond to the east). Locked rooms are dimmed with a lock icon, and hover shows what unlocks them.
+  Available rooms pulse in their `accent` with a small animation of their weird thing. Done rooms glow warm and show stars.
+  Keys: arrows cycle available rooms, Enter enters, B opens the shop. `justFinished` triggers a banner, confetti, and a NEW tag on rooms it unlocked.
+  Cosmetic perks change the plan: fairy lights (string lights), extra chairs (dining + patio), fresh flowers (vases + flower beds).
+- **select** `{roomId, retry?, lastHero?}`: two bust cards (art `drawBust`, with 'happy' for the selected hero and dim for the other).
+  The favored hero gets the tag "X's specialty: +15% damage" (**action: please make the bonus match 15% damage**).
+  Loadout tiles toggle with a click, 1-9, or Up/Down + Enter. Left/Right or Q/Tab swaps hero. Esc goes back to the house (`continueGame`).
+  Retries show a room-specific tip suggesting the other hero or skill.
+- **results**: stars land one by one, then the HP/minigame breakdown, then PP (+10 per *new* star), then new skill cards.
+  Enter or a click skips the animation. Continue calls `finishRoom`.
