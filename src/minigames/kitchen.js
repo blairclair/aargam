@@ -54,20 +54,20 @@ export default class BreadBake {
       this.beatGap = 0.62 + 0.06 * this.easy;
       this.demoBeats = 2; this.scoredBeats = 10;
       this.beats = Array.from({ length: this.demoBeats + this.scoredBeats }, (_, k) => ({ t: 1.2 + k * this.beatGap, demo: k < this.demoBeats, res: null }));
-      this.squash = 0; this.knead = 0; this.lastTick = -1; this.kneadHits = 0;
+      this.squash = 0; this.knead = 0; this.lastTick = -1; this.kneadHits = 0; this.combo = 0; this.hand = 1; this.beatPulse = 0;
     } else if (id === 'shape') {
       this.path = Array.from({ length: 120 }, (_, k) => { const a = (k / 120) * TAU; return { x: CX + Math.cos(a) * 150, y: CY + Math.sin(a) * 66 }; });
       this.checks = Array.from({ length: 40 }, (_, k) => ({ i: k * 3, hit: false }));
-      this.stroke = []; this.distSum = 0; this.distN = 0; this.touched = false;
+      this.stroke = []; this.distSum = 0; this.distN = 0; this.touched = false; this.chime = 0;
       this.shapeLimit = (12 + 3 * this.easy) * this.tm;
     } else if (id === 'proof') {
       this.level = 0; this.stopped = false; this.ghost = 0; this.demoDone = false; this.over = false;
-      this.zoneC = 0.7; this.zoneHW = 0.075 + 0.03 * this.easy;
+      this.zoneC = 0.7; this.zoneHW = 0.075 + 0.03 * this.easy; this.inZone = false;
       this.proofDelay = 0;
     } else if (id === 'bake') {
       this.bake = 0; this.pulled = false; this.burnt = false;
       this.bakeDur = (7.5 + 1.5 * this.easy) * this.tm;
-      this.goldC = 0.42; this.goldHW = 0.06 + 0.02 * this.easy;
+      this.goldC = 0.42; this.goldHW = 0.06 + 0.02 * this.easy; this.inGold = false;
     }
   }
 
@@ -119,10 +119,11 @@ export default class BreadBake {
   // ------------------------------------------------------------------ KNEAD
   updKnead(dt) {
     this.squash = Math.max(0, this.squash - dt * 5);
+    this.beatPulse = Math.max(0, this.beatPulse - dt * 4);
     const t = this.pt;
     // metronome tick on each beat
     const bi = this.beats.findIndex((b) => b.t > t) - 1;
-    if (bi !== this.lastTick && bi >= 0) { this.lastTick = bi; playSfx('drum', { volume: 0.4 }); }
+    if (bi !== this.lastTick && bi >= 0) { this.lastTick = bi; this.beatPulse = 1; playSfx('drum', { volume: 0.4 }); }
     // demo beats press themselves
     for (const b of this.beats) if (b.demo && !b.res && t >= b.t) { b.res = 'demo'; this.press(true); }
     if (this.tap()) {
@@ -133,9 +134,9 @@ export default class BreadBake {
         const perfect = 0.085 + 0.03 * this.easy;
         best.res = bd < perfect ? 'perfect' : bd < win * 0.62 ? 'good' : 'ok';
         this.press(false, best.res);
-      } else { this.squash = 0.4; playSfx('squish', { volume: 0.4 }); }
+      } else { this.squash = 0.4; this.combo = 0; playSfx('squish', { volume: 0.4 }); }
     }
-    for (const b of this.beats) if (!b.demo && !b.res && t > b.t + 0.3) { b.res = 'miss'; this.fx.floatText(CX, CY - 90, 'miss', 'rgba(255,246,229,0.7)', { size: 16 }); }
+    for (const b of this.beats) if (!b.demo && !b.res && t > b.t + 0.3) { b.res = 'miss'; this.combo = 0; this.fx.floatText(CX, CY - 90, 'miss', 'rgba(255,246,229,0.7)', { size: 16 }); }
     const last = this.beats[this.beats.length - 1];
     if (t > last.t + 0.6) {
       const val = { perfect: 1, good: 0.75, ok: 0.45, miss: 0 };
@@ -145,12 +146,19 @@ export default class BreadBake {
   }
   press(demo, res) {
     this.squash = 1;
+    this.hand = -this.hand; // alternate left / right hand, like real kneading
     if (!demo) this.knead = Math.min(1, this.knead + (res === 'perfect' ? 0.1 : res === 'good' ? 0.08 : 0.05));
-    playSfx('squish');
-    this.fx.snowPuff(CX + (Math.random() - 0.5) * 120, CY + 30, 6, '#fffaf0');
+    if (!demo) this.combo = res === 'ok' ? 0 : this.combo + 1;
+    playSfx('squish', { pitch: 1 + Math.min(8, this.combo) * 0.04 });
+    this.fx.snowPuff(CX + this.hand * 60 + (Math.random() - 0.5) * 50, CY + 30, 6, '#fffaf0');
+    if (!demo && [3, 5, 8].includes(this.combo)) {
+      this.fx.floatText(CX + 180, CY - 40, `${this.combo} in a row!`, PALETTE.sun, { size: 18 + this.combo });
+      this.fx.sparkle(770, COUNTER_Y - 60, PALETTE.sun, 8, 30); // the starter approves
+      if (this.combo >= 5) this.cheer.react('cheer', 'hit', true);
+    }
     if (!demo) {
       const col = res === 'perfect' ? PALETTE.sun : res === 'good' ? PALETTE.mint : PALETTE.paper;
-      this.fx.floatText(CX, CY - 90, res === 'perfect' ? 'Perfect!' : res === 'good' ? 'Good' : 'OK', col, { size: res === 'perfect' ? 22 : 17 });
+      this.fx.floatText(CX - this.hand * 70, CY - 80, res === 'perfect' ? 'Perfect!' : res === 'good' ? 'Good' : 'OK', col, { size: res === 'perfect' ? 22 : 17 });
       if (res === 'perfect') { this.fx.ringPulse(CX, CY, PALETTE.sun, 150, 0.35, 3); this.fx.addShake(2); }
     }
   }
@@ -172,9 +180,17 @@ export default class BreadBake {
         for (const c of this.checks) if (!c.hit) { const p = this.path[c.i]; if (Math.hypot(p.x - m.x, p.y - m.y) < 26 + 4 * this.easy) { c.hit = true; newHit = true; } }
         if (newHit && Math.random() < 0.5) this.fx.sparkle(m.x, m.y, '#fffaf0', 1, 4);
         if (d < 30 && Math.random() < 0.25) playSfx('squish', { volume: 0.15 });
+        if (Math.random() < 0.3) this.fx.snowPuff(m.x, m.y + 4, 1, '#fffaf0');
       }
     }
     const cov = this.coverage();
+    const step = Math.floor(cov * 10);
+    if (step > this.chime) {
+      this.chime = step;
+      playSfx('blip', { pitch: 1 + step * 0.08 });
+      this.fx.ringPulse(m.x, m.y, PALETTE.sun, 26, 0.3, 2);
+      if (step === 5) this.fx.floatText(CX, CY - 100, 'halfway!', PALETTE.paper, { size: 16 });
+    }
     if (cov >= 0.95 || this.pt > this.shapeLimit) {
       const acc = this.distN ? 1 - clamp((this.distSum / this.distN - 6) / 34, 0, 1) : 0;
       this.endStep(cov * 0.6 + acc * 0.4 * (cov > 0.3 ? 1 : cov / 0.3));
@@ -196,6 +212,11 @@ export default class BreadBake {
     const speed = (0.12 + this.level * 0.42) / this.tm;
     this.level += speed * dt;
     if (Math.random() < dt * 4) this.fx.burst(CX + (Math.random() - 0.5) * 120, CY - 40 - this.level * 70, '#fffaf0', 1, 30);
+    // little fermentation bubbles pop on the dough's surface
+    if (Math.random() < dt * 3) this.fx.ringPulse(CX + (Math.random() - 0.5) * 160, CY + 30 - ease(this.level) * 70 - 40 - Math.random() * 30, '#fffaf0', 7, 0.25, 1.5);
+    const inZone = Math.abs(this.level - this.zoneC) <= this.zoneHW;
+    if (inZone && !this.inZone) playSfx('blip', { pitch: 1.5 });
+    this.inZone = inZone;
     if (this.level >= 1) {
       this.level = 1; this.stopped = true; this.over = true;
       this.fx.burst(CX, CY - 80, DOUGH, 18, 160); this.fx.addShake(6); playSfx('error');
@@ -217,6 +238,10 @@ export default class BreadBake {
     if (this.pt < 0.8) return;
     this.bake += dt / this.bakeDur;
     if (Math.random() < dt * 3) this.fx.burst(CX + (Math.random() - 0.5) * 80, 150, 'rgba(255,255,255,0.6)', 1, 20);
+    if (this.bake > 0.25 && Math.random() < dt * 6) this.fx.burst(CX + (Math.random() - 0.5) * 160, 260, '#ffcf7a', 1, 40); // crust crackles
+    const inGold = Math.abs(this.bake - this.goldC) <= this.goldHW;
+    if (inGold && !this.inGold) playSfx('blip', { pitch: 1.5 });
+    this.inGold = inGold;
     if (this.bake >= 1) {
       this.bake = 1; this.pulled = true; this.burnt = true;
       for (let i = 0; i < 4; i++) this.fx.snowPuff(CX + (i - 1.5) * 40, 160, 6, '#555');
@@ -229,7 +254,8 @@ export default class BreadBake {
       const d = Math.abs(this.bake - this.goldC), hw = this.goldHW;
       const sc = d <= hw ? 1 - 0.25 * (d / hw) : Math.max(0.05, 0.75 - (d - hw) * 3.2);
       playSfx('pickup');
-      this.fx.sparkle(CX, CY - 20, PALETTE.sun, 10, 60);
+      this.fx.sparkle(CX, CY - 20, PALETTE.sun, 10 + Math.round(sc * 14), 70);
+      if (sc >= 0.8) { this.fx.floatText(CX + 150, 170, 'Ding!', PALETTE.sun, { size: 30 }); this.fx.ringPulse(CX, 290, PALETTE.sun, 160, 0.5, 4); this.fx.confetti(CX, 200, 20); }
       this.endStep(sc);
     }
   }
@@ -322,7 +348,7 @@ export default class BreadBake {
       ctx.restore();
     }
     // the (now friendly) sourdough starter jar
-    this.drawStarter(ctx, 770, COUNTER_Y);
+    this.drawStarter(ctx, 770, COUNTER_Y, STEPS[this.si]?.id === 'knead' ? this.beatPulse : 0);
     // butcher-block counter
     const cg = ctx.createLinearGradient(0, COUNTER_Y, 0, 540);
     cg.addColorStop(0, '#d9a86a'); cg.addColorStop(0.08, '#c48d52'); cg.addColorStop(1, '#8a5a32');
@@ -335,8 +361,8 @@ export default class BreadBake {
     for (let i = 0; i < 60; i++) { const a = i * 2.39996, r = 40 + (i * 37) % 160; ctx.beginPath(); ctx.arc(CX + Math.cos(a) * r * 1.4, COUNTER_Y + 40 + Math.sin(a) * r * 0.25, 2 + (i % 3), 0, TAU); ctx.fill(); }
   }
 
-  drawStarter(ctx, x, y) {
-    ctx.save(); ctx.translate(x, y);
+  drawStarter(ctx, x, y, pulse = 0) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(1 + pulse * 0.06, 1 - pulse * 0.08);
     const bub = Math.sin(this.t * 2.2);
     ctx.fillStyle = 'rgba(232,248,255,0.25)'; rr(ctx, -26, -70, 52, 70, 8); ctx.fill();
     ctx.fillStyle = '#efe0c0'; rr(ctx, -24, -46 - bub * 2, 48, 46 + bub * 2, 6); ctx.fill();
@@ -365,10 +391,10 @@ export default class BreadBake {
     this.board(ctx);
     const sq = ease(this.squash);
     const sx = 1 + sq * 0.22, sy = 1 - sq * 0.24;
-    drawDough(ctx, CX, CY + 40, 120 * sx, 70 * sy, 1 - this.knead, this.t);
+    drawDough(ctx, CX - this.hand * sq * 10, CY + 40, 120 * sx, 70 * sy, 1 - this.knead, this.t, this.knead);
     // hands press
     const hy = CY - 30 - (1 - sq) * 28;
-    drawPressHands(ctx, CX, hy + sq * 22, sq);
+    drawPressHands(ctx, CX, hy, sq, this.hand);
     if (this.phase !== 'play') return;
     // approach rings for the next two beats
     const t = this.pt;
@@ -470,6 +496,7 @@ export default class BreadBake {
     const zy0 = gy + gh * (1 - (this.zoneC + this.zoneHW)), zy1 = gy + gh * (1 - (this.zoneC - this.zoneHW));
     ctx.fillStyle = 'rgba(255,201,74,0.35)'; ctx.fillRect(gx, zy0, gw, zy1 - zy0);
     ctx.strokeStyle = PALETTE.sun; ctx.lineWidth = 2; ctx.strokeRect(gx, zy0, gw, zy1 - zy0);
+    if (this.inZone && !this.stopped) { ctx.save(); ctx.shadowColor = PALETTE.sun; ctx.shadowBlur = 24; ctx.fillStyle = 'rgba(255,201,74,0.6)'; ctx.fillRect(gx, zy0, gw, zy1 - zy0); ctx.restore(); text(ctx, 'now!', gx - 18, (zy0 + zy1) / 2 + 6, { align: 'right', font: BOLD(22), color: PALETTE.sun, outline: PALETTE.choc }); }
     ctx.fillStyle = PALETTE.danger; ctx.globalAlpha = 0.35; ctx.fillRect(gx, gy, gw, gh * 0.08); ctx.globalAlpha = 1;
     const fy = gy + gh * (1 - lv);
     const fg = ctx.createLinearGradient(0, fy, 0, gy + gh); fg.addColorStop(0, '#fff6e5'); fg.addColorStop(1, DOUGH_SH);
@@ -507,7 +534,9 @@ export default class BreadBake {
     // loaf inside (slides out when pulled)
     const out = this.pulled ? ease(this.pt - this.pulledAt()) : 0;
     const col = mixRgbStops(BAKE_STOPS, this.bake);
-    drawLoaf(ctx, ox, oy + 40 + out * 160, 120, 62, col, this.scores[1] ?? 0.8, this.t, clamp(this.bake * 2, 0, 1));
+    ctx.save(); ctx.translate(ox, oy + 40 - out * 14); ctx.scale(1 + out * 0.12, 1 + out * 0.12);
+    drawLoaf(ctx, 0, 0, 120, 62, col, this.scores[1] ?? 0.8, this.t, clamp(this.bake * 2, 0, 1));
+    ctx.restore();
     // handle
     ctx.fillStyle = '#e6e8ec'; rr(ctx, ox - 120, oy + 102, 240, 10, 5); ctx.fill();
     // color strip
@@ -520,7 +549,8 @@ export default class BreadBake {
     const z0 = sx + sw * (this.goldC - this.goldHW), z1 = sx + sw * (this.goldC + this.goldHW);
     if (this.phase === 'play' && !this.pulled) drawHighlight(ctx, z0, sy, z1 - z0, shh, this.t, PALETTE.sun);
     else { ctx.strokeStyle = PALETTE.sun; ctx.lineWidth = 3; rr(ctx, z0, sy - 2, z1 - z0, shh + 4, 6); ctx.stroke(); }
-    ctx.fillStyle = PALETTE.sun; star(ctx, (z0 + z1) / 2, sy - 14, 10, this.t);
+    if (this.inGold && !this.pulled) { ctx.save(); ctx.shadowColor = PALETTE.sun; ctx.shadowBlur = 20; ctx.fillStyle = 'rgba(255,201,74,0.55)'; rr(ctx, z0, sy, z1 - z0, shh, 6); ctx.fill(); ctx.restore(); text(ctx, 'now!', z1 + 14, sy - 6, { font: BOLD(22), color: PALETTE.sun, outline: PALETTE.choc }); }
+    ctx.fillStyle = PALETTE.sun; star(ctx, (z0 + z1) / 2, sy - 14, 10 + (this.inGold ? 4 : 0), this.t);
     text(ctx, 'raw', sx, sy + 40, { font: BOLD(12) }); text(ctx, 'burnt', sx + sw, sy + 40, { align: 'right', font: BOLD(12) });
     text(ctx, 'golden', (z0 + z1) / 2, sy + 40, { align: 'center', font: BOLD(13), color: PALETTE.sun });
     // marker
@@ -563,7 +593,7 @@ const stars = (s) => (s == null ? 0 : s >= 0.8 ? 3 : s >= 0.5 ? 2 : 1);
 
 // ------------------------------------------------------------------ shared drawing
 /** Lumpy dough blob. lump 0 = silky smooth, 1 = very lumpy. */
-function drawDough(ctx, x, y, rx, ry, lump, t) {
+function drawDough(ctx, x, y, rx, ry, lump, t, shine = 0) {
   const N = 28, pts = [];
   for (let i = 0; i < N; i++) {
     const a = (i / N) * TAU;
@@ -588,14 +618,15 @@ function drawDough(ctx, x, y, rx, ry, lump, t) {
   // flour specks + sheen
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.arc(x + Math.cos(i * 2.4) * rx * 0.5, y - ry * 0.2 + Math.sin(i * 1.7) * ry * 0.3, 1.6, 0, TAU); ctx.fill(); }
-  ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.ellipse(x - rx * 0.35, y - ry * 0.45, rx * 0.25, ry * 0.12, -0.2, 0, TAU); ctx.fill();
+  ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.4 * shine})`; ctx.beginPath(); ctx.ellipse(x - rx * 0.35, y - ry * 0.45, rx * (0.25 + 0.12 * shine), ry * 0.12, -0.2, 0, TAU); ctx.fill();
   ctx.restore();
 }
 
 /** Two cartoon hands pressing down (heel of the palm). */
-function drawPressHands(ctx, x, y, sq) {
+function drawPressHands(ctx, x, y, sq, side = 0) {
   for (const s of [-1, 1]) {
-    ctx.save(); ctx.translate(x + s * 52, y); ctx.rotate(s * 0.25);
+    const dy = s === side ? sq * 30 : -sq * 10;
+    ctx.save(); ctx.translate(x + s * 52, y + dy); ctx.rotate(s * 0.25);
     ctx.fillStyle = '#f2c7a5'; ctx.strokeStyle = 'rgba(120,70,40,0.5)'; ctx.lineWidth = 2;
     rr(ctx, -24, -30, 48, 42, 18); ctx.fill(); ctx.stroke();
     for (let f = 0; f < 4; f++) { rr(ctx, -22 + f * 11.5, -54, 10, 30, 5); ctx.fill(); ctx.stroke(); }
