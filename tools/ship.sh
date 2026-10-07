@@ -27,7 +27,20 @@ for attempt in 1 2 3 4 5 6 7 8; do
   # check only, so 9 teams racing to push don't starve each other with 2-minute smoke reruns.
   if [ "$attempt" = 1 ]; then
   case "$TEAM" in action) PORT=8101;; hub) PORT=8102;; art) PORT=8103;; story) PORT=8104;; games-a) PORT=8105;; games-b) PORT=8106;; art-world) PORT=8107;; games-c) PORT=8108;; games-d) PORT=8109;; *) PORT=8100;; esac
-  node tools/smoke.mjs --port "$PORT"
+  # CPU is shared by every agent: allow at most 2 concurrent smokes machine-wide (mkdir = atomic lock).
+  LOCKBASE="${TMPDIR:-/tmp}/aargam-smoke"
+  SLOT=""
+  while [ -z "$SLOT" ]; do
+    for n in 1 2; do
+      if mkdir "$LOCKBASE.$n" 2>/dev/null; then SLOT="$LOCKBASE.$n"; break; fi
+      # reclaim a slot whose holder died (older than 10 minutes)
+      if [ -n "$(find "$LOCKBASE.$n" -maxdepth 0 -mmin +10 2>/dev/null)" ]; then rmdir "$LOCKBASE.$n" 2>/dev/null; fi
+    done
+    [ -z "$SLOT" ] && { echo "ship: waiting for a smoke slot..." >&2; sleep 5; }
+  done
+  trap 'rmdir "$SLOT" 2>/dev/null' EXIT
+  node tools/smoke.mjs --port "$PORT" || { rmdir "$SLOT" 2>/dev/null; exit 1; }
+  rmdir "$SLOT" 2>/dev/null; trap - EXIT
   fi
   if git push -q origin HEAD:main; then
     echo "ship: pushed $(git rev-parse --short HEAD) to origin/main"
