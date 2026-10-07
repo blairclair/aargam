@@ -1,5 +1,19 @@
-// Shared helpers for the games-a minigames (office, kitchen, dining, living, playroom).
-// Owned by: games-a. Pure drawing/util helpers; no scene switching except finishMinigame via Outro.
+// Shared minigame helpers. Owned by: games-a (edit); any minigame team may IMPORT read-only.
+// Pure drawing/util helpers; no scene switching except finishMinigame via Outro.
+// CONTRACT — these signatures stay stable (additions only):
+//   math:     TAU, clamp(v,a,b), lerp(a,b,t), ease(t), easeInOut(t), BOLD(px), MONO(px), rr(ctx,x,y,w,h,r)
+//   params:   normParams(p) -> {...p, hero, attempt:number, perks:string[]}, timeMul(p) (1.2 w/ 'playlist'),
+//             ease_level(p) (0|1|2 by attempt)
+//   voice:    setBark(fn), line(roomId, event, hero)   events: start|good|great|bad|win|lose
+//   bust:     new Cheer(game, p, {x,y,h,side}) .react(mood 'cheer'|'oops'|'idle', event?, force?) .say(str,dur) .update(dt) .render(ctx)
+//   end card: new Outro(game, p) .start(success, score0to1, headline, sub?) .update(dt) .render(ctx) .active
+//             (calls finishMinigame after 3.2s or click/Enter)
+//   tutorial: drawHand(ctx,x,y,press0to1,{alpha}), drawHighlight(ctx,x,y,w,h,t,color?), drawArrow(ctx,ax,ay,bx,by,t,color?,bend?),
+//             prompt(ctx,str,y?,{font,x,alpha,fill,stroke,color,bob})
+//   scenery:  titleTag(ctx,roomId), timeBar(ctx,frac,x?,y?,w?,h?), drawBackdrop(ctx,roomId,t,{floorY,wallTop,wallBot,lampX}),
+//             vignette(ctx), star(ctx,x,y,r,rot?)
+//   color:    mix(hexA,hexB,k) -> 'rgb()', mixRgbStops(hexStops[],k) -> 'rgb()'
+//   re-exports: playSfx, PALETTE, FONT, ROOMS
 import { PALETTE, FONT, ROOMS, HEROES } from '../../core/theme.js';
 import { finishMinigame } from '../../core/flow.js';
 import { text, panel, chip } from '../../ui/widgets.js';
