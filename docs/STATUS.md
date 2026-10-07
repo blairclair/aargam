@@ -1,7 +1,7 @@
 # Build status & handoff (supervisor-owned)
 
 Read this first if you are a new session picking up the Housewarming build.
-Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~22:00.
+Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~22:10.
 
 ## Where everything lives
 - `main` on GitHub — integrated, playable game (always green: check + smoke).
@@ -21,12 +21,12 @@ Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~
 |---|---|---|
 | story | src/story, src/audio, docs/STORY.md | ✅ DONE (107cd15): script, staged cutscenes, title, audio + auto-music, barks API (incl. mid-minigame + sabotage), HERO_BLURBS |
 | hub | src/hub | ✅ FIRST PASS DONE (26c952e): floor plan, shop, select (busts), results. Open: hand playtest; hub tip copy could move to story |
-| action | src/action | all rooms w/ real art; open: heroes too small (scale 1.35×), bark bubble overlaps skill bar, pond drawWater/wallH, backyard string lights |
+| action | src/action | ✅ heroes 1.35×, bark above head, drawWater/wallH, string lights (b95fe4c). Last agent running: status text over face, adopt art projectiles/zones/hold |
 | games-a | dining, kitchen | ✅ DONE (df78e41): Pour the Drinks (solver-verified, sabotage twist, Cheers finale), Bread Bake (4 steps, oven twist) |
 | games-b | guest, primary, pond | ✅ DONE (dbf6c6c): Pipe Fixer (juiced), Crochet, Final Patch. Open: human playtest of timings |
 | games-c | office, living | ✅ DONE (9062c36): Bug Hunt v2, Bunny Roundup. All 9 minigames shipped. |
 | games-d | playroom, backyard | ✅ DONE (18395e5): Drumline (D/F drums, J/K cymbals), Card Duel. Open: Card Duel maybe too easy (needs human playtest) |
-| art | src/art (not world), src/ui | hero likeness shipped (9f0d90a): real cutout heads w/ hair, outfits from photos, kick/wrench anims; next drawStringLights re-export, final report |
+| art | src/art (not world), src/ui | ✅ DONE (e0ddb71): busts, dialog v2, HUD v2 + 20 skill icons, hero likeness, projectiles/zones/hold props, facade. Open: Aaron cutout faint sky fringe; more Aaron expression photos would help |
 | art-world | src/art/world | ✅ DONE (b69567f): 9 rooms, 41 furniture, 24 enemies, drawWater, drawStringLights. Open: dough blob looks more worried than menacing |
 
 ## User feedback log (most recent first)
