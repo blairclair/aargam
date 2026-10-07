@@ -145,7 +145,7 @@ export const BOSS_AI = {
         playSfx('whack');
         if (along > 0 && along < 250 && across < 34 + h.r) {
           const r = hurtHero(L, e.damage, e.x, e.y, { kind: 'melee', knock: 0, src: e });
-          if (r === 'hit') { e.state = 'hold'; e.st = 0.9; h.rootT = 1.0; L.fx.floatText(h.x, h.y - 90, 'GRABBED!', PALETTE.danger, { big: true }); }
+          if (r === 'hit') { e.state = 'hold'; e.st = 0.9; h.rootT = 1.0; L.fx.floatText(h.x, h.y - 130, 'GRABBED!', PALETTE.danger, { big: true }); }
         }
       } return;
       case 'hold': {

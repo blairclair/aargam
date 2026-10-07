@@ -627,7 +627,7 @@ export default class RoomScene {
     const lines = wrapText(ctx, bk.text, 250, FONT.small).slice(0, 3);
     const bw = 300, bh = 14 + lines.length * 16;
     const x = clamp(h.x - cx - bw / 2, 8, W - bw - 8);
-    const y = clamp(h.y - cy - 112 - bh, 70, H - 200);
+    const y = clamp(h.y - cy - 150 - bh, 70, H - 200);
     ctx.save();
     ctx.globalAlpha = Math.min(1, bk.t * 3, (3.2 - bk.t) * 6);
     panel(ctx, x, y, bw, bh, { radius: 12, stroke: bk.who === 'aaron' ? PALETTE.sun : PALETTE.mint });

@@ -100,7 +100,7 @@ export function updateHero(L, dt) {
   for (const slot of ['s1', 's2', 'ult']) {
     const id = h.slots[slot];
     if (!id || !inp.pressed(KEYS[slot])) continue;
-    if (h.cd[id] > 0 || h.channel) { L.fx.floatText(h.x, h.y - 84, h.channel ? 'Busy!' : 'Recharging...', 'rgba(255,246,229,0.7)'); continue; }
+    if (h.cd[id] > 0 || h.channel) { L.fx.floatText(h.x, h.y - 124, h.channel ? 'Busy!' : 'Recharging...', 'rgba(255,246,229,0.7)'); continue; }
     if (slot === 's1' && inp.pressed('Mouse2')) L.mouseAimT = 3;
     h.facing = aimAngle(L, h);
     castSkill(L, h, id);

@@ -69,7 +69,7 @@ export const SKILL_DEF = {
         if (e.hidden) { e.hidden = false; e.revealT = 0.4; L.fx.floatText(e.x, e.y - e.h - 16, 'FOUND!', PALETTE.mint); }
         e.markT = 6; n++;
       }
-      L.fx.floatText(h.x, h.y - 84, n ? `Debug: ${n} marked` : 'Debug: no bugs nearby', PALETTE.mint);
+      L.fx.floatText(h.x, h.y - 124, n ? `Debug: ${n} marked` : 'Debug: no bugs nearby', PALETTE.mint);
     },
   },
   unplug: {
@@ -149,7 +149,7 @@ export const SKILL_DEF = {
       const c = cards[Math.floor(Math.random() * cards.length)];
       vfx(L, { kind: 'card', x: h.x, y: h.y - 70, dur: 1.1, card: c });
       if (c === 'bolt') {
-        L.fx.floatText(h.x, h.y - 100, 'Lightning Bolt!', PALETTE.sun, { big: true });
+        L.fx.floatText(h.x, h.y - 140, 'Lightning Bolt!', PALETTE.sun, { big: true });
         const hit = new Set();
         for (let i = 0; i < 3; i++) {
           const e = nearestEnemy(L, h.x, h.y, 520, hit);
@@ -160,10 +160,10 @@ export const SKILL_DEF = {
         }
         L.fx.addShake(6);
       } else if (c === 'growth') {
-        L.fx.floatText(h.x, h.y - 100, 'Giant Growth!', PALETTE.heal, { big: true });
+        L.fx.floatText(h.x, h.y - 140, 'Giant Growth!', PALETTE.heal, { big: true });
         h.growT = 6; h.cd[h.slots.basic] = 0;
       } else {
-        L.fx.floatText(h.x, h.y - 100, 'Healing Salve!', PALETTE.heal, { big: true });
+        L.fx.floatText(h.x, h.y - 140, 'Healing Salve!', PALETTE.heal, { big: true });
         const heal = Math.round(h.maxHp * 0.3);
         h.hp = Math.min(h.maxHp, h.hp + heal);
         L.fx.burst(h.x, h.y - 20, PALETTE.heal, 18, 140);
@@ -252,7 +252,7 @@ export const SKILL_DEF = {
       arcHit(L, h, R, TAU, onBeat ? 2.2 : 1.1, { knock: onBeat ? 480 : 300, stun: onBeat ? 1.0 : 0.3 });
       clearEnemyShots(L, h.x, h.y, R);
       addWave(L, { x: h.x, y: h.y, team: 'hero', maxR: R, speed: 800, color: onBeat ? PALETTE.sun : '#9b6ab8', band: 10 });
-      L.fx.floatText(h.x, h.y - 88, onBeat ? 'ON BEAT!' : 'Off beat', onBeat ? PALETTE.sun : 'rgba(255,246,229,0.7)', onBeat ? { big: true } : undefined);
+      L.fx.floatText(h.x, h.y - 128, onBeat ? 'ON BEAT!' : 'Off beat', onBeat ? PALETTE.sun : 'rgba(255,246,229,0.7)', onBeat ? { big: true } : undefined);
       L.fx.addShake(onBeat ? 9 : 4);
     },
   },
@@ -292,7 +292,7 @@ export const SKILL_DEF = {
         if (e.hidden) e.hidden = false;
       }
       vfx(L, { kind: 'scan', x: h.x, y: h.y, r: 420, dur: 0.6, color: PALETTE.danger });
-      L.fx.floatText(h.x, h.y - 96, 'PULL AGGRO!', PALETTE.danger, { big: true });
+      L.fx.floatText(h.x, h.y - 136, 'PULL AGGRO!', PALETTE.danger, { big: true });
       L.fx.addShake(8);
     },
   },
@@ -304,7 +304,7 @@ export const SKILL_DEF = {
       for (const e of L.enemies) e.inBoundary = dist(e.x, e.y, h.x, h.y) < 160;
       for (const e of L.enemies) if (!e.dead && dist(e.x, e.y, h.x, h.y) < 160 + e.r) { e.stun = Math.max(e.stun, e.boss ? 1.6 : 6); }
       clearEnemyShots(L, h.x, h.y, 170);
-      L.fx.floatText(h.x, h.y - 96, 'BOUNDARIES.', PALETTE.mint, { big: true });
+      L.fx.floatText(h.x, h.y - 136, 'BOUNDARIES.', PALETTE.mint, { big: true });
       L.fx.addShake(8);
     },
   },

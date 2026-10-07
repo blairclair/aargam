@@ -29,7 +29,7 @@ export function hurtHero(L, amount, sx, sy, o = {}) {
   if (h.shieldT > 0 && o.kind !== 'wave' && o.kind !== 'hazard' && angDiff(fromAng, h.facing) < Math.PI * 0.5) {
     playSfx('shield');
     L.fx.burst(h.x + Math.cos(h.facing) * 20, h.y - 18 + Math.sin(h.facing) * 14, PALETTE.paper, 8, 130);
-    L.fx.floatText(h.x, h.y - 62, 'BLOCK', PALETTE.ice);
+    L.fx.floatText(h.x, h.y - 102, 'BLOCK', PALETTE.ice);
     if (o.src && o.kind === 'melee') { o.src.stun = Math.max(o.src.stun, 0.6); o.src.kvx += Math.cos(fromAng) * 260 / o.src.mass; o.src.kvy += Math.sin(fromAng) * 260 / o.src.mass; }
     return 'blocked';
   }
@@ -42,8 +42,8 @@ export function hurtHero(L, amount, sx, sy, o = {}) {
   h.kvx += Math.cos(fromAng + Math.PI) * k;
   h.kvy += Math.sin(fromAng + Math.PI) * k;
   if (o.slow) h.slowT = Math.max(h.slowT, o.slow);
-  if (o.root) { h.rootT = Math.max(h.rootT, o.root); L.fx.floatText(h.x, h.y - 80, 'Rooted!', PALETTE.mint); }
-  L.fx.floatText(h.x, h.y - 60, `-${dmg}`, PALETTE.danger);
+  if (o.root) { h.rootT = Math.max(h.rootT, o.root); L.fx.floatText(h.x, h.y - 120, 'Rooted!', PALETTE.mint); }
+  L.fx.floatText(h.x, h.y - 100, `-${dmg}`, PALETTE.danger);
   L.fx.burst(h.x, h.y - 20, PALETTE.danger, 8, 120);
   L.fx.addShake(o.kind === 'hazard' ? 2 : 5);
   L.damageTaken += dmg;
@@ -152,7 +152,7 @@ function reflectShot(L, s, h) {
   s.life = 1.2; s.t = 0; s.hits = new Set(); s.reflected = true; s.onLand = null;
   playSfx('shield');
   L.fx.burst(s.x, s.y, PALETTE.paper, 10, 140);
-  L.fx.floatText(h.x, h.y - 72, 'Reflected!', PALETTE.mint);
+  L.fx.floatText(h.x, h.y - 112, 'Reflected!', PALETTE.mint);
 }
 
 function shieldCatches(h, s) {
@@ -318,7 +318,7 @@ export function updatePickups(L, dt) {
         p.dead = true;
         const heal = Math.round(h.maxHp * 0.15);
         h.hp = Math.min(h.maxHp, h.hp + heal);
-        L.fx.floatText(h.x, h.y - 70, `+${heal}`, PALETTE.heal);
+        L.fx.floatText(h.x, h.y - 110, `+${heal}`, PALETTE.heal);
         L.fx.burst(p.x, p.y, PALETTE.heal, 8, 90);
         playSfx('pickup');
         continue;
