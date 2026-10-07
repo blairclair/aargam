@@ -61,5 +61,27 @@ export function drawBust(ctx, game, hero, x, y, o = {}) {
   ctx.restore();
 }
 
+/** Speech bubble whose tail points left toward a bust. o: { alpha, maxW, font, stroke } */
+export function drawBubble(ctx, str, x, y, o = {}) {
+  if (!str) return;
+  ctx.save();
+  if (o.alpha != null) ctx.globalAlpha *= o.alpha;
+  ctx.font = o.font ?? 'bold 14px "Trebuchet MS", system-ui, sans-serif';
+  const maxW = o.maxW ?? 260;
+  const words = String(str).split(/\s+/), lines = [];
+  let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+  lines.push(line);
+  const w = Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20, h = lines.length * 18 + 14;
+  const rr = (xx, yy) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(xx, yy, w, h, 10); else ctx.rect(xx, yy, w, h); };
+  ctx.fillStyle = 'rgba(8,10,18,0.3)'; rr(x + 2, y + 3); ctx.fill();
+  ctx.fillStyle = PALETTE.paper; ctx.strokeStyle = o.stroke ?? PALETTE.sunDeep; ctx.lineWidth = 2;
+  rr(x, y); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + 2, y + 8); ctx.lineTo(x - 10, y + 2); ctx.lineTo(x + 2, y + 20); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = PALETTE.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  lines.forEach((l, i) => ctx.fillText(l, x + 10, y + 8 + i * 18));
+  ctx.restore();
+}
+
 export function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 export function easeOutBack(k) { const c = 1.7; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); }

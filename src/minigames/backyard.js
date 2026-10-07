@@ -10,7 +10,8 @@ import { playSfx } from '../audio/sfx.js';
 import { DrumKit, SongClock } from './d/drums.js';
 import { buildChart, SECTION_STARTS } from './d/chart.js';
 import { drawBackyard, drawLights, drawGnome, drawSnare, drawNoteGem } from './d/drumart.js';
-import { RAVENS, readParams, drawBust, clamp } from './d/common.js';
+import { RAVENS, readParams, drawBust, drawBubble, clamp } from './d/common.js';
+import { bark } from '../story/lines.js';
 
 const LANES = [
   { key: 'D', code: 'KeyD', voice: 'bass', name: 'BASS', color: RAVENS.purpleLite, rim: RAVENS.purpleDeep },
@@ -67,6 +68,7 @@ export default class Drumline {
     this.pops = [];
     this.padFlash = [0, 0, 0, 0];
     this.mood = 'idle'; this.moodK = 0;
+    this.say = null; this.sayT = 0; this.saidStart = false;
     this.phase = 'play'; this.endT = 0; this.done = false;
     this.success = false; this.bandBeforeFinale = 0;
     this.t = 0;
@@ -156,7 +158,7 @@ export default class Drumline {
     const g = this.gnomes.find((q) => q.state === 'wild');
     if (!g) return;
     g.state = 'join'; g.slot = this.recruited++; g.k = 0; g.fx = g.x; g.fy = g.y;
-    if (!quiet) { this.mood = 'cheer'; this.moodK = 1; playSfx('star'); }
+    if (!quiet) { this.mood = 'cheer'; this.moodK = 1; playSfx('star'); if (this.recruited % 4 === 0) this._bark('hit'); }
   }
 
   update(dt) {
@@ -187,6 +189,8 @@ export default class Drumline {
     for (let i = 0; i < 4; i++) this.padFlash[i] = Math.max(0, this.padFlash[i] - dt * 5);
     this.lastHitAge = (this.lastHitAge ?? 9) + dt;
     this.moodK = Math.max(0, this.moodK - dt * 1.6);
+    this.sayT = Math.max(0, this.sayT - dt);
+    if (!this.saidStart && vis > -1.2) { this.saidStart = true; this._bark('minigame', 3.2); }
     for (const p of this.pops) p.life -= dt;
     this.pops = this.pops.filter((p) => p.life > 0);
     this._updateGnomes(dt, vis);
@@ -223,10 +227,17 @@ export default class Drumline {
       this.mood = 'cheer'; this.moodK = 1;
       this.fx.confetti(330, 320, 50);
       playSfx('victory');
+      this._bark('minigameWin', 6);
     } else {
       if (at != null) this.kit.play('miss', at);
       this.mood = 'oops'; this.moodK = 1;
+      this._bark('minigameFail', 6);
     }
+  }
+
+  _bark(event, dur = 2.6) {
+    const b = bark('backyard', event, { hero: this.p.hero });
+    if (b?.text) { this.say = b.text; this.sayT = dur; }
   }
 
   _finish() {
@@ -346,7 +357,8 @@ export default class Drumline {
       keycap(ctx, L.key, cx, hitY + 36);
       text(ctx, L.name, cx, hitY + 66, { align: 'center', font: 'bold 12px "Trebuchet MS", sans-serif', color: L.color });
     }
-    // notes
+    // notes (clipped to the board)
+    ctx.save(); ctx.beginPath(); ctx.rect(x, top, w, 540 - top); ctx.clip();
     for (let i = this.judgeFrom; i < this.notes.length; i++) {
       const n = this.notes[i];
       const y = hitY - (n.t - vis) * SPEED;
@@ -357,6 +369,7 @@ export default class Drumline {
       if (n.judged === 'miss') drawNoteGem(ctx, cx, y, '#6a6478', '#3a3540', LANE_W * 0.72, 0.5);
       else drawNoteGem(ctx, cx, y, L.color, L.rim, LANE_W * 0.72, n.demo ? 0.85 : 1, near);
     }
+    ctx.restore();
     // judgement pops
     for (const p of this.pops) {
       const k = 1 - p.life / 0.6, cx = x + (p.lane + 0.5) * LANE_W;
@@ -375,6 +388,7 @@ export default class Drumline {
     const { barDur, endT } = this.chart;
     // bust (left top), title + progress
     drawBust(ctx, g, this.p.hero, 64, 64, { size: 104, k: this.moodK, mood: this.moodK > 0.05 ? this.mood : 'idle', beat: vis > 0 ? phase : 0, ring: RAVENS.gold });
+    if (this.sayT > 0) drawBubble(ctx, this.say, 128, 84, { alpha: Math.min(1, this.sayT * 3), maxW: 230, stroke: RAVENS.gold });
     panel(ctx, 124, 14, 300, 58, { radius: 12, stroke: RAVENS.gold });
     text(ctx, 'DRUMLINE', 140, 38, { font: 'bold 20px "Trebuchet MS", sans-serif', color: RAVENS.goldLite });
     bar(ctx, 140, 48, 268, 10, clamp(vis / endT, 0, 1), RAVENS.purpleLite);
@@ -403,7 +417,7 @@ export default class Drumline {
       text(ctx, 'YOUR TURN!  D F J K or click', cx, 125, { align: 'center', font: 'bold 16px "Trebuchet MS", sans-serif', color: RAVENS.goldLite });
       text(ctx, word, cx, 250, { align: 'center', font: `bold ${Math.round(70 - k * 16)}px "Trebuchet MS", sans-serif`, color: RAVENS.goldLite, outline: RAVENS.purpleDeep, outlineWidth: 8, alpha: 1 - k * 0.5 });
     } else if (vis < barDur * 4) {
-      text(ctx, 'Streaks recruit gnomes into the band!', 300, 112, { align: 'center', font: 'bold 16px "Trebuchet MS", sans-serif', color: PALETTE.paper, outline: 'rgba(16,19,31,0.85)', alpha: clamp((barDur * 4 - vis) / barDur, 0, 1) });
+      text(ctx, 'Streaks recruit gnomes into the band!', 300, 200, { align: 'center', font: 'bold 16px "Trebuchet MS", sans-serif', color: PALETTE.paper, outline: 'rgba(16,19,31,0.85)', alpha: clamp((barDur * 4 - vis) / barDur, 0, 1) });
     }
     if (!this.kit.running && this.t > 0.5 && this.phase === 'play') {
       text(ctx, '(sound off: follow the notes)', 300, 530, { align: 'center', font: FONT.small, color: 'rgba(255,246,229,0.7)' });
