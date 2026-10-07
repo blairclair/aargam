@@ -10,7 +10,7 @@ import { Fx } from '../art/fx.js';
 import { playSfx, playMusic } from '../audio/sfx.js';
 import {
   PALETTE, TAU, clamp, lerp, ease, easeInOut, BOLD, MONO, rr, normParams, Cheer, Outro, drawHand, drawHighlight,
-  drawArrow, prompt, titleTag, drawBackdrop, vignette, mix, star, ppLine,
+  drawArrow, prompt, titleTag, drawBackdrop, vignette, mix, star, ppLine, drawTerminal,
 } from './a/common.js';
 import { pourAmount, applyPour, isSolved, hasMove, solveMoves, topRun } from './a/pour-logic.js';
 
@@ -177,6 +177,7 @@ export default class PourTheDrinks {
       this.fx.floatText(this.xs[b], surf - 40, `${this.streak}x flow!`, PALETTE.sun, { size: 16 + Math.min(10, this.streak * 2) });
       this.fx.ringPulse(this.xs[b], surf, PALETTE.sun, 40 + this.streak * 6, 0.35, 3);
       playSfx('pickup', { pitch: 1 + this.streak * 0.06 });
+      if (this.streak === 3 || this.streak === 6) this.cheer.react('cheer', 'combo', true);
     }
     if (this.isFull(b) && !this.doneFx[b]) {
       this.doneFx[b] = true;
@@ -258,7 +259,7 @@ export default class PourTheDrinks {
     const c = pool[Math.floor(Math.random() * pool.length)];
     this.levelOpt += Math.max(0, c.rem - remBefore);
     this.sel = -1;
-    this.pp = { ...c, t: 0, swapped: false, text: ppLine(this.li) };
+    this.pp = { ...c, t: 0, swapped: false, text: ppLine(this.li, 'dining') };
     playSfx('error'); playSfx('type');
     this.fx.addShake(5);
   }
@@ -271,7 +272,7 @@ export default class PourTheDrinks {
       this.history = []; // PartyPlanner's meddling can't be undone (undo works again from here)
       for (const k of [P.a, P.b]) { this.wob[k] = 1; this.fizz(k, 8); const r = this.glassRect(k); this.fx.splat(this.xs[k], r.y + r.h - 10 - this.glasses[k].length * UNIT, DRINKS[this.glasses[k][this.glasses[k].length - 1]].color, 6); }
       playSfx('splash');
-      this.cheer.react('oops', 'bad', true);
+      this.cheer.react('oops', 'twist', true);
       this.doneFx = this.glasses.map((_, k) => this.isFull(k));
     }
     if (P.t >= PP_T) { this.pp = null; this.streak = 0; }
@@ -529,26 +530,7 @@ export default class PourTheDrinks {
   }
 
   drawPPTerminal(ctx) {
-    const P = this.pp, t = P.t;
-    const a = t < 0.25 ? t / 0.25 : t > PP_T - 0.3 ? (PP_T - t) / 0.3 : 1;
-    // glitch flash
-    if (t < 0.35) {
-      ctx.save(); ctx.globalAlpha = (0.35 - t) * 1.2;
-      for (let y = 0; y < 540; y += 6) { ctx.fillStyle = y % 12 ? 'rgba(127,216,166,0.25)' : 'rgba(255,93,93,0.18)'; ctx.fillRect(Math.sin(y + t * 90) * 12, y, 960, 3); }
-      ctx.restore();
-    }
-    ctx.save(); ctx.globalAlpha = clamp(a, 0, 1);
-    const w = 520, x = 480 - w / 2, y = 150 - (1 - ease(t / 0.3)) * 30;
-    ctx.fillStyle = 'rgba(8,12,10,0.94)'; rr(ctx, x, y, w, 64, 10); ctx.fill();
-    ctx.strokeStyle = '#7fd8a6'; ctx.lineWidth = 2; rr(ctx, x, y, w, 64, 10); ctx.stroke();
-    ctx.fillStyle = '#7fd8a6'; ctx.font = MONO(12); ctx.textBaseline = 'middle';
-    ctx.fillText('PartyPlanner.exe', x + 12, y + 14);
-    const full = P.text, n = Math.floor(clamp((t - 0.2) * 40, 0, full.length));
-    const cursor = Math.floor(t * 3) % 2 ? '_' : ' ';
-    ctx.font = MONO(15); ctx.fillStyle = '#c9ffe0';
-    ctx.fillText(full.slice(0, n) + cursor, x + 12, y + 40, w - 24);
-    ctx.restore();
-    if (t > 1.5) prompt(ctx, 'PartyPlanner swapped two drinks!', 446, { alpha: clamp((t - 1.5) * 4, 0, 1) * clamp(a, 0, 1), fill: '#e8fff1', stroke: '#3fa874' });
+    drawTerminal(ctx, this.pp.text, this.pp.t, PP_T, { banner: 'PartyPlanner swapped two drinks!' });
   }
 
   drawFinaleText(ctx) {

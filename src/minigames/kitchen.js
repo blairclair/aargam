@@ -10,7 +10,7 @@ import { Fx } from '../art/fx.js';
 import { playSfx, playMusic } from '../audio/sfx.js';
 import {
   PALETTE, TAU, clamp, lerp, ease, easeInOut, BOLD, rr, normParams, timeMul, ease_level, Cheer, Outro,
-  drawHand, drawHighlight, drawArrow, prompt, titleTag, vignette, mix, mixRgbStops, star,
+  drawHand, drawHighlight, drawArrow, prompt, titleTag, vignette, mix, mixRgbStops, star, ppLine, drawTerminal,
 } from './a/common.js';
 
 const STEPS = [
@@ -58,7 +58,7 @@ export default class BreadBake {
     } else if (id === 'shape') {
       this.path = Array.from({ length: 120 }, (_, k) => { const a = (k / 120) * TAU; return { x: CX + Math.cos(a) * 150, y: CY + Math.sin(a) * 66 }; });
       this.checks = Array.from({ length: 40 }, (_, k) => ({ i: k * 3, hit: false }));
-      this.stroke = []; this.distSum = 0; this.distN = 0; this.touched = false; this.chime = 0;
+      this.stroke = []; this.distSum = 0; this.distN = 0; this.touched = false; this.chime = 0; this.closeSaid = false;
       this.shapeLimit = (12 + 3 * this.easy) * this.tm;
     } else if (id === 'proof') {
       this.level = 0; this.stopped = false; this.ghost = 0; this.demoDone = false; this.over = false;
@@ -68,6 +68,8 @@ export default class BreadBake {
       this.bake = 0; this.pulled = false; this.burnt = false;
       this.bakeDur = (7.5 + 1.5 * this.easy) * this.tm;
       this.goldC = 0.42; this.goldHW = 0.06 + 0.02 * this.easy; this.inGold = false;
+      // twist: PartyPlanner cranks the oven a few seconds in (baking pauses while it gloats, then runs hotter)
+      this.heat = 1; this.twistT = -1; this.ppText = ppLine(0, 'kitchen'); this.closeSaid = false;
     }
   }
 
@@ -154,7 +156,8 @@ export default class BreadBake {
     if (!demo && [3, 5, 8].includes(this.combo)) {
       this.fx.floatText(CX + 180, CY - 40, `${this.combo} in a row!`, PALETTE.sun, { size: 18 + this.combo });
       this.fx.sparkle(770, COUNTER_Y - 60, PALETTE.sun, 8, 30); // the starter approves
-      if (this.combo >= 5) this.cheer.react('cheer', 'hit', true);
+      if (this.combo === 5) this.cheer.react('cheer', 'combo', true);
+      if (this.combo === 8) this.cheer.react('cheer', 'hit', true);
     }
     if (!demo) {
       const col = res === 'perfect' ? PALETTE.sun : res === 'good' ? PALETTE.mint : PALETTE.paper;
@@ -183,6 +186,7 @@ export default class BreadBake {
         if (Math.random() < 0.3) this.fx.snowPuff(m.x, m.y + 4, 1, '#fffaf0');
       }
     }
+    if (!this.closeSaid && this.touched && this.shapeLimit - this.pt < 3) { this.closeSaid = true; this.cheer.react('oops', 'close', true); }
     const cov = this.coverage();
     const step = Math.floor(cov * 10);
     if (step > this.chime) {
@@ -236,7 +240,17 @@ export default class BreadBake {
   updBake(dt) {
     if (this.pulled) return;
     if (this.pt < 0.8) return;
-    this.bake += dt / this.bakeDur;
+    if (this.twistT < 0 && this.bake >= 0.13) {
+      this.twistT = 0; this.fx.addShake(5); playSfx('error'); playSfx('type');
+      this.cheer.react('oops', 'twist', true);
+    }
+    if (this.twistT >= 0) {
+      this.twistT += dt;
+      if (this.twistT < 1.4) return; // PartyPlanner is typing; the oven waits
+      this.heat = 1.6;
+    }
+    this.bake += dt * this.heat / this.bakeDur;
+    if (!this.closeSaid && this.bake > this.goldC + this.goldHW + 0.06) { this.closeSaid = true; this.cheer.react('oops', 'close', true); }
     if (Math.random() < dt * 3) this.fx.burst(CX + (Math.random() - 0.5) * 80, 150, 'rgba(255,255,255,0.6)', 1, 20);
     if (this.bake > 0.25 && Math.random() < dt * 6) this.fx.burst(CX + (Math.random() - 0.5) * 160, 260, '#ffcf7a', 1, 40); // crust crackles
     const inGold = Math.abs(this.bake - this.goldC) <= this.goldHW;
@@ -279,6 +293,7 @@ export default class BreadBake {
     this.cheer.render(ctx);
     if (this.phase === 'card') this.drawCard(ctx);
     this.drawPrompt(ctx);
+    if (STEPS[this.si]?.id === 'bake' && this.twistT >= 0 && this.twistT < 2.6 && this.phase !== 'reveal') drawTerminal(ctx, this.ppText, this.twistT, 2.6, { y: 196, banner: 'PartyPlanner turned the oven up! Watch the color!', bannerY: 505, bannerAt: 1.2 });
     this.outro.render(ctx);
   }
 
@@ -521,6 +536,7 @@ export default class BreadBake {
     ctx.fillStyle = og; rr(ctx, ox - 200, oy - 130, 400, 260, 22); ctx.fill();
     // dials
     for (let i = 0; i < 3; i++) { ctx.fillStyle = '#3a3f4a'; ctx.beginPath(); ctx.arc(ox - 120 + i * 120, oy - 104, 11, 0, TAU); ctx.fill(); ctx.fillStyle = PALETTE.sun; ctx.fillRect(ox - 121 + i * 120, oy - 114, 2, 8); }
+    if (this.heat > 1) text(ctx, 'HOT!', ox + 160, oy - 98, { align: 'center', font: BOLD(16), color: PALETTE.danger, outline: PALETTE.ink });
     // window
     const glow = this.pulled ? 0.4 : 0.85 + Math.sin(this.t * 9) * 0.05;
     ctx.fillStyle = '#2a1a14'; rr(ctx, ox - 160, oy - 80, 320, 170, 16); ctx.fill();
@@ -528,7 +544,7 @@ export default class BreadBake {
     wg.addColorStop(0, `rgba(255,170,70,${glow})`); wg.addColorStop(1, 'rgba(120,40,10,0.6)');
     ctx.fillStyle = wg; rr(ctx, ox - 150, oy - 70, 300, 150, 12); ctx.fill();
     // elements
-    ctx.strokeStyle = `rgba(255,90,40,${glow})`; ctx.lineWidth = 3;
+    ctx.strokeStyle = this.heat > 1 ? `rgba(255,${40 + Math.sin(this.t * 20) * 30},20,${glow})` : `rgba(255,90,40,${glow})`; ctx.lineWidth = this.heat > 1 ? 5 : 3;
     ctx.beginPath(); for (let x = -130; x <= 130; x += 20) ctx.lineTo(ox + x, oy - 58 + (x / 20 % 2 ? 4 : -4)); ctx.stroke();
     ctx.restore();
     // loaf inside (slides out when pulled)

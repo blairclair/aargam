@@ -4,7 +4,8 @@
 //   math:     TAU, clamp(v,a,b), lerp(a,b,t), ease(t), easeInOut(t), BOLD(px), MONO(px), rr(ctx,x,y,w,h,r)
 //   params:   normParams(p) -> {...p, hero, attempt:number, perks:string[]}, timeMul(p) (1.2 w/ 'playlist'),
 //             ease_level(p) (0|1|2 by attempt)
-//   voice:    setBark(fn), line(roomId, event, hero)   events: start|good|great|bad|win|lose (+ story ids), ppLine(seed?)
+//   voice:    setBark(fn), line(roomId, event, hero)   events: start|good|great|bad|win|lose (+ story ids; combo|twist|close map to minigameCombo/Twist/Close),
+//             ppLine(seed?, roomId?, event?='sabotage'), drawTerminal(ctx, str, t, dur, {y,w,banner,bannerY,bannerAt})
 //   bust:     new Cheer(game, p, {x,y,h,side}) .react(mood 'cheer'|'oops'|'idle', event?, force?) .say(str,dur) .update(dt) .render(ctx)
 //   end card: new Outro(game, p, {y?=250}) .start(success, score0to1, headline, sub?) .update(dt) .render(ctx) .active
 //             (calls finishMinigame after 3.2s or click/Enter)
@@ -51,9 +52,9 @@ export const ease_level = (p) => Math.min(2, p.attempt - 1);
 // good/great/bad fall back to tiny UI-level exclamations (not story dialogue).
 let barkFn = bark;
 export function setBark(fn) { barkFn = typeof fn === 'function' ? fn : bark; }
-const STORY_EVENT = { start: 'minigame', win: 'minigameWin', lose: 'minigameFail' };
-const STORY_EVENTS = new Set(['start', 'boss', 'lowhp', 'hit', 'win', 'lose', 'minigame', 'minigameWin', 'minigameFail']);
-const FALLBACK = { start: 'Here we go!', good: 'Nice!', great: 'Yes!', bad: 'Oops!', win: 'We did it!', lose: 'One more try.' };
+const STORY_EVENT = { start: 'minigame', win: 'minigameWin', lose: 'minigameFail', combo: 'minigameCombo', twist: 'minigameTwist', close: 'minigameClose' };
+const STORY_EVENTS = new Set(['start', 'boss', 'lowhp', 'hit', 'win', 'lose', 'minigame', 'minigameWin', 'minigameFail', 'sabotage', 'minigameCombo', 'minigameTwist', 'minigameClose']);
+const FALLBACK = { start: 'Here we go!', good: 'Nice!', great: 'Yes!', bad: 'Oops!', win: 'We did it!', lose: 'One more try.', combo: 'Combo!', twist: 'Whoa!', close: 'Hurry!' };
 export function line(roomId, event, hero) {
   const ev = STORY_EVENT[event] ?? (STORY_EVENTS.has(event) ? event : null);
   if (ev && barkFn) {
@@ -61,9 +62,37 @@ export function line(roomId, event, hero) {
   }
   return FALLBACK[event] ?? null;
 }
-/** A PartyPlanner terminal line (story's log lines), with the '> ' prompt. */
-export function ppLine(seed) {
-  try { return `> ${logLine(seed)}`; } catch { return '> optimizing...'; }
+/** A PartyPlanner terminal line with the '> ' prompt: the room's story 'sabotage' line if roomId is given, else a log line. */
+export function ppLine(seed, roomId, event = 'sabotage') {
+  try {
+    if (roomId) { const b = bark(roomId, event, { seed }); if (b?.text) return b.text.startsWith('>') ? b.text : `> ${b.text}`; }
+    return `> ${logLine(seed)}`;
+  } catch { return '> optimizing...'; }
+}
+
+/**
+ * PartyPlanner terminal popup (glitch flash + typed monospace line). t = seconds since it appeared, dur = total.
+ * o: { y?=150, w?=520, banner?: string (UI note under it, e.g. 'PartyPlanner swapped two drinks!'), bannerY?, bannerAt?=1.5 }
+ */
+export function drawTerminal(ctx, str, t, dur, o = {}) {
+  const a = clamp(t < 0.25 ? t / 0.25 : t > dur - 0.3 ? (dur - t) / 0.3 : 1, 0, 1);
+  if (t < 0.35) {
+    ctx.save(); ctx.globalAlpha = (0.35 - t) * 1.2;
+    for (let y = 0; y < 540; y += 6) { ctx.fillStyle = y % 12 ? 'rgba(127,216,166,0.25)' : 'rgba(255,93,93,0.18)'; ctx.fillRect(Math.sin(y + t * 90) * 12, y, 960, 3); }
+    ctx.restore();
+  }
+  ctx.save(); ctx.globalAlpha = a;
+  const w = o.w ?? 520, x = 480 - w / 2, y = (o.y ?? 150) - (1 - ease(t / 0.3)) * 30;
+  ctx.fillStyle = 'rgba(8,12,10,0.94)'; rr(ctx, x, y, w, 64, 10); ctx.fill();
+  ctx.strokeStyle = '#7fd8a6'; ctx.lineWidth = 2; rr(ctx, x, y, w, 64, 10); ctx.stroke();
+  ctx.fillStyle = '#7fd8a6'; ctx.font = MONO(12); ctx.textBaseline = 'middle';
+  ctx.fillText('PartyPlanner.exe', x + 12, y + 14);
+  const n = Math.floor(clamp((t - 0.2) * 40, 0, str.length));
+  ctx.font = MONO(15); ctx.fillStyle = '#c9ffe0';
+  ctx.fillText(str.slice(0, n) + (Math.floor(t * 3) % 2 ? '_' : ' '), x + 12, y + 40, w - 24);
+  ctx.restore();
+  const at = o.bannerAt ?? 1.5;
+  if (o.banner && t > at) prompt(ctx, o.banner, o.bannerY ?? 446, { alpha: clamp((t - at) * 4, 0, 1) * a, fill: '#e8fff1', stroke: '#3fa874' });
 }
 
 // ---------------------------------------------------------------- hero cheer bust
