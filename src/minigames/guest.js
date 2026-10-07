@@ -19,8 +19,9 @@ const WATER = '#5ec4f2', WATER_DEEP = '#2f86c4', PIPE = '#c9cdd6', PIPE_DARK = '
 // Filler tiles are fixed per board (seeded), so every board plays the same every time.
 const BOARDS = [
   { cols: 4, rows: 4, seed: 11, path: [[0, 0], [1, 0], [1, 1], [1, 2], [2, 2], [2, 3], [3, 3]] },
+  { cols: 5, rows: 4, seed: 19, path: [[0, 1], [1, 1], [1, 2], [2, 2], [3, 2], [3, 1], [4, 1]] },
   { cols: 5, rows: 5, seed: 23, path: [[0, 2], [0, 3], [1, 3], [2, 3], [2, 2], [2, 1], [3, 1], [3, 0], [4, 0]] },
-  { cols: 6, rows: 6, seed: 37, path: [[0, 4], [1, 4], [1, 5], [2, 5], [3, 5], [3, 4], [3, 3], [2, 3], [2, 2], [2, 1], [2, 0], [3, 0], [4, 0], [4, 1], [5, 1]] },
+  { cols: 6, rows: 5, seed: 37, path: [[0, 3], [1, 3], [1, 2], [1, 1], [2, 1], [3, 1], [3, 2], [3, 3], [4, 3], [4, 2], [5, 2]] },
 ];
 
 function seeded(seed) {
@@ -80,7 +81,9 @@ export default class PipeFixer {
     this.boardIdx = 0;
     this.level = 0; this.peak = 0;
     const fixit = this.p.hero === 'victoria' ? 1.1 : 1;
-    this.fillTime = 72 * this.p.timeMul * fixit;      // seconds for the room to fill completely
+    this.fillTime = 66 * this.p.timeMul * fixit;      // seconds for the room to fill completely (leaks/bursts speed it up)
+    this.streak = 0; this.bestStreak = 0; this.speedy = 0;
+    this.ducks = [];
     this.rotations = 0; this.minRotations = 0;
     this.cursor = { x: 0, y: 0 };
     this.state = 'demo';
@@ -112,6 +115,10 @@ export default class PipeFixer {
     }
     this.cursor = { x: this.b.src[0], y: this.b.src[1] };
     this.slide = 0;
+    this.boardT = 0;
+    this.nextBurst = (i === 0 ? 11 : 6 + i) + this.p.ease * 4;
+    this.ducks = []; this.duckT = 0; this.sprayT = 0;
+    this.whooshT = 0;
     this.flow();
     if (i === 0) {
       const first = this.b.at(this.b.src[0], this.b.src[1]);
@@ -124,7 +131,7 @@ export default class PipeFixer {
     const b = this.b;
     for (const t of b.tiles) { t.flooded = false; t.dist = 99; t.parent = -1; }
     const s = b.at(b.src[0], b.src[1]);
-    if (!(s.mask & W)) { this.connected = false; return; }
+    if (!(s.mask & W)) { this.connected = false; this.leaks = []; return; }
     const q = [s]; s.flooded = true; s.dist = 0; s.parent = -2;
     while (q.length) {
       const t = q.shift();
@@ -140,6 +147,19 @@ export default class PipeFixer {
     }
     const d = b.at(b.drain[0], b.drain[1]);
     this.connected = d.flooded && !!(d.mask & E);
+    // open ends of the wet network spray water into the room (and make it rise faster)
+    this.leaks = [];
+    for (const t of b.tiles) {
+      if (!t.flooded) continue;
+      for (const [bit, dx, dy, opp] of DIRS) {
+        if (!(t.mask & bit)) continue;
+        if (t === s && bit === W) continue;
+        if (t === d && bit === E) continue;
+        const nx = t.x + dx, ny = t.y + dy;
+        const n = nx >= 0 && ny >= 0 && nx < b.cols && ny < b.rows ? b.at(nx, ny) : null;
+        if (!n || !(n.mask & opp)) this.leaks.push({ t, bit, dx, dy });
+      }
+    }
   }
 
   turn(t, dir = 1) {
@@ -150,7 +170,6 @@ export default class PipeFixer {
     playSfx('pipe');
     const was = this.connected;
     this.flow();
-    if (this.connected && !was) this.drainPending = true;
   }
 
   tileAt(mx, my) {
@@ -171,12 +190,14 @@ export default class PipeFixer {
     for (const t of b.tiles) {
       t.ang += (t.target - t.ang) * Math.min(1, dt * 18);
       t.pop = Math.max(0, t.pop - dt * 5);
+      if (t.burst) t.burst = t.mask === t.solved ? 0 : Math.max(0.6, t.burst - dt);
       // water advances along the BFS tree, one tile after another
       const parentWet = t.parent === -2 ? 1 : t.parent >= 0 ? b.tiles[t.parent].wet : 0;
       if (t.flooded && parentWet > 0.75) t.wet = Math.min(1, t.wet + dt * 7);
       else if (!t.flooded) t.wet = Math.max(0, t.wet - dt * 5);
     }
     this.slide = Math.min(1, this.slide + dt * 3);
+    this.speedy = Math.max(0, this.speedy - dt);
 
     if (this.state === 'demo') {
       // ghost hand turns the first pipe so the player sees cause and effect. Any input skips.
@@ -191,8 +212,23 @@ export default class PipeFixer {
     }
 
     if (this.state === 'play') {
-      // rising water
-      this.level = Math.min(1, this.level + dt / this.fillTime);
+      this.boardT += dt;
+      // rising water: faster while pipes spray
+      const leakK = 1 + 0.12 * Math.min(5, this.leaks.filter((l) => l.t.wet > 0.5).length);
+      this.level = Math.min(1, this.level + dt * leakK / this.fillTime);
+      this.sprayT -= dt;
+      if (this.sprayT <= 0) {
+        this.sprayT = 0.09;
+        for (const l of this.leaks) {
+          if (l.t.wet < 0.5) continue;
+          const [cx, cy] = this.center(l.t);
+          const ex = cx + l.dx * this.tile * 0.5, ey = cy + l.dy * this.tile * 0.5;
+          this.fx._p({ x: ex, y: ey, vx: l.dx * 140 + (Math.random() - 0.5) * 60, vy: l.dy * 140 - 60 - Math.random() * 40, g: 420, drag: 1, life: 0.5, max: 0.5, color: WATER, size: 2 + Math.random() * 2, shape: 'drop', rot: 0, vr: 0 });
+        }
+      }
+      // surprise: a fixed pipe BURSTS and spins out of place
+      if (!this.connected && this.boardT > this.nextBurst && this.p.ease < 2) this.burst();
+      this.updateDucks(dt);
       this.peak = Math.max(this.peak, this.level);
       this.bust.tense = clamp01((this.level - 0.6) / 0.35);
       if (this.level > 0.75 && !this.warned) { this.warned = true; this.bust.react('worried'); this.bust.say(bark('guest', 'danger', this.p.hero)); playSfx('error'); }
@@ -214,18 +250,21 @@ export default class PipeFixer {
 
       // board complete once water physically reaches the drain
       const d = b.at(b.drain[0], b.drain[1]);
-      if (this.connected && d.wet >= 1) this.clearBoard();
+      if (this.connected && d.wet >= 1) { this.state = 'whoosh'; this.stateT = 0; playSfx('pour'); }
+    } else if (this.state === 'whoosh') {
+      this.updateDucks(dt, 3);
+      if (this.stateT > 0.75) this.clearBoard();
     } else if (this.state === 'cleared') {
       this.level = Math.max(this.levelAfter, this.level - dt * 0.35);
       if (this.stateT > 1.6) {
-        if (this.boardIdx + 1 < BOARDS.length) { this.loadBoard(this.boardIdx + 1); this.state = 'play'; this.stateT = 0; }
+        if (this.boardIdx + 1 < BOARDS.length) { this.loadBoard(this.boardIdx + 1); this.state = 'play'; this.stateT = 0; this.flow(); }
         else { this.state = 'won'; this.stateT = 0; this.fx.confetti(480, 300, 70); playSfx('victory'); this.bust.react('wow'); this.bust.say(bark('guest', 'win', this.p.hero)); }
       }
     } else if (this.state === 'won') {
       this.level = Math.max(0, this.level - dt * 0.4);
       if (this.stateT > 2.6) {
         const extra = Math.max(0, this.rotations - this.minRotations);
-        const score = 0.45 + 0.55 * (1 - this.peak) - Math.min(0.15, extra * 0.006);
+        const score = 0.4 + 0.5 * (1 - this.peak) + Math.min(0.1, this.bestStreak * 0.035) - Math.min(0.15, extra * 0.006);
         finishOnce(this, true, score);
       }
     } else if (this.state === 'lost') {
@@ -235,16 +274,69 @@ export default class PipeFixer {
 
   clearBoard() {
     this.state = 'cleared'; this.stateT = 0;
-    this.levelAfter = Math.max(0, this.level - 0.3);
+    const par = (7 + this.boardIdx * 3) * this.p.timeMul;
+    if (this.boardT < par) { this.streak++; this.bestStreak = Math.max(this.bestStreak, this.streak); this.speedy = 1.4; } else this.streak = 0;
+    this.levelAfter = Math.max(0, this.level - 0.3 - (this.streak ? 0.08 * this.streak : 0));
     const b = this.b, d = b.at(b.drain[0], b.drain[1]);
     const [dx, dy] = this.center(d);
-    this.fx.splat(dx + this.tile * 0.7, dy, WATER, 18);
-    this.fx.ringPulse(dx + this.tile * 0.7, dy, WATER, 70, 0.6);
-    for (const c of b.path) { const [x, y] = this.center(b.at(c[0], c[1])); this.fx.sparkle(x, y, PALETTE.paper, 2, 14); }
-    this.fx.floatText(dx, dy - 40, 'Fixed!', PALETTE.sun, { big: true });
+    this.fx.splat(dx + this.tile * 0.7, dy, WATER, 26);
+    this.fx.ringPulse(dx + this.tile * 0.7, dy, WATER, 110, 0.7, 6);
+    this.fx.ringPulse(dx + this.tile * 0.7, dy, PALETTE.paper, 60, 0.5);
+    for (const c of b.path) { const [x, y] = this.center(b.at(c[0], c[1])); this.fx.sparkle(x, y, PALETTE.paper, 3, 16); }
+    if (this.streak) this.fx.floatText(dx - 40, dy - 40, this.streak > 1 ? `Speedy! x${this.streak}` : 'Speedy!', PALETTE.sun, { big: true });
+    this.fx.addShake(10);
     playSfx('splash'); playSfx('star');
     this.bust.react('happy');
     this.bust.say(bark('guest', 'progress', this.p.hero));
+  }
+
+  burst() {
+    const b = this.b;
+    const good = b.tiles.filter((t) => t.onPath && t.mask === t.solved);
+    const wet = good.filter((t) => t.flooded && t.wet > 0.5);
+    const pool = wet.length ? wet : good;
+    this.nextBurst = this.boardT + 8 + Math.random() * 4 + this.p.ease * 4;
+    if (!pool.length) return;
+    const t = pool[Math.floor(Math.random() * pool.length)];
+    t.mask = rot1(t.mask); t.target += Math.PI / 2; t.pop = 1; t.burst = 1.6;
+    const [x, y] = this.center(t);
+    this.fx.splat(x, y, WATER, 22);
+    this.fx.ringPulse(x, y, PALETTE.danger, 60, 0.5);
+    this.fx.floatText(x, y - 30, 'BURST!', PALETTE.danger, { big: true });
+    this.fx.addShake(7);
+    playSfx('splash'); playSfx('error');
+    this.bust.react('oops');
+    this.flow();
+  }
+
+  /** Rubber ducks ride the current from the leak toward the drain (they plop out where the pipe breaks). */
+  updateDucks(dt, speedK = 1) {
+    const b = this.b, path = b.path;
+    const src = b.at(path[0][0], path[0][1]);
+    this.duckT -= dt;
+    if (this.duckT <= 0 && src.wet > 0.9 && this.ducks.length < 4) { this.duckT = 1.7; this.ducks.push({ pos: 0, bob: Math.random() * 6 }); }
+    for (const dk of this.ducks) {
+      const i = Math.floor(dk.pos);
+      const cur = b.at(path[i][0], path[i][1]);
+      const next = path[i + 1] ? b.at(path[i + 1][0], path[i + 1][1]) : null;
+      if (!cur.flooded || cur.wet < 0.5) { dk.dead = true; const [x, y] = this.center(cur); this.fx.splat(x, y, '#ffd23f', 5); continue; }
+      const canGo = next ? next.flooded && next.wet > 0.9 : this.connected;
+      const lim = canGo ? i + 1.999 : i + 0.5;
+      dk.pos = Math.min(lim, dk.pos + dt * 2.4 * speedK);
+      if (dk.pos >= path.length - 0.5) { dk.dead = true; const [x, y] = this.center(cur); this.fx.sparkle(x + this.tile * 0.6, y, '#ffd23f', 4, 12); }
+    }
+    this.ducks = this.ducks.filter((d) => !d.dead);
+  }
+
+  duckXY(dk) {
+    const path = this.b.path;
+    const i = Math.min(path.length - 1, Math.floor(dk.pos)), f = dk.pos - i;
+    const a = this.center(this.b.at(path[i][0], path[i][1]));
+    const nb = path[i + 1] ? this.center(this.b.at(path[i + 1][0], path[i + 1][1])) : [a[0] + this.tile, a[1]];
+    // first half of a tile: approach centre from the entry side; second half: head to the exit
+    const prev = i > 0 ? this.center(this.b.at(path[i - 1][0], path[i - 1][1])) : [a[0] - this.tile, a[1]];
+    if (f < 0.5) { const k = f + 0.5; return [prev[0] + (a[0] - prev[0]) * k, prev[1] + (a[1] - prev[1]) * k]; }
+    const k = f - 0.5; return [a[0] + (nb[0] - a[0]) * k, a[1] + (nb[1] - a[1]) * k];
   }
 
   lose() {
@@ -265,6 +357,8 @@ export default class PipeFixer {
 
     this.drawRisingWater(ctx, 'back');
     this.drawBoard(ctx);
+    this.drawWhoosh(ctx);
+    for (const dk of this.ducks) { const [x, y] = this.duckXY(dk); duck(ctx, x - 2, y + 4 + Math.sin(this.t * 8 + dk.bob) * 2, 0.75, Math.sin(this.t * 5 + dk.bob) * 0.2); }
     this.drawRisingWater(ctx, 'front');
     this.fx.render(ctx);
     ctx.restore();
@@ -274,6 +368,8 @@ export default class PipeFixer {
     chip(ctx, `Board ${this.boardIdx + 1} / ${BOARDS.length}`, 480, 30, { align: 'center', font: 'bold 14px "Trebuchet MS", sans-serif' });
     if (this.p.hero === 'victoria') chip(ctx, 'Fix-it girl: water rises slower', W2 - 16, 26, { align: 'right', fill: PALETTE.mint });
     if (this.p.playlist) chip(ctx, '♪ Playlist +20% time', W2 - 16, 50, { align: 'right', fill: PALETTE.sky });
+    const leaking = this.state === 'play' && this.leaks.some((l) => l.t.wet > 0.5);
+    if (leaking) text(ctx, 'LEAKING!', 57, 470, { align: 'center', font: 'bold 13px "Trebuchet MS", sans-serif', color: Math.sin(this.t * 10) > 0 ? PALETTE.danger : PALETTE.paper });
     this.bust.draw(ctx, W2 - 92, H + 6, 190);
 
     // teaching layer
@@ -289,9 +385,30 @@ export default class PipeFixer {
     } else if (this.state === 'play') {
       text(ctx, 'Click / Space: turn   Right-click / Q: turn back   Arrows: move', 480, 528, { align: 'center', font: '12px "Trebuchet MS", sans-serif', color: 'rgba(255,246,229,0.6)' });
     }
-    if (this.state === 'cleared') banner(ctx, this.boardIdx + 1 < BOARDS.length ? 'Pipe fixed!' : 'Last one!', 480, 90, this.stateT, { font: 'bold 38px "Trebuchet MS", sans-serif' });
+    if (this.state === 'cleared') banner(ctx, 'WHOOSH!', 480, 84, this.stateT, { color: WATER, font: 'bold 50px "Trebuchet MS", sans-serif', sub: this.streak ? `Speedy fix${this.streak > 1 ? ` x${this.streak}` : ''}: the flood drains extra!` : (this.boardIdx + 1 < BOARDS.length ? 'Next pipe!' : 'That was the last one!') });
+    if (this.state === 'play' && this.boardT < 1.2 && this.boardIdx > 0) banner(ctx, `Board ${this.boardIdx + 1}`, 480, 84, this.boardT, { font: 'bold 34px "Trebuchet MS", sans-serif' });
+    if (this.state === 'play' && this.streak) chip(ctx, `Speed streak x${this.streak}`, 480, 54, { align: 'center', fill: PALETTE.sun });
     if (this.state === 'won') banner(ctx, 'All pipes fixed!', 480, 250, this.stateT, { sub: 'The guest room is dry again.' });
     if (this.state === 'lost') banner(ctx, 'Flooded!', 480, 250, this.stateT, { color: WATER, sub: 'Grab a towel and try again: it gets easier.' });
+  }
+
+  drawWhoosh(ctx) {
+    if (this.state !== 'whoosh' && !(this.state === 'cleared' && this.stateT < 0.4)) return;
+    const k = this.state === 'whoosh' ? clamp01(this.stateT / 0.7) : 1;
+    const fade = this.state === 'cleared' ? 1 - this.stateT / 0.4 : 1;
+    const pts = [[this.ox - 40, this.center(this.b.at(...this.b.src))[1]], ...this.b.path.map((c) => this.center(this.b.at(c[0], c[1])))];
+    const last = pts[pts.length - 1]; pts.push([last[0] + this.tile, last[1]]);
+    const n = (pts.length - 1) * k;
+    ctx.save(); ctx.globalAlpha = fade; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const [w, c] of [[this.tile * 0.42, 'rgba(94,196,242,0.55)'], [this.tile * 0.18, 'rgba(255,255,255,0.95)']]) {
+      ctx.strokeStyle = c; ctx.lineWidth = w; ctx.shadowColor = WATER; ctx.shadowBlur = 18;
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i <= Math.floor(n); i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      const i = Math.floor(n), f = n - i;
+      if (pts[i + 1]) ctx.lineTo(pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   drawWallTiles(ctx) {
@@ -325,6 +442,15 @@ export default class PipeFixer {
         const x = ((i * 260 + this.t * (14 + i * 5)) % 1040) - 40;
         const y = top + Math.sin(x / 50 + this.t * 2) * 5 - 6;
         duck(ctx, x, y, 0.9 + (i % 2) * 0.2, Math.sin(this.t * 2 + i) * 0.15);
+      }
+      // the guest room's stuff floats up as the water rises
+      if (this.level > 0.06) {
+        const items = ['pillow', 'slipper', 'book', 'lamp', 'slipper', 'towel'];
+        items.forEach((kind, i) => {
+          const x = ((i * 173 + 90 + this.t * (9 + i * 3) * (i % 2 ? -1 : 1)) % 1040 + 1040) % 1040 - 40;
+          const y = top + Math.sin(x / 50 + this.t * 2) * 5;
+          floater(ctx, kind, x, y, Math.sin(this.t * 1.6 + i * 2) * 0.25, Math.min(1, this.level * 6));
+        });
       }
     }
   }
@@ -383,6 +509,7 @@ export default class PipeFixer {
       if (t.wet > 0) { ctx.fillStyle = hexA(WATER, 0.12 * t.wet); ctx.fill(); }
       if (hint && t.onPath && t.mask !== t.solved) { ctx.strokeStyle = 'rgba(255,201,74,0.6)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]); }
       if (cur) { ctx.strokeStyle = PALETTE.sun; ctx.lineWidth = 3; rrect(ctx, x + 2, y + 2, T - 4, T - 4, 10); ctx.stroke(); }
+      if (t.burst > 0) { ctx.fillStyle = `rgba(255,93,93,${0.25 + 0.2 * Math.sin(this.t * 14)})`; rrect(ctx, x + 3, y + 3, T - 6, T - 6, 9); ctx.fill(); ctx.strokeStyle = PALETTE.danger; ctx.lineWidth = 3; ctx.stroke(); }
       // pipe: draw the logical mask in a frame rotated back by the pending visual turn
       const pend = t.target - t.ang;
       ctx.save();
@@ -466,6 +593,27 @@ function drawPipe(ctx, mask, T, wet, t, dist) {
     ctx.fillRect(-3, -r - 4, 6, r * 2 + 8);
     ctx.restore();
   }
+}
+
+function floater(ctx, kind, x, y, tilt, a) {
+  ctx.save(); ctx.globalAlpha *= a; ctx.translate(x, y); ctx.rotate(tilt);
+  if (kind === 'pillow') {
+    ctx.fillStyle = '#f3e6d6'; rrect(ctx, -26, -14, 52, 22, 10); ctx.fill();
+    ctx.strokeStyle = '#c9b8a3'; ctx.lineWidth = 2; ctx.stroke();
+  } else if (kind === 'slipper') {
+    ctx.fillStyle = '#e98aa8'; ctx.beginPath(); ctx.ellipse(0, -4, 20, 8, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#fff6e5'; ctx.beginPath(); ctx.ellipse(8, -8, 9, 6, 0, 0, TAU); ctx.fill();
+  } else if (kind === 'book') {
+    ctx.fillStyle = '#5b7fa6'; ctx.fillRect(-16, -10, 32, 10);
+    ctx.fillStyle = '#fff6e5'; ctx.fillRect(-14, -8, 28, 3);
+  } else if (kind === 'lamp') {
+    ctx.fillStyle = '#ffc94a'; ctx.beginPath(); ctx.moveTo(-14, -30); ctx.lineTo(14, -30); ctx.lineTo(20, -12); ctx.lineTo(-20, -12); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#6b4636'; ctx.fillRect(-3, -12, 6, 10); ctx.fillRect(-12, -3, 24, 5);
+  } else {
+    ctx.fillStyle = '#7fd8a6'; rrect(ctx, -24, -9, 48, 12, 4); ctx.fill();
+    ctx.strokeStyle = '#3fa874'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-20, -4); ctx.lineTo(20, -4); ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function duck(ctx, x, y, s, tilt) {
