@@ -352,6 +352,8 @@ function baron_brrr(c, P) {
 }
 
 const DRAW = { frostling, brainfreezer, popsicle_knight, slush_golem, baron_brrr };
+/** Enemy type ids drawEnemy actually draws (anything else falls back to the frostling). */
+export const ENEMY_KINDS = Object.keys(DRAW);
 const BOX = { frostling: [50, 50], brainfreezer: [50, 70], popsicle_knight: [70, 70], slush_golem: [120, 100], baron_brrr: [160, 150] };
 
 export function drawEnemyImpl(ctx, game, type, x, y, o = {}) {

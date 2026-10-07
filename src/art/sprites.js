@@ -3,10 +3,10 @@
 // Coordinates: (x, y) is the entity's FEET / ground point in world or screen space; the caller
 // has already applied any camera transform.
 import { drawHeroImpl, drawPortrait as drawPortraitImpl, drawDenimShield } from './heroes.js';
-import { drawEnemyImpl, drawNPCImpl } from './enemies.js';
+import { drawEnemyImpl, drawNPCImpl, ENEMY_KINDS } from './enemies.js';
 import { drawGroundImpl, warmGround, groundKind } from './ground.js';
 import { drawPropImpl, drawProjectileImpl } from './props.js';
-export { drawDenimShield, warmGround, groundKind };
+export { drawDenimShield, warmGround, groundKind, ENEMY_KINDS };
 export { PROP_KINDS, ZONE_KINDS, PICKUP_KINDS, drawZone, drawPickup, drawWeather, drawFrostOverlay } from './props.js';
 
 /**
