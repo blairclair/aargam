@@ -1,7 +1,7 @@
 # Build status & handoff (supervisor-owned)
 
 Read this first if you are a new session picking up the Housewarming build.
-Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~21:00.
+Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~21:20.
 
 ## Where everything lives
 - `main` on GitHub — integrated, playable game (always green: check + smoke).
@@ -19,15 +19,15 @@ Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~
 ## Teams (round 2)
 | Team | Owns | State at last update |
 |---|---|---|
-| story | src/story, src/audio, docs/STORY.md | script + lines.js shipped (c4551d4); cutscene staging w/ busts → title → audio; owes games-a a dining swap line, review hub copy |
+| story | src/story, src/audio, docs/STORY.md | script, staged cutscenes w/ busts, title, synthesized audio + auto-music shipped (76f67cb, 688c823). Owes: dining swap line, mid-minigame barks (combo/twist/close), review hub copy |
 | hub | src/hub | ✅ FIRST PASS DONE (26c952e): floor plan, shop, select (busts), results. Open: hand playtest; hub tip copy could move to story |
 | action | src/action | all 9 rooms playable (213742f); tuning, fix rug-looks-like-telegraph, adopt HUD v2 when art exports HUD_VERSION=2 |
-| games-a | dining, kitchen | Pour the Drinks + Bread Bake shipped (1f9d5f4); liveliness pass (sabotage swap, fizz, Cheers finale) |
-| games-b | guest, primary, pond | Pipe Fixer, Crochet, Final Patch shipped (3abd446); next Pipe Fixer liveliness pass |
-| games-c | office, living | Bug Hunt shipped (3d79923); fix `victoria.patience` joke; boss-bug twist; Bunny Roundup |
-| games-d | playroom, backyard | Drumline shipped (75ef94e); remapping keys D/F drums J/K cymbals; then Card Duel |
-| art | src/art (not world), src/ui | busts, dialog v2, facade→art-world (aa5ad59); next HUD v2 + skill icons, hero likeness (heads still look like round medallions) |
-| art-world | src/art/world | stub API (051b52a); furniture + office room + enemies pending — NO wip backup yet (asked) |
+| games-a | dining, kitchen | Pour the Drinks + Bread Bake shipped (1f9d5f4); liveliness pass in progress |
+| games-b | guest, primary, pond | ✅ DONE (dbf6c6c): Pipe Fixer (juiced), Crochet, Final Patch. Open: human playtest of timings |
+| games-c | office, living | Bug Hunt v2 shipped (6fd0785: Segfault boss, combos, kind jokes); building Bunny Roundup (last minigame) |
+| games-d | playroom, backyard | ✅ DONE (18395e5): Drumline (D/F drums, J/K cymbals), Card Duel. Open: Card Duel maybe too easy (needs human playtest) |
+| art | src/art (not world), src/ui | busts, dialog v2, facade, HUD v2 + skill icons (ce995fd); next: re-export ROOM_KINDS/drawWater/WALL_H, hero likeness |
+| art-world | src/art/world | shipping all 9 rooms, 41 furniture, 24 enemies incl. koi (in flight); backup ok |
 
 ## User feedback log (most recent first)
 - Drumline: D/F = left/right drum, J/K = left/right cymbal.

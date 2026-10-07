@@ -3,7 +3,8 @@
 //   node tools/smoke.mjs [--port 8101] [--shots dir] [extra query strings...]
 // Starts a static server on --port, loads each scene URL, simulates a little input,
 // and fails on uncaught exceptions, console.error, or the engine crash screen.
-//   ONLY="scene=camp" node tools/smoke.mjs --port 8101      test a single URL
+//   ONLY="scene=hub" node tools/smoke.mjs --port 8101      test a single URL
+//   NOKEYS=1 ...                                             load + screenshot without pressing anything
 // Example: node tools/smoke.mjs --port 8101 "scene=level&region=summit&kind=boss&difficulty=5"
 import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -73,6 +74,7 @@ for (const [i, q] of urls.entries()) {
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/index.html${q ? '?' + q : ''}` });
   await sleep(1200);
   await evaluate('localStorage.clear()');
+  if (process.env.NOKEYS) { await sleep(2500); } else {
   // skip intro dialogs so gameplay actually runs (Enter advances Dialog)
   for (let k = 0; k < 8; k++) await key('Enter', 'Enter', 60);
   await sleep(300);
@@ -84,6 +86,7 @@ for (const [i, q] of urls.entries()) {
   await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 600, y: 300, button: 'left', clickCount: 1 });
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 600, y: 300, button: 'left', clickCount: 1 });
   await sleep(1500);
+  }
   const crashed = await evaluate('window.__game && window.__game.crashed ? JSON.stringify(window.__game.crashed) : null');
   if (crashed) problems.push(`[${current}] engine crash: ${crashed}`);
   const alive = await evaluate('!!window.__game');
