@@ -1,7 +1,31 @@
 # Build status & handoff (supervisor-owned)
 
 Read this first if you are a new session picking up the Housewarming build.
-Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~22:10.
+Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~22:30 — ROUND 2 FIRST PASS COMPLETE.
+
+## ☀️ Morning summary (read this first)
+
+**Round 2 first pass is complete: all 9 teams finished and everything is on `main`.**
+The full game plays end to end: title → opening cutscene → house floor plan → pick a room → intro cutscene →
+pick Aaron or Victoria + skills → action stage → the room's minigame → results → outro → … → pond finale →
+party ending. `node tools/playthrough.mjs` drives that whole campaign in headless Chrome and passes
+(all 9 rooms, unlock rule, clock 10 AM→7 PM, skills + ultimates granted, midgame/prefinale/party beats).
+
+**Play it:** `python3 -m http.server 8000` → http://localhost:8000 (sound on — real synthesized music now).
+Shortcuts: `?scene=room&roomId=kitchen&hero=victoria&dev=allskills`, `?scene=minigame&roomId=backyard`,
+`?scene=hub&dev=unlock5`, `?scene=cutscene&id=opening`.
+
+**What's in it:** 9 rooms of their house with real interiors · 24 enemies + 4 bosses (Roomba Tank, Sock Monster,
+Grill Dragon, PartyPlanner.exe code koi) · 20 earnable skills + 2 ultimates (Pull Aggro, Boundaries) · 9 minigames
+(Bug Hunt, Bread Bake, Pour the Drinks, Bunny Roundup, Card Duel, Crochet Pattern, Pipe Fixer, Drumline, Final Patch)
+· a full script with staged photo-bust cutscenes · Party Touch shop · 3 endings by star score · heroes with their
+real photo heads + hair, outfits from the photos.
+
+**Needs a human (nobody has hand-played it yet):**
+1. Difficulty: boss rooms (living/primary/pond) may be hard; some rooms may be short; Card Duel may be too easy;
+   minigame timers are bot-tuned.
+2. Sound mix (only ever tested muted).
+3. Two invented personal details in the script to confirm or cut (see below).
 
 ## Where everything lives
 - `main` on GitHub — integrated, playable game (always green: check + smoke).
@@ -21,7 +45,7 @@ Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~
 |---|---|---|
 | story | src/story, src/audio, docs/STORY.md | ✅ DONE (107cd15): script, staged cutscenes, title, audio + auto-music, barks API (incl. mid-minigame + sabotage), HERO_BLURBS |
 | hub | src/hub | ✅ FIRST PASS DONE (26c952e): floor plan, shop, select (busts), results. Open: hand playtest; hub tip copy could move to story |
-| action | src/action | ✅ heroes 1.35×, bark above head, drawWater/wallH, string lights (b95fe4c). Last agent running: status text over face, adopt art projectiles/zones/hold |
+| action | src/action | ✅ DONE (51a2102): 9 room stages, 20 skills, all enemies + 4 bosses, art adopted, 1.35× heroes. Open: human difficulty playtest |
 | games-a | dining, kitchen | ✅ DONE (df78e41): Pour the Drinks (solver-verified, sabotage twist, Cheers finale), Bread Bake (4 steps, oven twist) |
 | games-b | guest, primary, pond | ✅ DONE (dbf6c6c): Pipe Fixer (juiced), Crochet, Final Patch. Open: human playtest of timings |
 | games-c | office, living | ✅ DONE (9062c36): Bug Hunt v2, Bunny Roundup. All 9 minigames shipped. |
