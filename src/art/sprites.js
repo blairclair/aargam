@@ -5,7 +5,8 @@
 import { drawHeroImpl, drawPortrait as drawPortraitImpl, drawDenimShield } from './heroes.js';
 import { drawEnemyImpl, drawNPCImpl, ENEMY_KINDS as LEGACY_ENEMY_KINDS } from './enemies.js';
 import { drawGroundImpl, warmGround, groundKind } from './ground.js';
-import { drawPropImpl, drawProjectileImpl, PROP_KINDS as LEGACY_PROP_KINDS } from './props.js';
+import { drawPropImpl, drawProjectileImpl, PROP_KINDS as LEGACY_PROP_KINDS, ZONE_KINDS as LEGACY_ZONE_KINDS, drawZone as drawZoneLegacy } from './props.js';
+import { drawSkillProjectile, drawSkillZone, PROJECTILE_KINDS_V2, ZONE_KINDS_V2 } from './skillfx.js';
 import { drawWorldEnemy, drawFurniture, WORLD_ENEMY_KINDS, FURNITURE_KINDS } from './world/index.js';
 export { drawDenimShield, warmGround, groundKind };
 // Room interiors + furniture sizes come from art-world (src/art/world); re-exported here so everyone imports one module.
@@ -27,7 +28,7 @@ export { drawSkillIcon, SKILL_ICON_IDS } from './icons.js';
  * Returns { faceX, faceY, top } screen coords.
  */
 export function drawBust(ctx, game, hero, expr, x, y, h, o = {}) { return drawBustImpl(ctx, game, hero, expr, x, y, h, o); }
-export { ZONE_KINDS, PICKUP_KINDS, drawZone, drawPickup, drawWeather, drawFrostOverlay } from './props.js';
+export { PICKUP_KINDS, drawPickup, drawWeather, drawFrostOverlay } from './props.js';
 
 /**
  * Draw a hero. Heroes are "big-head" chibis: the photo portrait is the head.
@@ -75,4 +76,19 @@ export function drawProp(ctx, game, kind, x, y, o = {}) {
  * o: { r?, angle? (radians) or vx?/vy? (adds a trail + orients icicles), t?, life? 0..1 (rings fade), alpha? }
  * 'shout'/'shockwave' are expanding rings: pass r = current radius.
  */
-export function drawProjectile(ctx, game, kind, x, y, o = {}) { drawProjectileImpl(ctx, game, kind, x, y, o); }
+/** Projectile kinds drawProjectile really draws (v2 skill/enemy shots + legacy). */
+export const PROJECTILE_KINDS = [...PROJECTILE_KINDS_V2, 'mintscoop', 'slush', 'snowball', 'icicle', 'shout', 'shockwave'];
+/** Zone kinds drawZone really draws (v2 + legacy). */
+export const ZONE_KINDS = [...ZONE_KINDS_V2, ...LEGACY_ZONE_KINDS];
+/**
+ * Ground-level area effect, drawn under entities. (x, y) centre, r radius (length for beams/cones).
+ * v2 kinds: fire, net, puddle, web, boundaries, drumwave, hose, laser, steam, aggro, sizzle, mop, mark. See docs/teams/art.md.
+ */
+export function drawZone(ctx, game, kind, x, y, r, o = {}) {
+  if (drawSkillZone(ctx, game, kind, x, y, r, o)) return;
+  drawZoneLegacy(ctx, game, kind, x, y, r, o);
+}
+export function drawProjectile(ctx, game, kind, x, y, o = {}) {
+  if (drawSkillProjectile(ctx, game, kind, x, y, o)) return;
+  drawProjectileImpl(ctx, game, kind, x, y, o);
+}
