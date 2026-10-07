@@ -18,6 +18,14 @@ function label(s, x, y) { ctx.fillStyle = '#fff6e5'; ctx.font = '12px sans-serif
 function bg(x, y, w, h, c = '#d8c79a') { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 const pages = {
+  heads() {
+    bg(0, 0, 1400, 1000, '#b98a5c');
+    [30, 46, 70, 120, 240].forEach((h, i) => {
+      const x = 60 + i * 200 + h * 0.3;
+      S.drawCutoutHead(ctx, game, 'aaron', x, 300, h); label('aaron ' + h, x, 320);
+      S.drawCutoutHead(ctx, game, 'victoria', x, 700, h); label('victoria ' + h, x, 720);
+    });
+  },
   dialog() {
     const conv = [
       { who: 'aaron', text: 'I wrote PartyPlanner.exe to automate the prep. What could go wrong?', expr: 'happy' },

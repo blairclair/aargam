@@ -15,10 +15,13 @@ const BUST_META = {
 };
 
 /** expr -> which real photo to use + how to animate it. */
-export const BUST_EXPRS = ['smile', 'neutral', 'happy', 'surprised', 'annoyed', 'determined', 'worried', 'sheepish', 'sad', 'thinking'];
+export const BUST_EXPRS = ['smile', 'neutral', 'happy', 'surprised', 'annoyed', 'determined', 'worried', 'sheepish', 'sad', 'thinking', 'nod'];
+// Story-script aliases (motion words) -> canonical expressions.
+export const EXPR_ALIAS = { bounce: 'happy', sparkle: 'happy', lean: 'determined', shake: 'annoyed', surprise: 'surprised', sweat: 'worried', nod: 'nod', glad: 'happy', angry: 'annoyed', mad: 'annoyed', shocked: 'surprised', confused: 'thinking' };
+export function normExpr(expr) { return EXPR_ALIAS[expr] ?? expr ?? 'smile'; }
 const EXPR_BUST = {
   aaron: { default: 'smile' },
-  victoria: { smile: 'smile', happy: 'smile', sheepish: 'smile', default: 'neutral' },
+  victoria: { smile: 'smile', happy: 'smile', sheepish: 'smile', nod: 'smile', default: 'neutral' },
 };
 
 /** Which image key drawBust will use for hero+expr (exported so other teams can preload/check). */
@@ -26,7 +29,7 @@ export function bustKey(hero, expr = 'smile') {
   const H = HEROES[hero];
   if (!H?.busts) return null;
   const map = EXPR_BUST[hero] ?? { default: 'smile' };
-  const want = map[expr] ?? map.default;
+  const want = map[normExpr(expr)] ?? map.default;
   return H.busts[want] ?? H.busts.smile ?? Object.values(H.busts)[0];
 }
 
@@ -152,6 +155,7 @@ function thinkDots(c, x, y, s, t, a = 1) {
  * Returns { faceX, faceY, top } in screen space (useful for placing bubbles), or null if the image is missing.
  */
 export function drawBust(ctx, game, hero, expr = 'smile', x, y, h, o = {}) {
+  expr = normExpr(expr);
   const key = o.bust ? HEROES[hero]?.busts?.[o.bust] ?? bustKey(hero, expr) : bustKey(hero, expr);
   const img = key ? game?.assets?.image?.(key) : null;
   if (!ready(img)) return drawBustFallback(ctx, game, hero, x, y, h, o);
@@ -175,6 +179,7 @@ export function drawBust(ctx, game, hero, expr = 'smile', x, y, h, o = {}) {
     case 'determined': sc += 0.035 + beat * 0.03; dx += side * h * 0.025; rot = side * 0.035; dy += h * 0.01; break;
     case 'worried': case 'sad': dy += h * 0.015; rot = -side * 0.02 + Math.sin(t * 1.7) * 0.008; break;
     case 'sheepish': rot = -side * 0.04 + Math.sin(t * 2) * 0.01; dx -= side * h * 0.01; break;
+    case 'nod': dy += Math.sin(Math.min(1, et / 0.6) * Math.PI * 2) * h * 0.018 * (et < 0.6 ? 1 : 0); rot = side * 0.01; break;
     case 'thinking': rot = side * 0.03 + Math.sin(t * 1.2) * 0.01; break;
     default: break;
   }
