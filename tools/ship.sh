@@ -11,7 +11,7 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "ship: you have uncommitted changes. Commit (or stash) first." >&2; exit 1
 fi
 
-for attempt in 1 2 3 4 5; do
+for attempt in 1 2 3 4 5 6 7 8; do
   git fetch -q origin
   if git rev-parse -q --verify origin/main >/dev/null; then
     if ! git rebase -q origin/main; then
@@ -23,14 +23,18 @@ for attempt in 1 2 3 4 5; do
     fi
   fi
   node tools/check.mjs --team "$TEAM"
+  # Full headless smoke only on the first attempt; retries (someone else shipped first) re-run the fast
+  # check only, so 9 teams racing to push don't starve each other with 2-minute smoke reruns.
+  if [ "$attempt" = 1 ]; then
   case "$TEAM" in action) PORT=8101;; hub) PORT=8102;; art) PORT=8103;; story) PORT=8104;; games-a) PORT=8105;; games-b) PORT=8106;; art-world) PORT=8107;; games-c) PORT=8108;; games-d) PORT=8109;; *) PORT=8100;; esac
   node tools/smoke.mjs --port "$PORT"
+  fi
   if git push -q origin HEAD:main; then
     echo "ship: pushed $(git rev-parse --short HEAD) to origin/main"
     exit 0
   fi
   echo "ship: push rejected (someone shipped first). Retrying ($attempt)..." >&2
-  sleep $((RANDOM % 4 + 1))
+  sleep $((RANDOM % 6 + 1))
 done
-echo "ship: gave up after 5 attempts; message the supervisor." >&2
+echo "ship: gave up after 8 attempts; message the supervisor." >&2
 exit 3
