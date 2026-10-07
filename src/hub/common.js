@@ -29,6 +29,12 @@ export const FAVORED_BONUS = '+15% damage';
 
 /** Draw a hero photo bust (transparent cutout) with its bottom-center at (cx, by), height h. */
 export function drawBustImg(ctx, game, hero, cx, by, h, o = {}) {
+  if (typeof Sprites.drawBust === 'function') {
+    try {
+      return Sprites.drawBust(ctx, game, hero, o.expr ?? 'smile', cx, by, h,
+        { t: o.t ?? game.time, exprT: o.exprT, dim: o.dim, alpha: o.alpha, enter: o.enter, side: o.side, fade: o.fade });
+    } catch { /* fall back to the raw image below */ }
+  }
   const key = HEROES[hero]?.busts?.[o.expr ?? 'smile'] ?? `bust.${hero}.smile`;
   const img = game.assets?.image?.(key);
   ctx.save();

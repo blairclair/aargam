@@ -91,8 +91,7 @@ export default class ResultsScene {
     ctx.restore();
 
     // hero bust, celebrating
-    const hop = Math.abs(Math.sin(t * 3)) * (t < 2.5 ? 10 : 4);
-    drawBustImg(ctx, g, p.hero, 150, 540 - hop + 8, 330, { glow: 'rgba(255,214,120,0.6)' });
+    drawBustImg(ctx, g, p.hero, 138, 548, 300, { expr: 'happy', t, exprT: t, side: 1, enter: Math.min(1, t * 2.5), glow: 'rgba(255,214,120,0.6)' });
 
     // title
     const pop = Math.min(1, t * 4);

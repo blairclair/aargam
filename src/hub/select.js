@@ -44,8 +44,7 @@ export default class SelectScene {
     for (const h of HEROES_ORDER) this.loadouts[h] = initialLoadout(s, h);
     this.focus = -1; // -1 = Go button, 0..n-1 = skill tiles
     this.tip = this.p.retry ? retryTip(s, this.p.roomId, this.p.lastHero) : null;
-    this.bounce = { aaron: 0, victoria: 0 };
-    this.bounce[this.hero] = 1;
+    this.selT = 0;
     playMusic('house');
   }
 
@@ -53,7 +52,7 @@ export default class SelectScene {
 
   setHero(h) {
     if (h === this.hero) return;
-    this.hero = h; this.focus = -1; this.bounce[h] = 1;
+    this.hero = h; this.focus = -1; this.selT = this.t;
     playSfx('swap');
   }
 
@@ -82,7 +81,6 @@ export default class SelectScene {
     const g = this.game, inp = g.input;
     this.t += dt;
     this.sparks.update(dt);
-    for (const h of HEROES_ORDER) this.bounce[h] = Math.max(0, this.bounce[h] - dt * 3);
     const list = this.skills();
 
     if (inp.pressed('left')) this.setHero('aaron');
@@ -166,8 +164,10 @@ export default class SelectScene {
     const halo = ctx.createRadialGradient(c.x + c.w / 2, y + 130, 10, c.x + c.w / 2, y + 130, 120);
     halo.addColorStop(0, sel ? 'rgba(255,201,74,0.35)' : 'rgba(255,255,255,0.06)'); halo.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = halo; ctx.fillRect(c.x, y, c.w, c.h);
-    const b = this.bounce[h], hop = Math.sin(b * Math.PI) * 10, breathe = sel ? Math.sin(this.t * 2.2) * 2 : 0;
-    drawBustImg(ctx, g, h, c.x + c.w / 2, y + 236 - hop + breathe, 210, { alpha: sel ? 1 : 0.5 });
+    drawBustImg(ctx, g, h, c.x + c.w / 2, y + 240, 214, {
+      expr: sel ? 'happy' : 'smile', t: this.t, exprT: this.t - (this.selT ?? 0),
+      dim: sel ? 0 : 0.6, side: i === 0 ? 1 : -1, enter: Math.min(1, this.t * 3),
+    });
     // fade bust into name plate
     const fade = ctx.createLinearGradient(0, y + 200, 0, y + 240);
     fade.addColorStop(0, 'rgba(21,23,31,0)'); fade.addColorStop(1, 'rgba(21,23,31,0.95)');
