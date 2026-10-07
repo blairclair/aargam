@@ -36,6 +36,7 @@ Review page: `/src/art/world/gallery.html?page=rooms|room|furniture|enemies` (se
   | pond | glowing code |
 
 - **Water**: `drawWater(ctx, game, x, y, rx, ry, {t, weird})` draws a pond ellipse with bank pebbles, shimmer and ripples, plus code glyphs when weird. Call it for each `arena.water` after drawRoom and before entities.
+- **String lights**: `drawStringLights(ctx, game, x1, y1, x2, y2, {t, lit 0..1, sag})` hangs a sagging strand of coloured bulbs between two points. For light_posts, use each post's bulb point at about `(x, y - 96)`. `lit` is the fraction of bulbs on, counting from the start point, so a strand can light up progressively.
 - Performance: static art is cached in 512px world chunks (a base layer and a weird layer) per (room, size). Per-frame work is a few lights and scanlines.
 
 ## Furniture: `drawFurniture(ctx, game, kind, x, y, o) -> boolean`

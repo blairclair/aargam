@@ -7,7 +7,8 @@ export { FURNITURE_KINDS, FURNITURE_SIZE, FURNITURE_ALIASES, drawFurniture } fro
 
 // Rooms: drawRoom(ctx, game, roomId, camX, camY, w, h, {weird, t, arenaW, arenaH, wallH}) -> boolean
 // drawWater(ctx, game, x, y, rx, ry, {t, weird}) for action's arena.water ellipses.
-export { drawRoom, drawWater, ROOM_KINDS, WALL_H, SIDE, FRONT, roomGeometry } from './rooms.js';
+// drawStringLights(ctx, game, x1, y1, x2, y2, {t, lit 0..1, sag}) strands between light posts.
+export { drawRoom, drawWater, drawStringLights, ROOM_KINDS, WALL_H, SIDE, FRONT, roomGeometry } from './rooms.js';
 
 // Enemies: drawWorldEnemy(ctx, game, type, x, y, {facing, t, flash, anim, progress, phase, hpFrac, scale, seed, alpha, hpBar})
 export { WORLD_ENEMY_KINDS, drawWorldEnemy } from './enemies.js';

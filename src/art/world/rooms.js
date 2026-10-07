@@ -23,7 +23,7 @@ const STYLE = {
   },
   kitchen: {
     floor: 'tile', tile: ['#f3ead8', '#e3d6bb'], wall: '#f4ecd8', paper: 'subway', trim: '#ffffff', cap: '#4a3b36',
-    decor: [['window', 0.5, { w: 150 }], ['sign_bread', 0.24], ['pot_rail', 0.76], ['clock', 0.9], ['sconce', 0.08]],
+    decor: [['cabinets', 0.19, { w: 0.24 }], ['cabinets', 0.82, { w: 0.24 }], ['window', 0.5, { w: 150 }], ['sign_bread', 0.38], ['pot_rail', 0.635], ['sconce', 0.04]],
     weird: 'dough',
   },
   living: {
@@ -367,6 +367,21 @@ function decor(g, id, S, kind, fx, o, aw, wh, lights) {
       for (let x2 = 10, i = 0; x2 < aw - 10; x2 += 26, i++) { const y = -wh + 14 + Math.sin(x2 / 120 * Math.PI) ** 2 * 10; g.fillStyle = cols[i % 5]; g.beginPath(); g.moveTo(x2 - 8, y); g.lineTo(x2 + 8, y); g.lineTo(x2, y + 16); g.fill(); }
       break;
     }
+    case 'cabinets': { // upper kitchen cabinets across a fraction of the wall
+      const w = (o.w ?? 0.3) * aw, y = -wh + 12, hh = 52;
+      g.fillStyle = rgba(INK, 0.15); g.fillRect(x - w / 2 + 3, y + 3, w, hh);
+      g.fillStyle = tintA(id, '#f1eadb', 0.12); g.fillRect(x - w / 2, y, w, hh);
+      const n = Math.max(2, Math.round(w / 48)), dw = w / n;
+      for (let i = 0; i < n; i++) {
+        const dx = x - w / 2 + i * dw;
+        g.strokeStyle = rgba('#b5a88c', 0.9); g.lineWidth = 1.5; g.strokeRect(dx + 4, y + 4, dw - 8, hh - 8);
+        if (i % 3 === 1) { g.fillStyle = rgba('#cfe6f2', 0.7); g.fillRect(dx + 8, y + 8, dw - 16, hh - 16); g.fillStyle = '#fbfaf6'; for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(dx + 14 + k * (dw - 28) / 2, y + hh - 16, 5, 0, TAU); g.fill(); } }
+        g.fillStyle = '#b9a37a'; g.fillRect(dx + (i % 2 ? 8 : dw - 11), y + hh - 16, 3, 9);
+      }
+      g.fillStyle = shade('#f1eadb', -0.1); g.fillRect(x - w / 2 - 3, y + hh, w + 6, 4);
+      g.fillStyle = rgba(LAMP, 0.25); g.fillRect(x - w / 2, y + hh + 4, w, 6); // under-cabinet light
+      break;
+    }
     case 'towel_hook': {
       const y = top + 14; g.fillStyle = '#c4c8d0'; g.fillRect(x - 24, y, 48, 4);
       g.fillStyle = '#e98aa8'; rrect(g, x - 18, y + 4, 16, 40, 3); g.fill(); g.fillStyle = '#fff6e5'; rrect(g, x + 2, y + 4, 16, 34, 3); g.fill();
@@ -590,12 +605,60 @@ function paintBase(g, id, S, aw, ah, wh, r) {
   const dummy = [];
   for (const [k, fx, o] of S.decor ?? []) decor(g, id, S, k, fx, o ?? {}, aw, wh, dummy);
   g.restore();
-  if (S.outdoor === 'yard') { // patio already in siding (y 0..60); garden border along the fence
-    g.save(); g.beginPath(); g.rect(SIDE, 0, aw - SIDE * 2, ah); g.clip();
-    for (let y = 80; y < ah - 30; y += 24) for (const x of [SIDE + 8, aw - SIDE - 8]) { g.fillStyle = ['#ff8fb1', '#ffc94a', '#c9a0dc', '#fff6e5'][(y / 24 | 0) % 4]; g.beginPath(); g.arc(x + Math.sin(y) * 4, y, 4, 0, TAU); g.fill(); g.fillStyle = '#4f9a52'; g.beginPath(); g.ellipse(x - 5, y + 5, 5, 2.5, 0.5, 0, TAU); g.fill(); }
-    g.restore();
-  }
+  if (S.outdoor === 'yard') yardGround(g, id, aw, ah, r);
   walls(g, id, S, aw, ah, wh, r);
+}
+
+function yardGround(g, id, aw, ah, r) {
+  g.save(); g.beginPath(); g.rect(SIDE, 0, aw - SIDE * 2, ah - FRONT); g.clip();
+  // mulched flower borders along both side fences + the front fence
+  const bed = (x, y, w, h) => {
+    g.fillStyle = '#6b4a2e'; rrect(g, x, y, w, h, 10); g.fill();
+    g.fillStyle = rgba('#3a2414', 0.35); for (let i = 0; i < (w * h) / 120; i++) { g.beginPath(); g.arc(x + H(x + i, y, 71) * w, y + H(x, y + i, 72) * h, 1.4, 0, TAU); g.fill(); }
+    const cols = ['#ff8fb1', '#ffc94a', '#c9a0dc', '#fff6e5', '#ff5d5d'];
+    for (let yy = y + 10; yy < y + h - 4; yy += 18) for (let xx = x + 10; xx < x + w - 4; xx += 18) {
+      const hv = H(xx, yy, 73); if (hv < 0.25) continue;
+      g.fillStyle = '#4f9a52'; g.beginPath(); g.arc(xx, yy + 3, 6, 0, TAU); g.fill();
+      g.fillStyle = cols[Math.floor(hv * 5)]; for (let k = 0; k < 5; k++) { const a = k * TAU / 5; g.beginPath(); g.arc(xx + Math.cos(a) * 2.6, yy - 2 + Math.sin(a) * 2.6, 2.2, 0, TAU); g.fill(); }
+      g.fillStyle = '#ffd84a'; g.beginPath(); g.arc(xx, yy - 2, 1.5, 0, TAU); g.fill();
+    }
+  };
+  bed(SIDE, 70, 46, ah - 170); bed(aw - SIDE - 46, 70, 46, ah - 170);
+  bed(SIDE + 80, ah - FRONT - 40, aw * 0.3, 40); bed(aw - SIDE - 80 - aw * 0.3, ah - FRONT - 40, aw * 0.3, 40);
+  // flagstone path from the back door to the front gate
+  const dx = 0.4 * aw;
+  for (let i = 0, y = 70; y < ah - 30; i++, y += 46) {
+    const k = (y - 70) / (ah - 100), x = dx + (aw / 2 - dx) * k + Math.sin(i * 1.3) * 14;
+    g.fillStyle = rgba(INK, 0.15); g.beginPath(); g.ellipse(x + 2, y + 3, 26, 15, 0, 0, TAU); g.fill();
+    g.fillStyle = mix('#cbbfa8', '#b8ab92', H(i, 1, 74)); g.beginPath(); g.ellipse(x, y, 26, 15, H(i, 2, 74) - 0.5, 0, TAU); g.fill();
+    g.fillStyle = rgba('#ffffff', 0.2); g.beginPath(); g.ellipse(x - 6, y - 4, 10, 4, 0, 0, TAU); g.fill();
+  }
+  // a little herb patch + bird bath shadow spot near the patio corners (flat decor)
+  for (const [px, py] of [[aw * 0.72, 120], [aw * 0.2, ah * 0.55]]) {
+    g.fillStyle = '#6b4a2e'; g.beginPath(); g.ellipse(px, py, 50, 24, 0, 0, TAU); g.fill();
+    for (let i = 0; i < 9; i++) { const a = i * 0.7, d = 8 + (i % 3) * 12; g.fillStyle = ['#5fae5c', '#7cc26a', '#4f9a52'][i % 3]; g.beginPath(); g.arc(px + Math.cos(a) * d * 1.6, py + Math.sin(a) * d * 0.7, 7, 0, TAU); g.fill(); }
+  }
+  g.restore();
+}
+
+/**
+ * A strand of party string lights hanging between two points (e.g. between light_posts; pass the bulb-height
+ * points, about y - 96 above each post's base). o: { t, lit 0..1 (fraction of bulbs on / brightness), sag px }
+ */
+export function drawStringLights(ctx, game, x1, y1, x2, y2, o = {}) {
+  const t = o.t ?? game?.time ?? 0, lit = clamp01(o.lit ?? 1), sag = o.sag ?? Math.min(60, Math.hypot(x2 - x1, y2 - y1) * 0.12);
+  const pt = (k) => [x1 + (x2 - x1) * k, y1 + (y2 - y1) * k + Math.sin(k * Math.PI) * sag];
+  ctx.strokeStyle = '#3a3f4d'; ctx.lineWidth = 1.2; ctx.beginPath();
+  for (let i = 0; i <= 24; i++) { const [x, y] = pt(i / 24); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
+  ctx.stroke();
+  const n = Math.max(3, Math.round(Math.hypot(x2 - x1, y2 - y1) / 28)), cols = ['#ffd98a', '#ff8fb1', '#7fd8a6', '#8fc4ff'], gs = glow();
+  for (let i = 1; i < n; i++) {
+    const [x, y] = pt(i / n), on = lit > 0 && (i / n) <= lit + 0.001;
+    if (on) { ctx.globalAlpha = 0.8 + 0.2 * Math.sin(t * 3 + i * 1.7); ctx.drawImage(gs, x - 16, y - 12, 32, 32); ctx.globalAlpha = 1; }
+    ctx.fillStyle = on ? cols[i % 4] : '#8a8a7a'; ctx.beginPath(); ctx.ellipse(x, y + 4, 3, 4, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#3a3f4d'; ctx.fillRect(x - 1.5, y - 1, 3, 2);
+  }
+  return true;
 }
 
 // ------------------------------------------------------------------ live overlays
