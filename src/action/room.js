@@ -336,6 +336,7 @@ export default class RoomScene {
     if (this.barkData) this.drawBark(ctx);
     if (this.phase === 'intro') this.drawStageCard(ctx);
     this.drawPrompt(ctx);
+    if ((this.phase === 'won' || this.phase === 'lost') && typeof Sprites.drawBust === 'function') this.drawEndBust(ctx);
     if (this.bannerData) this.drawBanner(ctx);
     if (this.paused) this.drawPause(ctx);
   }
@@ -347,12 +348,19 @@ export default class RoomScene {
       // art convention: playable floor is 0..arenaW × 0..arenaH; back wall drawn above y=0
       ctx.save();
       ctx.translate(0, A.wallH);
-      Sprites.drawRoom(ctx, g, this.roomId, cx, cy - A.wallH, W, H, { weird: this.phase === 'won' ? Math.max(0, 1 - this.endT) : 1, t: this.time, arenaW: A.w, arenaH: A.h - A.wallH });
+      Sprites.drawRoom(ctx, g, this.roomId, cx, cy - A.wallH, W, H, { weird: this.weird(), t: this.time, arenaW: A.w, arenaH: A.h - A.wallH, wallH: A.wallH });
       ctx.restore();
     } else drawRoomFallback(ctx, A, this.accent, this.time);
   }
 
+  /** 1 while the room is haywire, fading to 0 during the victory beat. */
+  weird() { return this.phase === 'won' ? Math.max(0, 1 - this.endT / 1.5) : 1; }
+
   drawWater(ctx) {
+    if (typeof Sprites.drawWater === 'function') {
+      for (const wv of this.arena.water) Sprites.drawWater(ctx, this.game, wv.x, wv.y, wv.rx, wv.ry, { t: this.time, weird: this.weird() });
+      return;
+    }
     for (const wv of this.arena.water) {
       ctx.save();
       ctx.fillStyle = '#d9c99a';
@@ -542,6 +550,17 @@ export default class RoomScene {
     panel(ctx, W / 2 - tw / 2, y, tw, 44, { radius: 14, stroke: PALETTE.sun });
     keycap(ctx, pr.key, W / 2 - tw / 2 + 36, y + 22, {});
     text(ctx, pr.text, W / 2 - tw / 2 + 70, y + 28, { font: 'bold 16px "Trebuchet MS", system-ui, sans-serif', maxWidth: tw - 84 });
+    ctx.restore();
+  }
+
+  /** Hero photo bust slides in for the victory beat (or a sheepish one on defeat). */
+  drawEndBust(ctx) {
+    const won = this.phase === 'won';
+    const k = Math.min(1, this.endT * 3);
+    const ease = 1 - Math.pow(1 - k, 3);
+    const expr = won ? 'happy' : 'sheepish';
+    ctx.save();
+    try { Sprites.drawBust(ctx, this.game, this.hero.id, expr, 130, H, 290, { t: this.endT, exprT: this.endT, enter: ease, side: 1 }); } catch { /* art optional */ }
     ctx.restore();
   }
 
