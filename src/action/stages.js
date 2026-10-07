@@ -230,7 +230,7 @@ export const STAGES = {
     w: 1500, h: 920, wallH: 110, floor: 'grass', outdoor: true, start: { x: 750, y: 780 },
     props: [
       ['grill', 1240, 250], ['patio_table', 420, 640], ['tree', 140, 260], ['tree', 1390, 780], ['hedge', 700, 170], ['hedge', 400, 170],
-      ['light_post', 270, 420, { tag: 'light' }], ['light_post', 820, 360, { tag: 'light' }], ['light_post', 330, 820, { tag: 'light' }], ['light_post', 1120, 640, { tag: 'light' }],
+      ['light_post', 270, 420, { tag: 'light' }], ['light_post', 820, 360, { tag: 'light' }], ['light_post', 1120, 640, { tag: 'light' }], ['light_post', 330, 820, { tag: 'light' }],
     ],
     setup(L) {
       L.lights = L.arena.props.filter((p) => p.tag === 'light');

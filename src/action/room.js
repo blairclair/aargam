@@ -423,8 +423,8 @@ export default class RoomScene {
   drawLights(ctx) {
     const L = this.lights;
     if (!L || L.length < 2) return;
-    for (let i = 0; i < L.length; i++) {
-      const a = L[i], b = L[(i + 1) % L.length];
+    for (let i = 0; i < L.length - 1; i++) {
+      const a = L[i], b = L[i + 1];
       const lit = Math.min(a.done ? 1 : a.lit, b.done ? 1 : b.lit);
       if (typeof Sprites.drawStringLights === 'function') Sprites.drawStringLights(ctx, this.game, a.x, a.y - 96, b.x, b.y - 96, { t: this.time, lit, sag: 40 });
       else {
