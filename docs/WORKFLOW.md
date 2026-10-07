@@ -19,6 +19,12 @@ Several agents build this game at the same time. These rules keep us out of each
 6. Never `git push --force`, never rewrite `main`, and never commit the raw `*.jpg` photos in the repo root.
 7. If ship reports a **rebase conflict** or ownership error, stop and message the supervisor.
 
+## Never lose work
+- Run **`tools/backup.sh <team>`** at least every 10 minutes and before any long operation. It commits
+  uncommitted changes as a WIP commit and pushes your branch to `origin/wip/<team>` (your private
+  backup branch). Shipping to `main` stays separate and still goes through `tools/ship.sh`.
+- Resume after a crash: `git fetch origin && git checkout -B <your-branch> origin/wip/<team>`.
+
 ## Talking to the supervisor
 - Use `SendMessage` with `to: "main"`. Make the first line a one-sentence summary.
 - **Ask, don't guess**, when you need: a contract or signature change, a new theme constant or asset,
