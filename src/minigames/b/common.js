@@ -112,6 +112,7 @@ function speech(ctx, str, x, y, a) {
   ctx.save(); ctx.globalAlpha *= a;
   ctx.font = 'bold 14px "Trebuchet MS", sans-serif';
   const w = Math.min(260, ctx.measureText(str).width + 20), h = 30;
+  x = Math.max(10, Math.min(x, 950 - w));
   ctx.fillStyle = PALETTE.paper; ctx.strokeStyle = PALETTE.choc; ctx.lineWidth = 2;
   rrect(ctx, x, y - h, w, h, 12); ctx.fill(); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(x + 14, y - 1); ctx.lineTo(x + 6, y + 10); ctx.lineTo(x + 26, y - 1); ctx.closePath(); ctx.fill();
