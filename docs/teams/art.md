@@ -59,7 +59,7 @@ v2 is detected by `hud.hero` (no `hud.heroes`). The legacy round-1 shape still w
 - Bodies match the photos.
   - Aaron: tall and lean (long legs), heather-grey tee with faint stripes, dark shorts, white sneakers, fitness watch.
   - Victoria: light-wash denim jacket over a navy knit, mid-wash jeans with rolled cuffs, white sneakers, long hair continuing behind her shoulders, wrench in her back pocket.
-- `HERO_SCALE = 1.2` multiplies every hero draw so faces read at room scale. Pass `o.rawScale: true` to skip it.
+- `HERO_SCALE` (currently 1, because action scales heroes about 1.35× itself) multiplies every hero draw. Pass `o.rawScale: true` to skip it. Heads pick a 64, 128 or 256 px cutout cache by on-screen size, so they stay crisp when scaled up.
 - `anim: 'attack'`: Aaron does a **karate kick** toward `o.facing`; Victoria does an overhand **wrench swing**. Both leave a swoosh.
 - `o.hold`: one of `HOLD_KINDS` (`wrench, pan, baguette, mop, hose, drumsticks, plate, pillow, card, sock, yarn, ball, laptop`). Puts the item in the front hand; with `anim: 'attack'` it becomes an overhand swing with that item. `o.kick: false` turns off Aaron's kick.
 - `o.shield` 0..1 with `o.shieldKind: 'plate'` draws the Plate Shield. The default is the round-1 denim shield. `drawPlateShield` is also exported.

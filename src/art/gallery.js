@@ -20,6 +20,10 @@ function label(s, x, y) { ctx.fillStyle = '#fff6e5'; ctx.font = '12px sans-serif
 function bg(x, y, w, h, c = '#d8c79a') { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 const pages = {
+  big() {
+    bg(0, 0, 1400, 1000, '#b98a5c');
+    [1, 1.35, 2, 3].forEach((sc, i) => { S.drawHero(ctx, game, 'aaron', 100 + i * 300, 450, { scale: sc, t: T }); S.drawHero(ctx, game, 'victoria', 230 + i * 300, 950, { scale: sc, t: T, anim: 'walk' }); });
+  },
   fx2() {
     bg(0, 0, 1400, 1000, '#b98a5c');
     (S.PROJECTILE_KINDS ?? []).forEach((k, i) => { const x = 60 + (i % 12) * 110, y = 70 + Math.floor(i / 12) * 110; S.drawProjectile(ctx, game, k, x, y, { vx: 1, vy: 0.3, t: T + i * 0.1, r: k === 'shout' || k === 'shockwave' ? 40 : undefined }); label(k, x, y + 40); });

@@ -355,7 +355,7 @@ export function drawCutoutHead(ctx, game, hero, x, y, h, o = {}) {
   // head height (hair top -> chin) in source px
   const srcH = meta.chin - meta.headTop;
   const scrH = h * Math.hypot(m.a, m.b) * (spec.box[3] / srcH);
-  const px = scrH <= 64 ? 64 : scrH <= 128 ? 128 : 256;
+  const px = scrH <= 40 ? 64 : scrH <= 100 ? 128 : 256;
   const c = headCanvas(game, hero, px);
   if (!c) return false;
   const k = h / (srcH * c.k);

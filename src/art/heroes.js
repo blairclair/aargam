@@ -475,7 +475,7 @@ function fallbackHead(ctx, game, hid, L, hx, chinY, t, sway, o) {
  *   o.shieldKind: 'denim' (default) | 'plate'
  */
 /** Global in-world hero size multiplier (faces need to read at room scale). Multiplies o.scale; o.rawScale skips it. */
-export const HERO_SCALE = 1.2;
+export const HERO_SCALE = 1;
 export function drawHeroImpl(ctx, game, id, x, y, o = {}) {
   const L = LOOK[id] ?? LOOK.aaron;
   const hid = LOOK[id] ? id : 'aaron';
