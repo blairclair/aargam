@@ -368,8 +368,8 @@ export default class RoomScene {
   drawFurniture(ctx, p) {
     const g = this.game;
     const o = { seed: p.seed, t: this.time, w: p.w, d: p.d, lit: p.done ? 1 : p.lit, flash: p.flash > 0 ? p.flash : 0, room: this.roomId, laptop: p.laptop };
-    if (Sprites.FURNITURE_KINDS?.includes?.(p.kind) && typeof Sprites.drawFurniture === 'function') { if (Sprites.drawFurniture(ctx, g, p.kind, p.x, p.y, o) !== false) return; }
-    else if (Sprites.PROP_KINDS?.includes?.(p.kind) && ['tree', 'rock'].includes(p.kind)) { Sprites.drawProp(ctx, g, p.kind, p.x, p.y, o); return; }
+    // PROP_KINDS = art-world furniture + round-1 props (my kind names are canonical; tree/rock reuse round-1 art)
+    if (Sprites.PROP_KINDS?.includes?.(p.kind)) { Sprites.drawProp(ctx, g, p.kind, p.x, p.y, o); return; }
     drawFurnitureFallback(ctx, p, this.time, g);
   }
 
