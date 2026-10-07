@@ -10,12 +10,14 @@ function rr(ctx, x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundR
 function rand(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 
 /** Draw a backdrop for `key` (room id | 'house' | 'dusk' | 'party'). Never throws. */
-export function drawBackdrop(ctx, game, key, t = 0, W = 960, H = 540) {
+export function drawBackdrop(ctx, game, key, t = 0, W = 960, H = 540, o = {}) {
   ctx.save();
   try {
-    if (ROOMS[key] && typeof Sprites.drawRoom === 'function') {
-      // art's interior, framed on the room's center
-      Sprites.drawRoom(ctx, game, key, 0, 0, W, H, { t, cutscene: true });
+    if (ROOMS[key] && key !== 'pond' && typeof Sprites.drawRoom === 'function' && artRoom(ctx, game, key, t, W, H, o.weird ?? 0.6)) {
+      // art-world's interior + furniture, with our animated story bits on top
+      const f = ANIMS[key]; if (f) f(ctx, W, H, t);
+      glow(ctx, W / 2, H * 0.5, 380, ROOMS[key].accent, (o.weird ?? 0.6) * (0.14 + 0.05 * Math.sin(t * 2)));
+      vignette(ctx, W, H);
     } else if (key === 'house') house(ctx, W, H, t, false);
     else if (key === 'dusk' || key === 'party') house(ctx, W, H, t, true, key === 'party');
     else if (key === 'backyard') backyard(ctx, W, H, t);
@@ -29,7 +31,65 @@ export function drawBackdrop(ctx, game, key, t = 0, W = 960, H = 540) {
   ctx.restore();
 }
 
-// ------------------------------------------------------------ interiors
+// ------------------------------------------------------------ art-world rooms, staged for a cutscene
+const SCALE = 1.45;
+// Furniture per room in arena coords (arena is W/SCALE wide; x≈330 is screen center). Back row first (y-sorted).
+const STAGE = {
+  office: [['bookshelf', 150, 40], ['server_rack', 520, 44], ['desk', 330, 86], ['office_chair', 330, 118], ['plant', 590, 70]],
+  kitchen: [['fridge', 170, 54], ['counter', 280, 52], ['oven', 380, 52], ['sink', 470, 46], ['island', 330, 150]],
+  living: [['rug', 330, 190], ['floor_lamp', 150, 60], ['tv_stand', 330, 40], ['armchair', 500, 120], ['sofa', 330, 130], ['coffee_table', 330, 190]],
+  dining: [['rug', 330, 190], ['sideboard', 330, 40], ['dining_chair', 230, 110], ['dining_chair', 430, 110], ['dining_table', 330, 160]],
+  playroom: [['toy_shelf', 220, 40], ['toy_shelf', 440, 40], ['toy_box', 330, 90], ['block_tower', 480, 130], ['play_table', 300, 180]],
+  primary: [['wardrobe', 140, 46], ['nightstand', 240, 60], ['nightstand', 420, 60], ['dresser', 540, 46], ['bed', 330, 200], ['laundry_pile', 480, 200]],
+  guest: [['plant', 170, 60], ['laundry_basket', 470, 80], ['bathtub', 330, 120], ['guest_bed', 540, 200]],
+  backyard: [['fence', 140, 20], ['fence', 330, 20], ['fence', 520, 20], ['tree', 110, 80], ['hedge', 560, 70], ['light_post', 200, 120], ['light_post', 460, 120], ['grill', 470, 170], ['patio_table', 250, 180]],
+};
+
+function artRoom(ctx, game, key, t, W, H, weird) {
+  const wh = Sprites.WALL_H ?? 130;
+  const aw = Math.ceil(W / SCALE), ah = Math.ceil(H / SCALE - wh);
+  ctx.save();
+  ctx.scale(SCALE, SCALE);
+  ctx.translate(0, wh);
+  const ok = Sprites.drawRoom(ctx, game, key, 0, -wh, aw, ah + wh, { t, weird, arenaW: aw, arenaH: ah, wallH: wh });
+  if (ok !== false && typeof Sprites.drawProp === 'function') {
+    for (const [kind, x, y] of STAGE[key] ?? []) {
+      try { Sprites.drawProp(ctx, game, kind, x, y, { t, weird, seed: (x % 3) / 3 }); } catch { /* skip a piece */ }
+    }
+  }
+  ctx.restore();
+  return ok !== false;
+}
+
+// Animated story bits drawn over art's rooms (screen space), kept to the middle so busts don't cover them.
+const ANIMS = {
+  office(ctx, W, H, t) { for (let i = 0; i < 7; i++) { const a = t * 1.3 + i * 1.7; bug(ctx, W / 2 + Math.cos(a) * (110 + i * 14), 380 + Math.sin(a * 1.4) * 18, a); } },
+  living(ctx, W, H, t) { for (let i = 0; i < 4; i++) bunny(ctx, W / 2 - 120 + i * 80, 372 - Math.abs(Math.sin(t * 4 + i)) * 12); },
+  dining(ctx, W, H, t) {
+    for (let i = 0; i < 4; i++) {
+      const a = t * 1.5 + i * 1.6, px = W / 2 + Math.cos(a) * 150, py = 190 + Math.sin(a * 2) * 30;
+      ctx.fillStyle = '#fff6e5'; ctx.beginPath(); ctx.ellipse(px, py, 20, 7, Math.sin(a) * 0.4, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#e98aa8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(px, py, 13, 4, Math.sin(a) * 0.4, 0, TAU); ctx.stroke();
+    }
+  },
+  playroom(ctx, W, H, t) {
+    for (let i = 0; i < 5; i++) {
+      const x = W / 2 - 160 + i * 80 + ((t * 30) % 80), y = 380;
+      ctx.fillStyle = '#fff6e5'; rr(ctx, x - 12, y - 34, 24, 34, 3); ctx.fill();
+      ctx.fillStyle = i % 2 ? '#a8483a' : '#10131f'; ctx.font = 'bold 14px serif'; ctx.textAlign = 'center'; ctx.fillText(i % 2 ? '♥' : '♠', x, y - 12);
+    }
+  },
+  guest(ctx, W, H, t) {
+    for (let i = 0; i < 5; i++) {
+      const x = W / 2 - 200 + i * 100, y = ((t * 160 + i * 70) % 380);
+      ctx.fillStyle = '#9fd3f5'; ctx.beginPath(); ctx.arc(x, y, 4, 0, TAU); ctx.moveTo(x - 4, y); ctx.lineTo(x, y - 9); ctx.lineTo(x + 4, y); ctx.fill();
+    }
+    for (let i = 0; i < 5; i++) duck(ctx, W / 2 - 180 + i * 90 + Math.sin(t + i) * 8, 380 + Math.sin(t * 2 + i) * 3);
+  },
+  backyard(ctx, W, H, t) { for (let i = 0; i < 5; i++) gnome(ctx, W / 2 - 110 + i * 50, 384 + (i % 2) * 6 - Math.abs(Math.sin(t * 4 + i)) * 4); },
+};
+
+// ------------------------------------------------------------ fallback interiors
 const WALLS = {
   office: ['#3b4a5e', '#2c394b'], kitchen: ['#f0dcb4', '#d9c093'], living: ['#7b6a8f', '#5e4f72'],
   dining: ['#a86a74', '#87505a'], playroom: ['#6c9bc9', '#4f7eae'], primary: ['#d6a3b4', '#b98597'],
