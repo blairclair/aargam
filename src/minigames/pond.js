@@ -75,6 +75,7 @@ export default class FinalPatch {
     this.flash = 0; this.redFlash = 0;
     this.prevDown = false;
     this.beat = 0;
+    this.overclock = false; this.ocT = 0; this.lunge = 0;
     this.koiGlyphs = buildKoi();
     this.rain = Array.from({ length: 46 }, (_, i) => ({ x: (i * 211) % 960, y: (i * 97) % 540, v: 30 + (i * 13) % 50, c: '01{};<>/=*'[i % 10] }));
     this.lines = (this.mode === 'debug' ? DEBUG_LINES : WELD_LINES).map((src, li) => this.makeLine(src, li));
@@ -108,6 +109,7 @@ export default class FinalPatch {
     this.fx.update(dt); this.bust.update(dt);
     this.flash = Math.max(0, this.flash - dt * 2.5);
     this.redFlash = Math.max(0, this.redFlash - dt * 3);
+    this.lunge = Math.max(0, this.lunge - dt * 1.6);
     for (const l of this.lines) { l.shake = Math.max(0, l.shake - dt * 4); if (l.fixed) l.fixT += dt; }
     for (const r of this.rain) { r.y += r.v * dt * (1 + this.tension * 2); if (r.y > 560) { r.y = -20; r.x = (r.x + 373) % 960; } }
     const inp = this.game.input, m = inp.mouse;
@@ -119,7 +121,8 @@ export default class FinalPatch {
       return;
     }
     if (this.state === 'play') {
-      this.time -= dt;
+      this.time -= dt * (this.overclock ? 1.35 : 1);
+      this.ocT += dt;
       this.bust.tense = this.tension;
       // heartbeat that speeds up with tension
       const rate = 0.9 - this.tension * 0.55;
@@ -240,7 +243,11 @@ export default class FinalPatch {
     this.fx.floatText(812, 60, `+${bonus}s`, TERM_G, { size: 16 });
     this.cur++; this.sel = 0; this.held = null; this.drag = null;
     if (this.cur >= this.lines.length) { this.state = 'final'; this.st = 0; this.bust.tense = 0; }
-    else if (this.cur === Math.floor(this.lines.length / 2)) this.bust.say(bark('pond', 'progress', this.p.hero));
+    else if (this.cur === Math.floor(this.lines.length / 2) && !this.overclock && this.p.ease < 2) {
+      this.overclock = true; this.ocT = 0; this.lunge = 1; this.redFlash = 1;
+      this.fx.addShake(14); playSfx('splash'); playSfx('error');
+      this.bust.react('worried');
+    }
   }
 
   miss(x, y, why) {
@@ -287,6 +294,8 @@ export default class FinalPatch {
       prompt(ctx, this.mode === 'debug' ? ['Click the glitching word', 'or', { key: '←' }, { key: '→' }, { key: '↵' }] : ['Drag the matching shape into the gap', 'or', { key: '←' }, { key: '→' }, { key: '↵' }], 400, 506, this.t, { color: TERM_G, font: 'bold 18px "Trebuchet MS", sans-serif' });
       this.drawGhostHand(ctx);
     }
+    if (this.state === 'play' && this.overclock && this.ocT < 2.2) banner(ctx, 'IT\'S FIGHTING BACK!', 330, 250, this.ocT, { color: RED, font: 'bold 40px Menlo, Consolas, monospace', sub: 'Reboot overclocked: patch faster!' });
+    if (this.state === 'play' && this.overclock) chip(ctx, 'OVERCLOCKED x1.35', 812 + 46, 112, { align: 'center', fill: RED, color: PALETTE.paper });
     if (this.state === 'final') this.drawFinale(ctx);
     if (this.state === 'lost') banner(ctx, 'REBOOT COMPLETE', 480, 250, this.st, { color: RED, font: 'bold 52px Menlo, Consolas, monospace', sub: 'PartyPlanner is back up. Try again: it gets easier.' });
     if (this.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${this.flash})`; ctx.fillRect(0, 0, W, H); }
@@ -327,9 +336,10 @@ export default class FinalPatch {
     ctx.save();
     // the koi lurks to the right of the terminal, head toward the code; it thrashes harder as it reboots
     const bob = Math.sin(this.t * 1.3) * 6;
-    ctx.translate(752, 250 + bob);
+    const lg = Math.sin(Math.min(1, (1 - this.lunge) * 1.2) * Math.PI) * (this.lunge > 0 ? 1 : 0);
+    ctx.translate(752 - lg * 150, 250 + bob - lg * 20);
     ctx.rotate(Math.sin(this.t * (1.1 + thrash * 5)) * (0.04 + thrash * 0.07));
-    ctx.scale(0.5, 0.5);
+    ctx.scale(0.5 + lg * 0.25, 0.5 + lg * 0.25);
     const dying = fin && this.st > 1 && this.st < 2.2;
     const glitch = (this.state === 'play' && Math.random() < 0.02 + ten * 0.12) || (dying && Math.random() < 0.6);
     if (glitch) ctx.translate((Math.random() - 0.5) * 30, 0);

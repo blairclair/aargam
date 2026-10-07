@@ -46,6 +46,9 @@ export default class CrochetPattern {
     this.btnPulse = [0, 0, 0, 0];
     this.btnGlow = [0, 0, 0, 0];
     this.tangle = 0;
+    this.monster = { y: 0.2, lunge: 0, grin: 0 };
+    this.combo = 0; this.bestCombo = 0; this.lastPress = 0;
+    this.speedFlash = 0;
     this.showSpeed = 0.68 * (this.p.ease ? 1.15 : 1);
     this.newRound(true);
     this.setState('intro');
@@ -67,6 +70,8 @@ export default class CrochetPattern {
     }
     this.seq = seq;
     this.idx = 0;
+    this.speedRound = !first && (this.round === 2 || this.round === 4) && this.p.ease < 2;
+    if (this.speedRound) this.speedFlash = 1.6;
     const sq = this.squares[this.round];
     sq.colors = seq.map((i) => STITCHES[i].color);
     sq.prog = 0;
@@ -83,6 +88,11 @@ export default class CrochetPattern {
     const [bx, by] = btnPos(i);
     if (i === want) {
       this.idx++;
+      const quick = this.st - this.lastPress < 0.9;
+      this.lastPress = this.st;
+      this.combo = quick ? this.combo + 1 : 1;
+      this.bestCombo = Math.max(this.bestCombo, this.combo);
+      if (this.combo >= 3) { this.fx.floatText(bx, by - 46, `Combo x${this.combo}`, PALETTE.sun, { size: 18 }); if (this.combo % 3 === 0) this.fx.ringPulse(bx, by, PALETTE.sun, 60, 0.4); }
       sq.prog = this.idx / this.seq.length;
       playSfx('stitch', { pitch: i });
       this.fx.sparkle(bx, by, STITCHES[i].color, 4, 20);
@@ -99,6 +109,8 @@ export default class CrochetPattern {
     this.lives--;
     playSfx('error');
     this.tangle = 1;
+    this.combo = 0;
+    this.monster.lunge = 1; this.monster.grin = 1.5;
     this.bust.react('oops');
     this.bust.say(bark('primary', 'miss', this.p.hero));
     this.fx.addShake(6);
@@ -126,6 +138,13 @@ export default class CrochetPattern {
     this.fx.update(dt); this.bust.update(dt);
     for (let i = 0; i < 4; i++) { this.btnPulse[i] = Math.max(0, this.btnPulse[i] - dt * 4); this.btnGlow[i] = Math.max(0, this.btnGlow[i] - dt * 2.2); }
     this.tangle = Math.max(0, this.tangle - dt * 1.2);
+    this.speedFlash = Math.max(0, this.speedFlash - dt);
+    { // the sock monster creeps up while you dawdle, lunges on a tangle, sulks when a square is mended
+      const mo = this.monster, st = this.state;
+      const target = st === 'input' ? 0.25 + 0.75 * clamp01(this.st / this.inputTime) : st === 'tangled' || st === 'lost' ? 1 : st === 'done' || st === 'won' ? -0.2 : 0.25;
+      mo.y += (target - mo.y) * Math.min(1, dt * 3);
+      mo.lunge = Math.max(0, mo.lunge - dt * 2); mo.grin = Math.max(0, mo.grin - dt);
+    }
     for (const sq of this.squares) { sq.shown += (sq.prog - sq.shown) * Math.min(1, dt * 10); sq.pop = Math.max(0, sq.pop - dt * 2); }
     const inp = this.game.input;
 
@@ -135,7 +154,7 @@ export default class CrochetPattern {
         break;
       case 'show': {
         // light each stitch in turn
-        const step = this.showSpeed;
+        const step = this.showSpeed * (this.speedRound ? 0.68 : 1);
         const i = Math.floor((this.st - 0.5) / step);
         if (i > this.showIdx && i < this.seq.length) {
           this.showIdx = i;
@@ -143,7 +162,7 @@ export default class CrochetPattern {
           this.btnGlow[s] = 1; this.btnPulse[s] = 1;
           playSfx('stitch', { pitch: s });
         }
-        if (this.st > 0.5 + this.seq.length * step + 0.35) { this.setState('input'); this.idx = 0; }
+        if (this.st > 0.5 + this.seq.length * step + 0.35) { this.setState('input'); this.idx = 0; this.lastPress = 0; this.combo = 0; }
         break;
       }
       case 'input': {
@@ -172,7 +191,7 @@ export default class CrochetPattern {
         }
         break;
       case 'won':
-        if (this.st > 3) finishOnce(this, true, 1 - this.mistakes * 0.12 - this.timeouts * 0.05 - this.p.ease * 0.05);
+        if (this.st > 3) finishOnce(this, true, 0.92 + Math.min(0.08, this.bestCombo * 0.012) - this.mistakes * 0.12 - this.timeouts * 0.05 - this.p.ease * 0.05);
         break;
       case 'lost':
         if (this.st > 2.5) finishOnce(this, false, (this.round / HOLES.length) * 0.4);
@@ -190,6 +209,7 @@ export default class CrochetPattern {
     this.drawQuilt(ctx);
     this.drawPad(ctx);
     this.drawSequence(ctx);
+    this.drawMonster(ctx);
     this.fx.render(ctx);
     ctx.restore();
 
@@ -211,7 +231,8 @@ export default class CrochetPattern {
       ctx.save(); ctx.strokeStyle = PALETTE.sun; ctx.lineWidth = 3; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -this.t * 20;
       rrect(ctx, cx - SQ / 2 - 4, cy - SQ / 2 - 4, SQ + 8, SQ + 8, 10); ctx.stroke(); ctx.restore();
     } else if (this.state === 'show') {
-      prompt(ctx, r1 ? 'Watch the pattern…' : 'Watch…', 480, 500, this.t, { color: '#ff8fb1' });
+      prompt(ctx, r1 ? 'Watch the pattern…' : this.speedRound ? 'Speed stitch! Watch fast…' : 'Watch…', 480, 500, this.t, { color: this.speedRound ? PALETTE.sun : '#ff8fb1' });
+      if (this.speedFlash > 0) banner(ctx, 'SPEED STITCH!', 480, 250, 1.6 - this.speedFlash, { color: PALETTE.sun, font: 'bold 40px "Trebuchet MS", sans-serif' });
     } else if (this.state === 'input') {
       if (r1) prompt(ctx, ['Your turn! Repeat it with', { key: '←' }, { key: '↑' }, { key: '↓' }, { key: '→' }, 'or click'], 420, 500, this.t, { color: PALETTE.mint });
       else prompt(ctx, 'Your turn!', 480, 500, this.t, { color: PALETTE.mint });
@@ -230,6 +251,47 @@ export default class CrochetPattern {
     }
     if (this.state === 'won') banner(ctx, 'Quilt mended!', 480, 230, this.st, { color: '#ff8fb1', sub: 'Every square stitched back in.' });
     if (this.state === 'lost') banner(ctx, 'All tangled up!', 480, 230, this.st, { color: PALETTE.danger, sub: 'Untangle and try again: it gets easier.' });
+  }
+
+  drawMonster(ctx) {
+    // a lumpy striped sock monster rising from the laundry pile at the bottom-left, reaching for the current square
+    const mo = this.monster;
+    if (mo.y <= -0.15) return;
+    const bx = 120, by = 548 - Math.max(0, mo.y) * 150 - mo.lunge * 30;
+    const wob = Math.sin(this.t * 4) * 4;
+    const hole = HOLES[Math.min(this.round, HOLES.length - 1)];
+    const [hx, hy] = cellCenter(hole);
+    // sock arm reaching toward the hole (reach grows with mo.y)
+    const reach = clamp01(mo.y) * 0.75 + mo.lunge * 0.25;
+    if (reach > 0.05 && this.state !== 'won') {
+      const tx = bx + (hx - bx) * reach, ty = by - 40 + (hy - (by - 40)) * reach;
+      ctx.save(); ctx.lineCap = 'round';
+      ctx.strokeStyle = '#7b5ea7'; ctx.lineWidth = 16;
+      ctx.beginPath(); ctx.moveTo(bx + 30, by - 50); ctx.quadraticCurveTo(bx + 60, ty + 40 + wob, tx, ty); ctx.stroke();
+      ctx.strokeStyle = '#f2d16b'; ctx.lineWidth = 16; ctx.setLineDash([8, 12]);
+      ctx.beginPath(); ctx.moveTo(bx + 30, by - 50); ctx.quadraticCurveTo(bx + 60, ty + 40 + wob, tx, ty); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#7b5ea7'; ctx.beginPath(); ctx.arc(tx, ty, 11, 0, TAU); ctx.fill();
+      ctx.restore();
+    }
+    ctx.save(); ctx.translate(bx, by);
+    // body: three lumpy striped socks
+    const cols = ['#7b5ea7', '#f2d16b', '#e98aa8'];
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = cols[i % 3];
+      ctx.beginPath(); ctx.ellipse(Math.sin(i * 1.9) * 26, -20 - i * 14 + (i === 4 ? wob : 0), 56 - i * 6, 22, Math.sin(i + this.t) * 0.15, 0, TAU); ctx.fill();
+    }
+    // googly eyes looking at the target
+    const ang = Math.atan2(hy - (by - 80), hx - bx);
+    for (const ex of [-18, 16]) {
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ex, -82 + wob, 13, 0, TAU); ctx.fill();
+      ctx.fillStyle = PALETTE.ink; ctx.beginPath(); ctx.arc(ex + Math.cos(ang) * 5, -82 + wob + Math.sin(ang) * 5, 6, 0, TAU); ctx.fill();
+    }
+    // mouth: grin after it tangles your yarn, frown otherwise
+    ctx.strokeStyle = PALETTE.ink; ctx.lineWidth = 3; ctx.beginPath();
+    if (mo.grin > 0) ctx.arc(0, -66 + wob, 14, 0.2, Math.PI - 0.2); else ctx.arc(0, -52 + wob, 10, Math.PI + 0.4, TAU - 0.4);
+    ctx.stroke();
+    ctx.restore();
   }
 
   drawBed(ctx) {
