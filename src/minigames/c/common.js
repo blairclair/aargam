@@ -1,5 +1,6 @@
 // Shared helpers for games-c minigames (Bug Hunt, Bunny Roundup). Owned by: games-c.
 import { PALETTE } from '../../core/theme.js';
+import * as Sprites from '../../art/sprites.js';
 
 const TAU = Math.PI * 2;
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -26,18 +27,32 @@ export const timeMul = (p) => (perkList(p).includes('playlist') ? 1.2 : 1);
 export class Bust {
   constructor(hero) { this.hero = hero === 'victoria' ? 'victoria' : 'aaron'; this.bounce = 0; this.shake = 0; this.cheer = 0; this.t = 0; }
   react(kind) {
-    if (kind === 'good') this.bounce = 1;
-    else if (kind === 'bad') this.shake = 1;
-    else if (kind === 'cheer') { this.cheer = 1; this.bounce = 1; }
+    if (kind === 'good') { this.bounce = 1; this._expr('happy', 0.9); }
+    else if (kind === 'bad') { this.shake = 1; this._expr('surprised', 1.2); }
+    else if (kind === 'cheer') { this.cheer = 1; this.bounce = 1; this._expr('happy', 2.5); }
+    else if (kind === 'focus') this._expr('determined', 1.5);
+  }
+  _expr(e, dur) {
+    // don't restart the same beat on every hit (it would never finish)
+    if (this.expr !== e || this.exprLeft < 0.3) this.exprT = 0;
+    this.expr = e; this.exprLeft = dur;
   }
   update(dt) {
     this.t += dt;
+    this.exprT = (this.exprT ?? 0) + dt;
+    this.exprLeft = Math.max(0, (this.exprLeft ?? 0) - dt);
+    if (this.exprLeft <= 0 && this.expr !== 'smile') { this.expr = 'smile'; this.exprT = 0; }
     this.bounce = Math.max(0, this.bounce - dt * 3);
     this.shake = Math.max(0, this.shake - dt * 2.5);
     this.cheer = Math.max(0, this.cheer - dt * 0.6);
   }
   /** Draws with bottom-left at (x, yBottom), height h. */
   render(ctx, game, x, yBottom, h) {
+    if (typeof Sprites.drawBust === 'function' && game.assets.image(`bust.${this.hero}.smile`)) {
+      const img0 = game.assets.image(`bust.${this.hero}.smile`);
+      const cx = x + ((img0.width / img0.height) * h) / 2;
+      return Sprites.drawBust(ctx, game, this.hero, this.expr ?? 'smile', cx, yBottom, h, { t: this.t, exprT: this.exprT ?? 0, side: 1 });
+    }
     const img = game.assets.image(`bust.${this.hero}.smile`);
     const breathe = Math.sin(this.t * 2) * 1.5;
     const by = -Math.sin(this.bounce * Math.PI) * 18;
