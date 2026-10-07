@@ -40,7 +40,7 @@ export const SKILL_DEF = {
       const n = arcHit(L, h, range, arc, 1, { knock: 230, src: 'basic' });
       n && L.fx.addShake(2.5);
       clearEnemyShots(L, h.x, h.y - 10, range + 10, h.facing, arc);
-      vfx(L, { kind: 'swoosh', x: h.x, y: h.y - 14, ang: h.facing, arc, r: range * 0.85, dur: 0.2, color: PALETTE.paper });
+      vfx(L, { kind: 'swoosh', x: h.x, y: h.y - 20, ang: h.facing, arc, r: range * 0.9, dur: 0.2, color: PALETTE.paper });
     },
   },
   wrench: {
@@ -52,7 +52,7 @@ export const SKILL_DEF = {
       const n = arcHit(L, h, range, arc, 1.15, { knock: 280, stun: 0.25, src: 'basic' });
       if (n) { L.fx.addShake(3.5); L.fx.burst(h.x + Math.cos(h.facing) * 40, h.y - 16 + Math.sin(h.facing) * 30, PALETTE.sun, 6, 140); }
       clearEnemyShots(L, h.x, h.y - 10, range + 10, h.facing, arc);
-      vfx(L, { kind: 'swoosh', x: h.x, y: h.y - 14, ang: h.facing, arc, r: range * 0.85, dur: 0.22, color: '#c8d0dc', thick: 11 });
+      vfx(L, { kind: 'swoosh', x: h.x, y: h.y - 20, ang: h.facing, arc, r: range * 0.9, dur: 0.22, color: '#c8d0dc', thick: 11 });
     },
   },
 
@@ -107,7 +107,7 @@ export const SKILL_DEF = {
       const range = 92, arc = Math.PI * 1.15;
       const n = arcHit(L, h, range, arc, 1.6, { knock: 320, burn: 3 });
       if (n) L.fx.addShake(5);
-      vfx(L, { kind: 'swoosh', x: h.x, y: h.y - 14, ang: h.facing, arc, r: range * 0.85, dur: 0.28, color: '#ff8a3d', thick: 14 });
+      vfx(L, { kind: 'swoosh', x: h.x, y: h.y - 20, ang: h.facing, arc, r: range * 0.9, dur: 0.28, color: '#ff8a3d', thick: 14 });
       for (let i = 0; i < 8; i++) { const a = h.facing - arc / 2 + arc * i / 7; L.fx.burst(h.x + Math.cos(a) * range * 0.8, h.y - 14 + Math.sin(a) * range * 0.6, i % 2 ? PALETTE.sunDeep : PALETTE.danger, 2, 60); }
     },
   },

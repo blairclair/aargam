@@ -136,7 +136,7 @@ export const STAGES = {
       ['plant', 70, 180], ['bookshelf', 1150, 168],
     ],
     setup(L) {
-      L.boss = L.spawnEnemy('roomba', 650, 300, { spawnDelay: 1.2, hpMul: 3 });
+      L.boss = L.spawnEnemy('roomba', 650, 300, { spawnDelay: 1.2, hpMul: 3, dmgMul: 0.75 });
       for (let i = 0; i < 3; i++) L.spawnEnemy('dust_bunny', 250 + i * 400, 300 + (i % 2) * 50, { spawnDelay: 1.4, counts: false });
     },
     update() {},

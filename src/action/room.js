@@ -607,7 +607,7 @@ export default class RoomScene {
     const lines = wrapText(ctx, bk.text, 250, FONT.small).slice(0, 3);
     const bw = 300, bh = 14 + lines.length * 16;
     const x = clamp(h.x - cx - bw / 2, 8, W - bw - 8);
-    const y = clamp(h.y - cy - 96 - bh, 70, H - 200);
+    const y = clamp(h.y - cy - 112 - bh, 70, H - 200);
     ctx.save();
     ctx.globalAlpha = Math.min(1, bk.t * 3, (3.2 - bk.t) * 6);
     panel(ctx, x, y, bw, bh, { radius: 12, stroke: bk.who === 'aaron' ? PALETTE.sun : PALETTE.mint });
@@ -663,7 +663,7 @@ function drawStars(ctx, x, y, t) {
 }
 
 function drawPlate(ctx, h, t) {
-  const a = h.facing, px = h.x + Math.cos(a) * 22, py = h.y - 18 + Math.sin(a) * 14;
+  const a = h.facing, px = h.x + Math.cos(a) * 26, py = h.y - 24 + Math.sin(a) * 16;
   ctx.save();
   ctx.globalAlpha = 0.9;
   ctx.fillStyle = '#fff6e5'; ctx.strokeStyle = '#e98aa8'; ctx.lineWidth = 2;

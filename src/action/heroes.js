@@ -47,6 +47,9 @@ export function aimPoint(L, h, range) {
   return { x: h.x + Math.cos(h.facing) * range * 0.8, y: h.y + Math.sin(h.facing) * range * 0.8 };
 }
 
+/** Heroes draw 1.35x so the photo faces read (hitbox r stays 13). */
+export const HERO_SCALE = 1.35;
+
 const KEYS = { basic: 'attack', s1: 'ability', s2: 'special', ult: 'Space' };
 
 export function updateHero(L, dt) {
@@ -115,7 +118,7 @@ export function heroDrawOpts(L, h) {
   const blink = h.invuln > 0 && Math.floor(L.time * 20) % 2 === 0;
   let facing = h.facing;
   if (h.spinT > 0) facing = h.facing + L.time * 28;
-  return { facing, anim, progress, t: h.animT, flash: h.flash, alpha: blink ? 0.55 : 1, shield: h.shieldT > 0 ? Math.min(1, h.shieldT * 5) : 0, scale: h.growT > 0 ? 1.3 : undefined };
+  return { facing, anim, progress, t: h.animT, flash: h.flash, alpha: blink ? 0.55 : 1, shield: h.shieldT > 0 ? Math.min(1, h.shieldT * 5) : 0, scale: HERO_SCALE * (h.growT > 0 ? 1.3 : 1) };
 }
 
 export { SKILL_DEF };
