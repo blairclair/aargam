@@ -1,7 +1,7 @@
 # Build status & handoff (supervisor-owned)
 
 Read this first if you are a new session picking up the Housewarming build.
-Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~21:20.
+Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~21:35.
 
 ## Where everything lives
 - `main` on GitHub — integrated, playable game (always green: check + smoke).
@@ -19,15 +19,15 @@ Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~
 ## Teams (round 2)
 | Team | Owns | State at last update |
 |---|---|---|
-| story | src/story, src/audio, docs/STORY.md | script, staged cutscenes w/ busts, title, synthesized audio + auto-music shipped (76f67cb, 688c823). Owes: dining swap line, mid-minigame barks (combo/twist/close), review hub copy |
+| story | src/story, src/audio, docs/STORY.md | mid-minigame barks + sabotage lines + HERO_BLURBS (a944d94); doing in-engine cutscene read-through |
 | hub | src/hub | ✅ FIRST PASS DONE (26c952e): floor plan, shop, select (busts), results. Open: hand playtest; hub tip copy could move to story |
-| action | src/action | all 9 rooms playable (213742f); tuning, fix rug-looks-like-telegraph, adopt HUD v2 when art exports HUD_VERSION=2 |
+| action | src/action | all 9 rooms + real art (ad872c7); fix: bark bubble overlaps skill bar bottom-left |
 | games-a | dining, kitchen | Pour the Drinks + Bread Bake shipped (1f9d5f4); liveliness pass in progress |
 | games-b | guest, primary, pond | ✅ DONE (dbf6c6c): Pipe Fixer (juiced), Crochet, Final Patch. Open: human playtest of timings |
-| games-c | office, living | Bug Hunt v2 shipped (6fd0785: Segfault boss, combos, kind jokes); building Bunny Roundup (last minigame) |
+| games-c | office, living | ✅ DONE (9062c36): Bug Hunt v2, Bunny Roundup. All 9 minigames shipped. |
 | games-d | playroom, backyard | ✅ DONE (18395e5): Drumline (D/F drums, J/K cymbals), Card Duel. Open: Card Duel maybe too easy (needs human playtest) |
-| art | src/art (not world), src/ui | busts, dialog v2, facade, HUD v2 + skill icons (ce995fd); next: re-export ROOM_KINDS/drawWater/WALL_H, hero likeness |
-| art-world | src/art/world | shipping all 9 rooms, 41 furniture, 24 enemies incl. koi (in flight); backup ok |
+| art | src/art (not world), src/ui | facade re-exports world (8018a49) — real rooms now in-game; next: hero likeness pass (in-world heads still photo circles) |
+| art-world | src/art/world | ✅ content shipped (90a9075): 9 rooms, 41 furniture, 24 enemies; polishing (backyard decor, kitchen counters) |
 
 ## User feedback log (most recent first)
 - Drumline: D/F = left/right drum, J/K = left/right cymbal.
