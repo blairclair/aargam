@@ -51,6 +51,7 @@ function spawnWave(L, w) {
     }
   }
   playSfx('blip');
+  if (L.W && L.W.i > 1) L.say?.('sabotage');
 }
 
 function spawnFormation(L, type, n, opts) {
@@ -111,10 +112,10 @@ export const STAGES = {
 
   // 2 ── Kitchen: the sourdough starter keeps spitting dough; toasters on the counters, a screaming kettle.
   kitchen: waveStage({
-    w: 1300, h: 760, wallH: 130, floor: 'tile', start: { x: 650, y: 650 },
+    w: 1300, h: 680, wallH: 130, floor: 'tile', start: { x: 650, y: 600 },
     props: [
       ['counter', 250, 200, { w: 340 }], ['oven', 470, 200], ['fridge', 560, 196],
-      ['counter', 900, 200, { w: 360 }], ['island', 650, 470], ['starter_jar', 1180, 240], ['plant', 60, 700],
+      ['counter', 900, 200, { w: 360 }], ['island', 650, 470], ['starter_jar', 1180, 240], ['plant', 60, 640],
     ],
     setup(L) { L.spawnEnemy('toaster', 250, 240, { spawnDelay: 1 }); },
     waves: [
@@ -122,19 +123,20 @@ export const STAGES = {
       { spawn: [['dough_blob', 3], ['kettle', 1]], from: { x: 1150, y: 300, spread: 60 }, at: 2, delay: 1.5 },
       { spawn: [['toaster', 1]], from: { x: 900, y: 240, spread: 0 }, at: 3, delay: 0.5 },
       { spawn: [['dough_blob', 4], ['kettle', 1]], from: { x: 1150, y: 300, spread: 70 }, at: 1, delay: 1.5 },
+      { spawn: [['dough_blob', 5]], from: { x: 1150, y: 300, spread: 80 }, at: 1, delay: 1.5 },
     ],
   }),
 
   // 3 ── Living room: the Roomba Tank (mini-boss) + dust bunnies.
   living: {
-    w: 1300, h: 800, wallH: 130, floor: 'wood', start: { x: 650, y: 700 },
+    w: 1300, h: 720, wallH: 130, floor: 'wood', start: { x: 650, y: 665 },
     props: [
       ['rug', 650, 520, { w: 380, d: 230 }], ['tv_stand', 650, 172], ['coffee_table', 650, 470],
-      ['sofa', 650, 620, { w: 230 }], ['armchair', 320, 470], ['armchair', 980, 470],
+      ['sofa', 650, 595, { w: 230 }], ['armchair', 320, 470], ['armchair', 980, 470],
       ['plant', 70, 180], ['bookshelf', 1150, 168],
     ],
     setup(L) {
-      L.boss = L.spawnEnemy('roomba', 650, 300, { spawnDelay: 1.2 });
+      L.boss = L.spawnEnemy('roomba', 650, 300, { spawnDelay: 1.2, hpMul: 3 });
       for (let i = 0; i < 3; i++) L.spawnEnemy('dust_bunny', 250 + i * 400, 300 + (i % 2) * 50, { spawnDelay: 1.4, counts: false });
     },
     update() {},
@@ -144,37 +146,39 @@ export const STAGES = {
 
   // 4 ── Dining room: plates fly from the sideboard, chairs charge.
   dining: waveStage({
-    w: 1240, h: 760, wallH: 130, floor: 'wood', start: { x: 620, y: 660 },
+    w: 1240, h: 690, wallH: 130, floor: 'wood', start: { x: 620, y: 630 },
     props: [['rug', 620, 520, { w: 420, d: 250 }], ['dining_table', 620, 470], ['sideboard', 620, 174], ['plant', 60, 180], ['plant', 1180, 180]],
     waves: [
       { spawn: [['chair', 2, { onDeath: wrangled }], ['flying_plate', 2]], from: { x: 620, y: 300, spread: 140 }, delay: 0.2 },
       { spawn: [['flying_plate', 4]], from: { x: 620, y: 230, spread: 120 }, at: 1, delay: 1 },
       { spawn: [['chair', 3, { onDeath: wrangled }]], at: 1, delay: 1 },
-      { spawn: [['chair', 2, { onDeath: wrangled }], ['flying_plate', 3]], delay: 1.2 },
+      { spawn: [['chair', 2, { onDeath: wrangled }], ['flying_plate', 3]], at: 1, delay: 1.2 },
+      { spawn: [['chair', 3, { onDeath: wrangled }], ['flying_plate', 3]], from: { x: 620, y: 300, spread: 160 }, delay: 1.2 },
     ],
   }),
 
   // 5 ── Playroom: card-soldier formations, grid-hopping pawns, jack-in-the-box ambushes.
   playroom: waveStage({
-    w: 1240, h: 780, wallH: 130, floor: 'carpet', start: { x: 620, y: 680 },
+    w: 1240, h: 700, wallH: 130, floor: 'carpet', start: { x: 620, y: 640 },
     props: [['rug', 620, 540, { w: 420, d: 250 }], ['toy_box', 200, 210], ['block_tower', 1040, 260], ['play_table', 620, 330], ['bookshelf', 1080, 168], ['block_tower', 150, 600]],
     setup(L) { for (const [x, y] of [[330, 520], [920, 600], [760, 260]]) L.spawnEnemy('jack_box', x, y, { spawnDelay: 0 }); },
     waves: [
       { spawn: [['card_soldier', 4, { formation: 'row' }]], delay: 0.5, at: 3 },
       { spawn: [['pawn', 3]], at: 4, delay: 1 },
       { spawn: [['card_soldier', 5, { formation: 'row' }], ['pawn', 2]], at: 3, delay: 1.2 },
+      { spawn: [['card_soldier', 4, { formation: 'row' }], ['card_soldier', 4, { formation: 'row' }], ['pawn', 2]], at: 1, delay: 1.5 },
     ],
   }),
 
   // 6 ── Primary bedroom: lint + hanger hawks, then the Sock Monster climbs out of the laundry.
   primary: {
-    w: 1300, h: 800, wallH: 130, floor: 'carpet', start: { x: 650, y: 690 },
-    props: [['rug', 650, 590, { w: 360, d: 200 }], ['bed', 650, 340], ['nightstand', 505, 220], ['nightstand', 795, 220], ['dresser', 1080, 180], ['laundry_basket', 200, 560], ['laundry_basket', 1120, 640], ['plant', 60, 180]],
+    w: 1300, h: 720, wallH: 130, floor: 'carpet', start: { x: 650, y: 660 },
+    props: [['rug', 650, 600, { w: 360, d: 180 }], ['bed', 650, 340], ['nightstand', 505, 220], ['nightstand', 795, 220], ['dresser', 1080, 180], ['laundry_basket', 200, 560], ['laundry_basket', 1120, 620], ['plant', 60, 180]],
     setup(L) { L.W = waveRunner([{ spawn: [['lint', 6], ['hanger', 2]], delay: 0.4 }, { spawn: [['lint', 4], ['hanger', 1]], at: 2, delay: 1 }]); },
     update(L, dt) {
       L.W.update(L, dt);
       if (!L.boss && L.W.done && L.aliveCounted() <= 1) {
-        L.boss = L.spawnEnemy('sock_monster', 220, 470, { spawnDelay: 1.4 });
+        L.boss = L.spawnEnemy('sock_monster', 220, 470, { spawnDelay: 1.4, hpMul: 2.4 });
         L.banner('The laundry is moving...', PALETTE.danger);
         L.fx.burst(200, 540, '#ff8fb1', 30, 220);
         playSfx('error');
@@ -189,7 +193,7 @@ export const STAGES = {
 
   // 7 ── Guest bedroom: survive the flood. Leaks drip puddles, ducks swarm, pipe snakes burst from walls.
   guest: {
-    w: 1200, h: 780, wallH: 130, floor: 'tile', start: { x: 600, y: 600 },
+    w: 1200, h: 700, wallH: 130, floor: 'tile', start: { x: 600, y: 600 },
     props: [['guest_bed', 280, 360], ['bathtub', 860, 240], ['sink', 1090, 200], ['dresser', 520, 176], ['rug', 640, 560, { w: 300, d: 170 }]],
     survive: 70,
     setup(L) { L.surviveT = 0; L.dripT = 2; L.duckT = 1; L.snakeT = 6; },
@@ -249,7 +253,7 @@ export const STAGES = {
         spawnWave(L, { spawn: [['gnome', 4 + Math.min(2, lit), { formation: 'column', counts: false }]] });
       }
       if (!L.boss && lit >= L.lights.length) {
-        L.boss = L.spawnEnemy('grill_dragon', 1240, 320, { spawnDelay: 1.4 });
+        L.boss = L.spawnEnemy('grill_dragon', 1240, 320, { spawnDelay: 1.4, hpMul: 2.4 });
         L.banner('The grill is waking up!', PALETTE.danger);
         playSfx('error');
       }
@@ -268,7 +272,7 @@ export const STAGES = {
     water: [{ x: 700, y: 470, rx: 270, ry: 150 }],
     props: [['reeds', 400, 420], ['reeds', 1000, 520], ['reeds', 560, 640], ['rock', 980, 330], ['rock', 360, 600], ['tree', 120, 240], ['tree', 1290, 260], ['tree', 1300, 800], ['lily_pad', 640, 440], ['lily_pad', 780, 520]],
     setup(L) {
-      L.boss = L.spawnEnemy('partyplanner', 700, 470, { spawnDelay: 1.6 });
+      L.boss = L.spawnEnemy('partyplanner', 700, 470, { spawnDelay: 1.6, hpMul: 1.6 });
       for (let i = 0; i < 2; i++) L.spawnEnemy('code_fish', 700 + (i ? 120 : -120), 470, { spawnDelay: 1.6, counts: false });
       L.log('> main() // party_mode = true');
     },

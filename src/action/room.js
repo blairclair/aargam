@@ -320,6 +320,7 @@ export default class RoomScene {
     list.sort((a, b) => a.y - b.y);
     for (const it of list) this.drawItem(ctx, it.k, it.o);
 
+    this.drawLights(ctx);
     if (this.laser) drawLaser(ctx, this.laser, this.time);
     if (this.hoseVfx && h.channel) drawHose(ctx, this.hoseVfx, this.time);
     for (const v of this.vfx) drawVfx(ctx, v);
@@ -333,7 +334,7 @@ export default class RoomScene {
     this.drawOffscreenMarkers(ctx, cx, cy);
     this.drawHud(ctx);
     if (this.logData) this.drawLog(ctx);
-    if (this.barkData) this.drawBark(ctx);
+    if (this.barkData) this.drawBark(ctx, cx, cy);
     if (this.phase === 'intro') this.drawStageCard(ctx);
     this.drawPrompt(ctx);
     if ((this.phase === 'won' || this.phase === 'lost') && typeof Sprites.drawBust === 'function') this.drawEndBust(ctx);
@@ -415,6 +416,30 @@ export default class RoomScene {
       if (h.shieldT > 0) drawPlate(ctx, h, this.time);
       if (h.slowT > 0) { ctx.fillStyle = 'rgba(255,246,229,0.3)'; ctx.beginPath(); ctx.ellipse(h.x, h.y, 16, 6, 0, 0, Math.PI * 2); ctx.fill(); }
       if (h.rootT > 0) { ctx.save(); ctx.strokeStyle = PALETTE.pine; ctx.lineWidth = 4; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(h.x + i * 8, h.y); ctx.quadraticCurveTo(h.x + i * 14, h.y - 12, h.x + i * 4, h.y - 22); ctx.stroke(); } ctx.restore(); }
+    }
+  }
+
+  /** Backyard: strands of bulbs hang between consecutive posts as they get strung. */
+  drawLights(ctx) {
+    const L = this.lights;
+    if (!L || L.length < 2) return;
+    for (let i = 0; i < L.length; i++) {
+      const a = L[i], b = L[(i + 1) % L.length];
+      const lit = Math.min(a.done ? 1 : a.lit, b.done ? 1 : b.lit);
+      if (typeof Sprites.drawStringLights === 'function') Sprites.drawStringLights(ctx, this.game, a.x, a.y - 96, b.x, b.y - 96, { t: this.time, lit, sag: 40 });
+      else {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(40,40,48,0.8)'; ctx.lineWidth = 1.5;
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2 - 96 + 40;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y - 84); ctx.quadraticCurveTo(mx, my, b.x, b.y - 84); ctx.stroke();
+        const n = 10;
+        for (let k = 1; k < n; k++) {
+          const u = k / n, x = (1 - u) * (1 - u) * a.x + 2 * u * (1 - u) * mx + u * u * b.x, y = (1 - u) * (1 - u) * (a.y - 84) + 2 * u * (1 - u) * my + u * u * (b.y - 84);
+          ctx.fillStyle = lit >= 1 ? ['#ffc94a', '#ff8fb1', '#7fd8a6', '#5aa4e6'][k % 4] : '#55555f';
+          ctx.beginPath(); ctx.arc(x, y + 3, 3, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      }
     }
   }
 
@@ -576,16 +601,21 @@ export default class RoomScene {
     ctx.restore();
   }
 
-  drawBark(ctx) {
-    const b = this.barkData, g = this.game;
-    const lines = wrapText(ctx, b.text, 270, FONT.ui).slice(0, 3);
-    const bh = 22 + lines.length * 19;
-    const x = 14, y = H - 14 - bh;
+  /** Speech bubble above the hero's head (never over the HUD). */
+  drawBark(ctx, cx, cy) {
+    const bk = this.barkData, g = this.game, h = this.hero;
+    const lines = wrapText(ctx, bk.text, 250, FONT.small).slice(0, 3);
+    const bw = 300, bh = 14 + lines.length * 16;
+    const x = clamp(h.x - cx - bw / 2, 8, W - bw - 8);
+    const y = clamp(h.y - cy - 96 - bh, 70, H - 200);
     ctx.save();
-    ctx.globalAlpha = Math.min(1, b.t * 3, (3.2 - b.t) * 6);
-    panel(ctx, x, y, 336, bh, { radius: 14, stroke: b.who === 'aaron' ? PALETTE.sun : PALETTE.mint });
-    if (HEROES[b.who]) Sprites.drawPortrait(ctx, g, b.who, x + 26, y + bh / 2, 18, {});
-    lines.forEach((l, i) => text(ctx, l, x + 52, y + 26 + i * 19));
+    ctx.globalAlpha = Math.min(1, bk.t * 3, (3.2 - bk.t) * 6);
+    panel(ctx, x, y, bw, bh, { radius: 12, stroke: bk.who === 'aaron' ? PALETTE.sun : PALETTE.mint });
+    const tx = clamp(h.x - cx, x + 20, x + bw - 20);
+    ctx.fillStyle = 'rgba(27,34,56,0.92)';
+    ctx.beginPath(); ctx.moveTo(tx - 8, y + bh - 1); ctx.lineTo(tx + 8, y + bh - 1); ctx.lineTo(tx, y + bh + 10); ctx.closePath(); ctx.fill();
+    if (HEROES[bk.who]) Sprites.drawPortrait(ctx, g, bk.who, x + 20, y + bh / 2, 13, {});
+    lines.forEach((l, i) => text(ctx, l, x + 40, y + 19 + i * 16, { font: FONT.small }));
     ctx.restore();
   }
 
