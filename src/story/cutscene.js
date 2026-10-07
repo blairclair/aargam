@@ -272,7 +272,7 @@ export default class CutsceneScene {
       text(ctx, `${R.name.toUpperCase()}`, W / 2, 31, { align: 'center', baseline: 'middle', font: 'bold 17px "Trebuchet MS", sans-serif', color: R.accent });
       if (this.kind === 'intro') text(ctx, `GOAL: ${R.objective}  ·  then: ${R.minigame}`, W / 2, 55, { align: 'center', baseline: 'middle', font: 'bold 15px "Trebuchet MS", sans-serif', color: PALETTE.paper });
     }
-    if (clock && !this.isParty) {
+    if (clock && !this.isParty && s.clock < 19) {
       chip(ctx, `${clock}  ·  party at 7 PM`, W - 16, 26, { align: 'right', fill: 'rgba(16,19,31,0.8)', color: PALETTE.sun });
     }
     // skip hint

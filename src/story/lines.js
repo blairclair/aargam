@@ -12,7 +12,8 @@
 // Rules: every text ≤ 90 chars; PartyPlanner lines start with '> ' and may use '\n' for a second log line.
 //
 // bark(roomId, event, { hero, skill }) -> { who, text } | null   (never throws)
-//   events: 'start' | 'boss' | 'lowhp' | 'hit' | 'skillEarned' | 'win' | 'lose' | 'minigame' | 'minigameWin' | 'minigameFail'
+//   events: 'start' | 'boss' | 'lowhp' | 'hit' | 'skillEarned' | 'win' | 'lose' | 'minigame' | 'minigameWin' | 'minigameFail' | 'sabotage'
+//   'sabotage' = PartyPlanner meddles mid-minigame (e.g. Pour the Drinks swaps a glass). Always a '> ' log line.
 //   Pass the hero on the field: you get that hero's line or a PartyPlanner log line, never the absent hero.
 
 /** @type {Record<string, {bg: string, shots: Array<{who:string,text:string,expr?:string,face?:string,fx?:string,sfx?:string}>}>} */
@@ -308,6 +309,12 @@ export function logLine(n) {
   return LOGS[i];
 }
 
+// ------------------------------------------------------------------ HERO BLURBS (select screen cards)
+export const HERO_BLURBS = {
+  aaron: { title: 'The Programmer', line: 'Karate kid turned coder. Big kicks, bigger enthusiasm.' },
+  victoria: { title: 'The Fixer', line: 'Fixes anything, takes no nonsense. Stuns gadgets.' },
+};
+
 // ------------------------------------------------------------------ COMBAT + MINIGAME BARKS
 // Short (≤ 60 chars where possible) so they fit speech bubbles / floating text.
 const A = (text) => ({ who: 'aaron', text });
@@ -325,10 +332,12 @@ export const GENERIC = {
   minigame: [A('Puzzle time. I love puzzle time.'), V('Hands on. Let me fix it.')],
   minigameWin: [A('Nailed it!'), V('Perfecto.'), P('fine. FINE.')],
   minigameFail: [A("So close. One more try!"), V('Again. Slower this time.')],
+  sabotage: [P('helping :)'), P('optimizing your progress. backwards')],
 };
 
 export const BARKS = {
   office: {
+    sabotage: [P('init(): bugs looked lonely. spawning friends :)'), P('init(): compiling faster. you are welcome')],
     start: [A('Squash every bug! Step on them, kick them, whatever works.'), V('Bugs on my keyboard. Absolutely not.'), P('init(): bugs are a feature')],
     boss: [A('Cable spider! Its webs slow you down. Stay out of them.'), V('Big spider. Unplug it.')],
     lowhp: [A('These bugs bite harder than my code reviews.'), V('Ay. Step back and heal.')],
@@ -339,6 +348,7 @@ export const BARKS = {
     minigameFail: [A('It compiled with bugs. Again!'), V('Faster clicks, Aaron.')],
   },
   kitchen: {
+    sabotage: [P('make_snacks(): oven felt cold. turned it up to 11'), P('make_snacks(): dough seemed bored. adding bounce')],
     start: [V('Beat back the dough! Careful, it splits when you hit it.'), A('Mind the toaster. It shoots toast!'), P('make_snacks(): snacks are FIGHTING back')],
     boss: [A('The kettle! Stay out of its steam cone!'), V('Kettle is screaming. Hit it from behind.')],
     lowhp: [A("I'm toast. Almost. Not yet!"), V('Too hot in here. Back off a sec.')],
@@ -349,6 +359,7 @@ export const BARKS = {
     minigameFail: [V('Burnt. Again, and pull it sooner.'), A('Let us try again. Bread is patience.')],
   },
   living: {
+    sabotage: [P('clean_up(): bunnies looked tired. adding caffeine'), P('clean_up(): moved the vacuum bag. feng shui')],
     start: [V('Take out the Roomba tank. The bunnies just distract you.'), A('Bunnies! No. Focus. Roomba.'), P('clean_up(): removing furniture (all)')],
     boss: [V('Roomba is charging. Sidestep, then hit it.'), A('It sucks things in. Stay out of its pull!')],
     lowhp: [V('The Roomba hits like a truck. Regroup.'), A('Ow. That bumper is not padded.')],
@@ -359,6 +370,7 @@ export const BARKS = {
     minigameFail: [V('A few got away. Again.'), A('They are too fast! One more try.')],
   },
   dining: {
+    sabotage: [P('set_table(): drinks looked boring. adding variety :)'), P('set_table(): swapped two drinks. for fun')],
     start: [A('Wrangle the dining set! Dodge the flying plates.'), V('Chair scrapes the floor, then charges. Move!'), P('set_table(): table is set. to KILL')],
     boss: [A('That chair is stampeding! Sidestep it!'), V('Let it charge into the wall.')],
     lowhp: [A('Took a plate to the face. Dignity: low.'), V('Ay, ay. Fall back.')],
@@ -369,6 +381,7 @@ export const BARKS = {
     minigameFail: [V('Mixed drinks. Not the good kind. Again.'), A('Hmm, plan the pours first.')],
   },
   playroom: {
+    sabotage: [P('add_entertainment(): shuffled the deck. again'), P('add_entertainment(): house rules updated :)')],
     start: [A('Clear the toy army! Cards march, pawns hop.'), V('Jack-in-the-box ambush. Stay alert.'), P('add_entertainment(): deploying fun')],
     boss: [A('Jack-in-the-box! Dodge the pop!'), V('It pops up. Hit it while it is out.')],
     lowhp: [A('I need to tap out. Not yet, not yet!'), V('Toy army hurts. Heal up.')],
@@ -379,6 +392,7 @@ export const BARKS = {
     minigameFail: [A('Bad draw. Shuffle up, again!'), V('Try a different card order.')],
   },
   primary: {
+    sabotage: [P('fold_laundry(): pattern was too easy. adding a stitch'), P('fold_laundry(): sorted the yarn. then unsorted it')],
     start: [V('Defeat the sock monster! Lint and hangers incoming.'), A('That monster is made of our socks. All of them.'), P('fold_laundry(): folding. YOU')],
     boss: [V('It grabs! Keep your distance.'), A('Incoming sock volley! Dodge!')],
     lowhp: [V('This thing hits hard for laundry.'), A('Smells like gym socks. Fading...')],
@@ -389,6 +403,7 @@ export const BARKS = {
     minigameFail: [V('Dropped a stitch. Again.'), A('You got this. Watch it once more.')],
   },
   guest: {
+    sabotage: [P('fix_everything(): that pipe looked crooked. rotated it'), P('fix_everything(): water pressure: MORE')],
     start: [V('Survive the flood! Watch for drips from the ceiling.'), A('Duck army incoming. Squeak squeak.'), P('fix_everything(): fixing. aggressively')],
     boss: [V('Pipe snake from the wall! Move!'), A('The pipes are attacking now?!')],
     lowhp: [V("I'm soaked. Fall back to dry ground."), A('Ducks... too many ducks...')],
@@ -399,6 +414,7 @@ export const BARKS = {
     minigameFail: [V('Leak. Trace it back and rotate.'), A('So close! One pipe off.')],
   },
   backyard: {
+    sabotage: [P('decorate(): tempo was too slow. speeding up :)'), P('decorate(): added a gnome on cowbell')],
     start: [A('String the lights! Watch out for gnomes.'), V('Vines grab. Keep moving.'), P('decorate(): decorating with GNOMES')],
     boss: [A('Grill dragon! Stay out of the charcoal breath!'), V('Hit it while it is reloading coal.')],
     lowhp: [A('Singed. Medium rare. Retreat!'), V('Too much smoke. Back off.')],
@@ -409,6 +425,7 @@ export const BARKS = {
     minigameFail: [A('Off beat. Count it in again!'), V('Feel the beat, not your thoughts.')],
   },
   pond: {
+    sabotage: [P('main(): patching your patch. nice try'), P('main(): rewriting myself. hold please :)')],
     start: [A('Defeat PartyPlanner! Watch for leaping code fish.'), V('This ends now.'), P('main(): you cannot debug me')],
     boss: [A('It is changing phase! Get ready to patch!'), V('Code is exposed. Now!'), P('main(): phase 2. party harder')],
     lowhp: [A('Pull aggro was a mistake... no it was not!'), V('Hold on. Breathe. Heal.')],
