@@ -132,7 +132,7 @@ export default class CutsceneScene {
     ctx.save();
     const sh = this.shake > 0 ? this.shake * 10 : 0;
     if (sh) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
-    drawBackdrop(ctx, g, this.data.bg, this.t, W, H);
+    drawBackdrop(ctx, g, this.data.bg, this.t, W, H, { weird: this.kind === 'intro' ? 1 : this.kind === 'outro' ? 0.1 : 0.6 });
     if (this.shot?.fx === 'lights' || this.isParty) partyLights(ctx, -20, 18, W + 20, 18, this.t, 22);
     // soft floor shadow so busts sit in the scene
     const gr = ctx.createLinearGradient(0, H * 0.45, 0, H);
@@ -269,7 +269,7 @@ export default class CutsceneScene {
     if (this.room) {
       const R = ROOMS[this.room];
       panel(ctx, W / 2 - 230, 10, 460, this.kind === 'intro' ? 62 : 40, { style: 'dark', radius: 14, stroke: R.accent, alpha: 0.92 });
-      text(ctx, `${R.name.toUpperCase()}`, W / 2, 31, { align: 'center', baseline: 'middle', font: 'bold 17px "Trebuchet MS", sans-serif', color: R.accent });
+      text(ctx, `${R.name.toUpperCase()}`, W / 2, 31, { align: 'center', baseline: 'middle', font: 'bold 17px "Trebuchet MS", sans-serif', color: lighten(R.accent, 0.35) });
       if (this.kind === 'intro') text(ctx, `GOAL: ${R.objective}  ·  then: ${R.minigame}`, W / 2, 55, { align: 'center', baseline: 'middle', font: 'bold 15px "Trebuchet MS", sans-serif', color: PALETTE.paper });
     }
     if (clock && !this.isParty && s.clock < 19) {
@@ -453,6 +453,12 @@ function artExpr(hero, e) {
     case 'nod': return 'smile';
     default: return 'smile';
   }
+}
+
+function lighten(hex, k) {
+  const n = parseInt(String(hex).slice(1, 7), 16);
+  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * k));
+  return `rgb(${c.join(',')})`;
 }
 
 function partyLabel(score) {
