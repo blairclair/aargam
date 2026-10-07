@@ -16,7 +16,8 @@
     "docs/DESIGN.md",
     "docs/ARCHITECTURE.md",
     "docs/WORKFLOW.md",
-    "assets/**"
+    "assets/**",
+    "docs/STATUS.md"
   ],
   "story": [
     "src/story/**",
