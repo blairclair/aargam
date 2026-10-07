@@ -26,7 +26,7 @@ export const PIECES = {
 };
 // PartyPlanner trick cards (one-time surprises).
 export const TRICKS = {
-  flip:    { id: 'flip', name: 'TABLE FLIP', text: '2 damage to all your guests!' },
+  flip:    { id: 'flip', name: 'TABLE FLIP', text: '3 damage to all your guests!' },
   reverse: { id: 'reverse', name: 'REVERSE!', text: 'Your guests swap lanes!' },
   monopoly:{ id: 'monopoly', name: 'MONOPOLY MONEY', text: 'PartyPlanner +2 mana this turn!' },
 };

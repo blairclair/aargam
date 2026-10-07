@@ -71,7 +71,7 @@ export default class CardDuel {
     this.phase = 'foe';
     this.maxMana = Math.min(this.round + 1, 6);
     this.mana = this.maxMana;
-    let foeMana = Math.min(this.round + 1, 6) - (this.p.attempt >= 3 ? 1 : 0);
+    let foeMana = Math.min(this.round === 1 ? 1 : this.round + 2, 7) - (this.p.attempt >= 3 ? 2 : this.p.attempt === 2 ? 1 : 0);
     const last = this.round === this.maxRounds;
     this._enqueue(0.7, () => this._banner(last ? 'FINAL ROUND!' : `ROUND ${this.round}`, last ? 'Last chance to win the table' : null, last ? PALETTE.danger : PALETTE.paper, 0.7));
     // PartyPlanner trick cards (one-time surprises)
@@ -88,7 +88,7 @@ export default class CardDuel {
   _applyTrick(id) {
     if (id === 'flip') {
       this.shake = 12;
-      this.board.you.forEach((u, lane) => { if (u) this._damage(u, 2, 'you', lane); });
+      this.board.you.forEach((u, lane) => { if (u) this._damage(u, 3, 'you', lane); });
       this._enqueue(0.4, () => this._reap());
     } else if (id === 'reverse') {
       const b = this.board.you; this.board.you = [b[2], b[1], b[0]];
@@ -111,8 +111,11 @@ export default class CardDuel {
       let lane;
       if (this.round === 1) lane = 1;
       else {
+        // half the time block your strongest guest, otherwise go for an open lane to hit your face
         const threatened = empty.filter((l) => this.board.you[l]).sort((a, b) => this.board.you[b].atk - this.board.you[a].atk);
-        lane = threatened.length && Math.random() < 0.75 ? threatened[0] : empty[Math.floor(Math.random() * empty.length)];
+        const open = empty.filter((l) => !this.board.you[l]);
+        if (threatened.length && (Math.random() < 0.5 || !open.length)) lane = threatened[0];
+        else lane = (open.length ? open : empty)[Math.floor(Math.random() * (open.length || empty.length))];
       }
       mana -= PIECES[id].cost;
       const L = lane;
@@ -127,7 +130,7 @@ export default class CardDuel {
     else while (this.hand.length < 3) this.hand.push(this._draw());
     // dramatic final turn: the legendary card shows up
     const last = this.round === this.maxRounds;
-    if (!this.legendGiven && (this.hp.foe <= 6 || last) && this.round > 1) {
+    if (!this.legendGiven && (this.hp.foe <= this.maxHp.foe / 2 || last) && this.round > 1) {
       this.legendGiven = true;
       this._enqueue(1.5, () => {
         this.hand.push({ ...PARTY_CARDS.party, fresh: 1 });
@@ -555,7 +558,7 @@ function heartBar(ctx, x, y, w, shown, hp, max, color) {
   bar(ctx, x + 22, y + 4, w - 22, 14, shown / max, color, 'rgba(0,0,0,0.5)', { ghost: Math.max(shown, hp) / max });
   ctx.save(); ctx.fillStyle = PALETTE.danger; ctx.translate(x + 9, y + 11); ctx.beginPath();
   ctx.moveTo(0, 6); ctx.bezierCurveTo(-10, -2, -6, -10, 0, -5); ctx.bezierCurveTo(6, -10, 10, -2, 0, 6); ctx.fill(); ctx.restore();
-  text(ctx, `${Math.max(0, Math.round(hp))}`, x + w / 2 + 11, y + 15, { align: 'center', font: 'bold 12px "Trebuchet MS", sans-serif' });
+  text(ctx, `${Math.max(0, Math.round(hp))} / ${max}`, x + w / 2 + 11, y + 16, { align: 'center', font: 'bold 13px "Trebuchet MS", sans-serif', outline: PALETTE.ink, outlineWidth: 3 });
 }
 function drawCrosshair(ctx, x, y) {
   ctx.strokeStyle = PALETTE.danger; ctx.lineWidth = 3;

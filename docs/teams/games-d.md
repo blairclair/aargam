@@ -20,3 +20,11 @@
 
 ## Testing
 `ONLY="scene=minigame&roomId=backyard" node tools/smoke.mjs --port 8109 --shots <dir>`. Add `&perks=playlist` or `&attempt=2` to test those cases.
+
+## Card Duel
+- 3 lanes and a hand of 3. Mana lands refill each round (2, 3, ... up to 6) and turn sideways when tapped (an MTG nod). Tap a card, then a lane, or press 1/2/3 then 1/2/3. Enter or the button ends the turn, and then every lane clashes straight ahead (an empty lane means a hit to the face).
+- Each round PartyPlanner places its board-game pieces before your turn, so you can see them and answer. It blocks your strongest guest half the time; otherwise it goes for an open lane.
+- Trick cards: REVERSE (your guests swap lanes) or TABLE FLIP (3 damage to every guest) in round 3, MONOPOLY MONEY (+2 foe mana) in round 5, and TABLE FLIP in round 7 if it hasn't been played yet.
+- Final turn drama: once PartyPlanner is at half HP or below, or it's the final round, the legendary **HOUSEWARMING!** card (cost 0) shows up. All your guests attack again for double damage.
+- Round 1 is guided, with a pointer and a prompt for each step: pick the card, pick the lane, end the turn.
+- You win when PartyPlanner reaches 0 HP. If neither side is out after the last round, whoever has the higher HP fraction wins. Score = 0.5 + 0.35 × your HP fraction + 0.15 × the share of rounds you didn't need. Rounds: 8, +2 with playlist, +1 on retries. PartyPlanner's HP and mana go down on attempts 2 and 3+.
