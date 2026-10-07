@@ -19,7 +19,7 @@ Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~
 ## Teams (round 2)
 | Team | Owns | State at last update |
 |---|---|---|
-| story | src/story, src/audio, docs/STORY.md | mid-minigame barks + sabotage lines + HERO_BLURBS (a944d94); doing in-engine cutscene read-through |
+| story | src/story, src/audio, docs/STORY.md | ✅ DONE (107cd15): script, staged cutscenes, title, audio + auto-music, barks API (incl. mid-minigame + sabotage), HERO_BLURBS |
 | hub | src/hub | ✅ FIRST PASS DONE (26c952e): floor plan, shop, select (busts), results. Open: hand playtest; hub tip copy could move to story |
 | action | src/action | all 9 rooms + real art (ad872c7); fix: bark bubble overlaps skill bar bottom-left |
 | games-a | dining, kitchen | Pour the Drinks + Bread Bake shipped (1f9d5f4); liveliness pass in progress |
@@ -40,6 +40,11 @@ Updated by the supervisor at every 10-minute check-in. Last update: 2026-10-06 ~
 - Hub: use `HERO_BLURBS` from lines.js for select-screen role lines.
 - Minigames: optional switch to shared a/common.js helpers for visual consistency.
 - Human playtest timings: Bunny Roundup 80s, Bug Hunt ramp, Pipe flood ~66s, Final Patch 75s, Card Duel maybe too easy.
+
+## For the user to check (morning)
+- Invented personal details in the script — confirm or veto: Victoria's "Ask any teen I work with" and Aaron's "the one I lost in college" (see docs/STORY.md).
+- Listen to the music/sfx mix with sound on (only tested muted).
+- Playtest minigame difficulty (bots only so far).
 
 ## Known issues / next for the supervisor
 - Integration playthrough of the full loop once art-world rooms + HUD v2 land.
