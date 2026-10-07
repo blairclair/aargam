@@ -1,10 +1,10 @@
 # games-d — Drumline (backyard) + Card Duel (playroom)
 
 ## Files
-- `src/minigames/backyard.js` — **Drumline**. 4 lanes (D F J K or click/tap the lane), Marching Ravens purple & gold.
+- `src/minigames/backyard.js` — **Drumline**. 4 lanes: D = left drum, F = right drum, J = left cymbal (crash), K = right cymbal (ride); or click/tap the lane, Marching Ravens purple & gold.
 - `src/minigames/playroom.js` — **Card Duel** (tiny MTG nod).
 - `src/minigames/d/common.js` — `readParams` (perks array or comma string), `drawBust` (reacting photo bust), `drawBubble`, `RAVENS` colors.
-- `src/minigames/d/drums.js` — `DrumKit` (WebAudio snare / quads / bass / crash / brass stabs, own AudioContext) and `SongClock`.
+- `src/minigames/d/drums.js` — `DrumKit` (WebAudio drumL/drumR/cymL/cymR lane voices + snare/quads/bass/crash/brass for the flourish, own AudioContext) and `SongClock`.
 - `src/minigames/d/chart.js` — the cadence chart (demo bar, count-in, 27 bars + final hit).
 - `src/minigames/d/drumart.js` — backyard field, string lights, gnomes (wild ↔ band uniform), snare, note gems.
 

@@ -9,15 +9,16 @@ import { drawHero } from '../art/sprites.js';
 import { playSfx } from '../audio/sfx.js';
 import { DrumKit, SongClock } from './d/drums.js';
 import { buildChart, SECTION_STARTS } from './d/chart.js';
-import { drawBackyard, drawLights, drawGnome, drawSnare, drawNoteGem } from './d/drumart.js';
+import { drawBackyard, drawLights, drawGnome, drawSnare, drawNoteGem, drawCymbal } from './d/drumart.js';
 import { RAVENS, readParams, drawBust, drawBubble, clamp } from './d/common.js';
 import { bark } from '../story/lines.js';
 
 const LANES = [
-  { key: 'D', code: 'KeyD', voice: 'bass', name: 'BASS', color: RAVENS.purpleLite, rim: RAVENS.purpleDeep },
-  { key: 'F', code: 'KeyF', voice: 'snare', name: 'SNARE', color: RAVENS.goldLite, rim: '#a8800f' },
-  { key: 'J', code: 'KeyJ', voice: 'quadLo', name: 'QUAD', color: RAVENS.purpleLite, rim: RAVENS.purpleDeep },
-  { key: 'K', code: 'KeyK', voice: 'quadHi', name: 'QUAD', color: RAVENS.goldLite, rim: '#a8800f' },
+  // D/F = left/right drum (purple drum heads), J/K = left/right cymbal (gold cymbals)
+  { key: 'D', code: 'KeyD', voice: 'drumL', name: 'L DRUM', kind: 'drum', color: RAVENS.purpleLite, rim: RAVENS.purpleDeep },
+  { key: 'F', code: 'KeyF', voice: 'drumR', name: 'R DRUM', kind: 'drum', color: '#9b7be6', rim: RAVENS.purpleDeep },
+  { key: 'J', code: 'KeyJ', voice: 'cymL', name: 'L CYMBAL', kind: 'cymbal', color: RAVENS.goldLite, rim: '#a8800f' },
+  { key: 'K', code: 'KeyK', voice: 'cymR', name: 'R CYMBAL', kind: 'cymbal', color: '#ffe79a', rim: '#a8800f' },
 ];
 const HW = { x: 580, w: 340, top: 34, hitY: 448 };
 const LANE_W = HW.w / 4;
@@ -305,13 +306,20 @@ export default class Drumline {
     drawHero(ctx, g, this.p.hero, x, y, { scale: 1.7, anim: 'idle', facing: 0, t: this.t });
     // sticks
     const L = this.lastHitLane ?? 0;
-    const downL = recent && L <= 1, downR = recent && L >= 2;
+    // left hand plays D (drum) / J (cymbal); right hand plays F (drum) / K (cymbal)
+    const left = L === 0 || L === 2, cym = L >= 2;
+    // cymbal pair on a stand beside the drummer
+    ctx.fillStyle = '#8d95a3'; ctx.fillRect(x + 77, y - 76, 3, 76);
+    drawCymbal(ctx, x + 64, y - 80, RAVENS.goldLite, '#a8800f', 40, 1, this.padFlash[2], Math.sin(this.t * 40) * 0.15 * this.padFlash[2]);
+    drawCymbal(ctx, x + 94, y - 84, '#ffe79a', '#a8800f', 40, 1, this.padFlash[3], Math.sin(this.t * 40) * 0.15 * this.padFlash[3]);
     ctx.save(); ctx.strokeStyle = '#e6c79a'; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(x + 2, y - 40); ctx.lineTo(x + 26, downL ? y - 42 : y - 66);
-    ctx.moveTo(x + 14, y - 40); ctx.lineTo(x + 44, downR ? y - 42 : y - 64);
+    const tipL = recent && left ? (cym ? [x + 60, y - 82] : [x + 26, y - 42]) : [x + 22, y - 68];
+    const tipR = recent && !left ? (cym ? [x + 92, y - 86] : [x + 42, y - 42]) : [x + 46, y - 66];
+    ctx.moveTo(x + 2, y - 40); ctx.lineTo(tipL[0], tipL[1]);
+    ctx.moveTo(x + 14, y - 40); ctx.lineTo(tipR[0], tipR[1]);
     ctx.stroke(); ctx.restore();
-    drawSnare(ctx, x + 32, y - 40, 0.95, Math.max(...this.padFlash));
+    drawSnare(ctx, x + 32, y - 40, 0.95, Math.max(this.padFlash[0], this.padFlash[1]));
     // sash
     ctx.fillStyle = RAVENS.gold; ctx.globalAlpha = 0.9;
     ctx.fillRect(x - 14, y - 52, 4, 4);
@@ -327,7 +335,7 @@ export default class Drumline {
     for (let i = 0; i < 4; i++) {
       const lx = x + i * LANE_W;
       const gr = ctx.createLinearGradient(0, top, 0, hitY);
-      gr.addColorStop(0, 'rgba(75,42,140,0)'); gr.addColorStop(1, i % 2 ? 'rgba(227,181,43,0.16)' : 'rgba(123,85,214,0.22)');
+      gr.addColorStop(0, 'rgba(75,42,140,0)'); gr.addColorStop(1, LANES[i].kind === 'cymbal' ? 'rgba(227,181,43,0.18)' : 'rgba(123,85,214,0.24)');
       ctx.fillStyle = gr; ctx.fillRect(lx, top, LANE_W, hitY - top);
       if (this.padFlash[i] > 0) { ctx.fillStyle = `rgba(255,217,106,${0.18 * this.padFlash[i]})`; ctx.fillRect(lx, top, LANE_W, hitY - top); }
       if (i) { ctx.fillStyle = 'rgba(227,181,43,0.35)'; ctx.fillRect(lx - 1, top, 2, 540 - top); }
@@ -349,11 +357,17 @@ export default class Drumline {
     // pads + keycaps
     for (let i = 0; i < 4; i++) {
       const cx = x + (i + 0.5) * LANE_W, L = LANES[i], f = this.padFlash[i];
-      ctx.save();
-      ctx.fillStyle = L.rim; ctx.beginPath(); ctx.ellipse(cx, hitY, LANE_W * 0.4 + f * 4, 15 + f * 2, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = f > 0 ? '#fff' : L.color; ctx.lineWidth = 3; ctx.stroke();
-      ctx.fillStyle = `rgba(255,246,229,${0.15 + f * 0.6})`; ctx.beginPath(); ctx.ellipse(cx, hitY - 1, LANE_W * 0.3, 9, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
+      if (L.kind === 'cymbal') {
+        // cymbal pad on a little stand; wobbles when struck
+        ctx.fillStyle = '#8d95a3'; ctx.fillRect(cx - 1.5, hitY, 3, 22);
+        drawCymbal(ctx, cx, hitY, f > 0 ? '#fff3c4' : L.color, L.rim, LANE_W * 0.8 + f * 6, 1, f, Math.sin(this.t * 40) * 0.12 * f);
+      } else {
+        ctx.save();
+        ctx.fillStyle = L.rim; ctx.beginPath(); ctx.ellipse(cx, hitY, LANE_W * 0.4 + f * 4, 15 + f * 2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = f > 0 ? '#fff' : L.color; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = `rgba(255,246,229,${0.15 + f * 0.6})`; ctx.beginPath(); ctx.ellipse(cx, hitY - 1, LANE_W * 0.3, 9, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
       keycap(ctx, L.key, cx, hitY + 36);
       text(ctx, L.name, cx, hitY + 66, { align: 'center', font: 'bold 12px "Trebuchet MS", sans-serif', color: L.color });
     }
@@ -367,6 +381,7 @@ export default class Drumline {
       const cx = x + (n.lane + 0.5) * LANE_W, L = LANES[n.lane];
       const near = clamp(1 - Math.abs(n.t - vis) / 0.35, 0, 1);
       if (n.judged === 'miss') drawNoteGem(ctx, cx, y, '#6a6478', '#3a3540', LANE_W * 0.72, 0.5);
+      else if (L.kind === 'cymbal') drawCymbal(ctx, cx, y, L.color, L.rim, LANE_W * 0.76, n.demo ? 0.85 : 1, near);
       else drawNoteGem(ctx, cx, y, L.color, L.rim, LANE_W * 0.72, n.demo ? 0.85 : 1, near);
     }
     ctx.restore();
@@ -401,7 +416,7 @@ export default class Drumline {
       // WATCH: demo bar plays itself
       panel(ctx, HW.x + 14, 96, HW.w - 28, 74, { radius: 12, stroke: RAVENS.gold, alpha: 0.95 });
       chip(ctx, 'WATCH', cx, 114, { align: 'center', fill: RAVENS.gold });
-      text(ctx, 'Hit the drum as its note', cx, 140, { align: 'center', font: 'bold 16px "Trebuchet MS", sans-serif' });
+      text(ctx, 'Hit each drum & cymbal as it', cx, 140, { align: 'center', font: 'bold 16px "Trebuchet MS", sans-serif' });
       text(ctx, 'crosses the gold line', cx, 160, { align: 'center', font: 'bold 16px "Trebuchet MS", sans-serif', color: RAVENS.goldLite });
       // ghost hand pressing the upcoming demo key
       const next = this.notes.find((n) => n.demo && n.judged !== 'auto') ?? this.notes.find((n) => n.demo && n.judged === 'auto' && vis - n.t < 0.25);

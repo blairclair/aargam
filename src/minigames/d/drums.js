@@ -59,6 +59,16 @@ export class DrumKit {
     o.start(t); o.stop(t + decay + 0.05);
   }
 
+  /** Metallic cymbal partials (inharmonic squares through a highpass), 808-style. */
+  _metal(t, base, decay, peak) {
+    const hp = this.ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 6500;
+    hp.connect(this._env(t, peak, decay, 0.003));
+    for (const r of [2, 3, 4.16, 5.43, 6.79, 8.21]) {
+      const o = this.ctx.createOscillator(); o.type = 'square'; o.frequency.value = base * r;
+      o.connect(hp); o.start(t); o.stop(t + decay + 0.05);
+    }
+  }
+
   /** Play a voice at audio time t (default: now). Unknown names are ignored. */
   play(name, t, vel = 1) {
     if (!this.running) return;
@@ -80,6 +90,26 @@ export class DrumKit {
       case 'quadHi':
         this._tone(t, 'sine', 390, 315, 0.55 * vel, 0.2, 0.08);
         this._noise(t, 0.03, 'bandpass', 2800, 1, 0.15 * vel, 0.02);
+        break;
+      // ---- the four player lanes: left/right drum, left/right cymbal
+      case 'drumL': // deeper snare, left hand
+        this._noise(t, 0.22, 'highpass', 1400, 0.8, 0.5 * vel, 0.15);
+        this._tone(t, 'triangle', 210, 150, 0.5 * vel, 0.12, 0.06);
+        this._tone(t, 'sine', 120, 70, 0.4 * vel, 0.16, 0.08);
+        break;
+      case 'drumR': // brighter, tighter snare, right hand
+        this._noise(t, 0.18, 'highpass', 2400, 0.9, 0.55 * vel, 0.11);
+        this._noise(t, 0.06, 'bandpass', 4200, 1.6, 0.3 * vel, 0.04);
+        this._tone(t, 'triangle', 330, 240, 0.4 * vel, 0.08, 0.04);
+        break;
+      case 'cymL': // crash: wide, washy
+        this._metal(t, 310, 0.9, 0.22 * vel);
+        this._noise(t, 1.0, 'highpass', 6000, 0.6, 0.28 * vel, 0.85);
+        break;
+      case 'cymR': // ride: pingy bell
+        this._metal(t, 470, 0.45, 0.2 * vel);
+        this._tone(t, 'sine', 2350, 2300, 0.12 * vel, 0.4, 0.05);
+        this._noise(t, 0.3, 'bandpass', 9000, 1.2, 0.12 * vel, 0.25);
         break;
       case 'click':
         this._tone(t, 'square', 1900, 1700, 0.12 * vel, 0.03, 0.01);

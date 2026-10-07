@@ -155,6 +155,23 @@ export function drawSnare(ctx, x, y, s = 1, hit = 0) {
   ctx.restore();
 }
 
+/** Gold cymbal (note or pad) centered at (x,y). wobble: radians of tilt (after a hit). */
+export function drawCymbal(ctx, x, y, color, rim, w = 56, alpha = 1, glow = 0, wobble = 0) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(wobble);
+  if (glow > 0) { ctx.fillStyle = `rgba(255,217,106,${0.35 * glow})`; ctx.beginPath(); ctx.ellipse(0, 0, w * 0.62, 18, 0, 0, TAU); ctx.fill(); }
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(0, 5, w / 2, 9, 0, 0, TAU); ctx.fill();
+  const g = ctx.createRadialGradient(-w * 0.12, -3, 2, 0, 0, w / 2);
+  g.addColorStop(0, '#fff6d0'); g.addColorStop(0.45, color); g.addColorStop(1, rim);
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, w / 2, 9, 0, 0, TAU); ctx.fill();
+  // lathe rings
+  ctx.strokeStyle = 'rgba(120,80,10,0.35)'; ctx.lineWidth = 1;
+  for (const k of [0.75, 0.5]) { ctx.beginPath(); ctx.ellipse(0, 0, (w / 2) * k, 9 * k, 0, 0, TAU); ctx.stroke(); }
+  // bell
+  ctx.fillStyle = rim; ctx.beginPath(); ctx.ellipse(0, -3, w * 0.12, 5, 0, Math.PI, 0); ctx.fill();
+  ctx.fillStyle = '#fff6d0'; ctx.beginPath(); ctx.arc(0, -6, 1.6, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+
 /** Drum-head note gem centered at (x,y). */
 export function drawNoteGem(ctx, x, y, color, rim, w = 56, alpha = 1, glow = 0) {
   ctx.save(); ctx.globalAlpha = alpha;
