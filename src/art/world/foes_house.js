@@ -56,60 +56,117 @@ function zap(c, x1, y1, x2, y2, t, color = '#fff27a', w = 1.4) {
 }
 
 // ================================================================ OFFICE
-// ---- Syntax Beetle: glossy navy shell with mint `{ }` markings, scuttling legs.
+// ---- Syntax Beetle: glossy navy shell split into two wing cases, mint `{ }` + circuit traces,
+// pronotum plate, clubbed antennae, jointed tripod-gait legs. Wing cases crack open on wind-up.
+/** Two-segment jointed leg from hip (hx,hy) via knee to foot; small claw at the tip. */
+function jointLeg(c, hx, hy, kx, ky, fx, fy, col, w0) {
+  c.strokeStyle = col; c.lineCap = 'round'; c.lineJoin = 'round';
+  c.lineWidth = w0; c.beginPath(); c.moveTo(hx, hy); c.lineTo(kx, ky); c.stroke();
+  c.lineWidth = w0 * 0.7; c.beginPath(); c.moveTo(kx, ky); c.lineTo(fx, fy); c.stroke();
+  c.lineWidth = w0 * 0.45; c.beginPath(); c.moveTo(fx, fy); c.lineTo(fx + 1.4, fy + 0.4); c.stroke();
+  c.fillStyle = col; c.beginPath(); c.arc(kx, ky, w0 * 0.62, 0, TAU); c.fill();
+}
 function beetle(c, P) {
   const w = windOf(P), r = relOf(P), h = hurtOf(P);
   const mv = moving(P) || r > 0;
   const lunge = r > 0 ? Math.sin(r * Math.PI) * 7 : 0;
-  shadow(c, 13, 4, 0.25);
+  const LEG = '#141728';
+  shadow(c, 14, 4, 0.25);
   c.save();
   c.translate(shake(P, 1.2), 0);
   c.scale(P.dir, 1);
   c.translate(lunge - w * 2, 0);
   const rear = w * 0.25 - h * 0.2; // rears up during wind-up
-  // legs (3 per side), alternating tripod gait
-  c.strokeStyle = '#1a1d2e'; c.lineWidth = 1.6; c.lineCap = 'round';
-  for (let i = 0; i < 3; i++) {
-    const ph = P.t * (mv ? 22 : 3) + i * 2.1;
-    const sw = Math.sin(ph) * (mv ? 3 : 0.6);
-    const lx = -6 + i * 6;
-    for (const side of [-1, 1]) {
-      const s2 = side * (i % 2 ? 1 : -1);
-      c.beginPath(); c.moveTo(lx, -8); c.lineTo(lx + sw * s2 - 2, -8 + side * 6); c.lineTo(lx + sw * s2 - 3, side > 0 ? 0 : -16); c.stroke();
+  // legs (3 per side), alternating tripod gait; far side first (drawn behind the shell)
+  for (const side of [-1, 1]) {
+    if (side > 0) continue;
+    for (let i = 0; i < 3; i++) {
+      const ph = P.t * (mv ? 22 : 3) + i * 2.1 + (i % 2 ? Math.PI : 0);
+      const sw = Math.sin(ph) * (mv ? 3 : 0.6), lift = mv ? Math.max(0, Math.cos(ph)) * 1.5 : 0;
+      const lx = -6 + i * 6;
+      jointLeg(c, lx, -10, lx + (i - 1) * 3 + sw * 0.5, -17, lx + (i - 1) * 5 + sw, -14 - lift, '#0f1220', 1.5);
     }
+  }
+  for (let i = 0; i < 3; i++) {
+    const ph = P.t * (mv ? 22 : 3) + i * 2.1 + (i % 2 ? 0 : Math.PI);
+    const sw = Math.sin(ph) * (mv ? 3 : 0.6), lift = mv ? Math.max(0, Math.cos(ph)) * 1.8 : 0;
+    const lx = -6 + i * 6;
+    jointLeg(c, lx, -6, lx + (i - 1) * 3.5 + sw * 0.5 - 1, -3, lx + (i - 1) * 6 + sw, -lift, LEG, 1.8);
   }
   c.save();
   c.translate(0, -9);
   c.rotate(-rear);
-  // body shell
+  // hind wings flicker out from under the cases on wind-up / release
+  const open = Math.max(w * 0.9, r > 0 ? 1 - r : 0);
+  if (open > 0.15) {
+    const fl = 0.6 + Math.abs(Math.sin(P.t * 48)) * 0.4;
+    c.fillStyle = rgba('#d9f2ff', 0.45 * open);
+    for (const s of [-1, 1]) { c.beginPath(); c.ellipse(-11, s * 5 * fl, 9 * open, 3.2, s * (0.5 + open * 0.3), 0, TAU); c.fill(); }
+  }
+  // body shell (two wing cases, rear tips part on wind-up)
   const g = c.createRadialGradient(-3, -5, 1, 0, 0, 14);
-  g.addColorStop(0, '#4a5a8a'); g.addColorStop(0.55, '#2a3358'); g.addColorStop(1, '#161b33');
+  g.addColorStop(0, '#5468a0'); g.addColorStop(0.5, '#2a3358'); g.addColorStop(1, '#141930');
   c.fillStyle = g;
-  c.beginPath(); c.ellipse(-1, 0, 12, 8.5, 0, 0, TAU); c.fill(); outline(c, '#0c0f1e', 1);
-  // { } markings, one brace per wing case (glow on wind-up)
+  c.beginPath(); c.ellipse(-1, 0, 12, 8.5, 0, 0, TAU); c.fill(); outline(c, '#0a0d1a', 1.1);
+  // rim highlight along the top edge
+  c.strokeStyle = 'rgba(170,200,255,0.55)'; c.lineWidth = 0.9;
+  c.beginPath(); c.ellipse(-1, 0, 10.8, 7.3, 0, Math.PI * 1.08, Math.PI * 1.75); c.stroke();
+  // pronotum plate (segment behind the head)
+  c.fillStyle = '#232a4c';
+  c.beginPath(); c.moveTo(3.6, -7.6); c.quadraticCurveTo(12, -6, 11.5, 0); c.quadraticCurveTo(12, 6, 3.6, 7.6); c.quadraticCurveTo(6.2, 0, 3.6, -7.6); c.fill();
+  c.strokeStyle = '#0a0d1a'; c.lineWidth = 0.9;
+  c.beginPath(); c.moveTo(3.6, -7.7); c.quadraticCurveTo(6.2, 0, 3.6, 7.7); c.stroke();
+  c.fillStyle = 'rgba(170,200,255,0.3)'; c.beginPath(); c.ellipse(7.5, -4.2, 2, 0.8, 0.3, 0, TAU); c.fill();
+  // wing-case seam (centre line), parts into a V at the rear on wind-up
+  c.strokeStyle = '#0a0d1a'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(4.6, 0); c.lineTo(-6, 0);
+  c.lineTo(-12.6, -open * 2.2); c.moveTo(-6, 0); c.lineTo(-12.6, open * 2.2); c.stroke();
+  c.strokeStyle = 'rgba(140,170,240,0.35)'; c.lineWidth = 0.6;
+  c.beginPath(); c.moveTo(4.4, -0.9); c.lineTo(-11.5, -0.9); c.stroke();
+  // circuit traces + solder pads on the cases (mint, glow on wind-up)
+  const trace = mix('#3f8f7a', '#c9ffe0', w);
+  c.strokeStyle = trace; c.lineWidth = 0.7; c.fillStyle = trace;
+  for (const s of [-1, 1]) {
+    c.beginPath(); c.moveTo(2.6, s * 3.4); c.lineTo(0.5, s * 5.6); c.lineTo(-7, s * 6.2); c.lineTo(-10.2, s * 3.6); c.stroke();
+    for (const [px, py] of [[2.6, s * 3.4], [-10.2, s * 3.6], [-3.4, s * 6]]) { c.beginPath(); c.arc(px, py, 0.7, 0, TAU); c.fill(); }
+  }
+  // shell spots
+  c.fillStyle = 'rgba(150,180,255,0.28)';
+  for (const [sx, sy, sr] of [[-9, -3.2, 1.1], [-6.5, 5.6, 0.9], [2.5, -6, 0.8], [3, 5.8, 0.9]]) { c.beginPath(); c.arc(sx, sy, sr, 0, TAU); c.fill(); }
+  // { } markings straddling the seam (glow on wind-up)
   c.save();
-  c.font = 'bold 13px Menlo, monospace'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.font = 'bold 11px Menlo, monospace'; c.textAlign = 'center'; c.textBaseline = 'middle';
   c.fillStyle = mix(PALETTE.mint, '#eaffef', w);
   if (w > 0) { c.shadowColor = PALETTE.mint; c.shadowBlur = 6 * w; }
-  c.fillText('{', -6.5, 0.5); c.fillText('}', 2, 0.5);
+  c.fillText('{', -7.2, 0.4); c.fillText('}', 0.6, 0.4);
   c.restore();
   // gloss
-  c.fillStyle = 'rgba(255,255,255,0.45)'; c.beginPath(); c.ellipse(-4, -5, 4, 1.4, -0.2, 0, TAU); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.ellipse(-4, -5.6, 3.6, 1.2, -0.15, 0, TAU); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.35)'; c.beginPath(); c.arc(1.2, -6.2, 0.8, 0, TAU); c.fill();
   // head
-  c.fillStyle = '#1d2240'; c.beginPath(); c.ellipse(11, 0.5, 5.5, 5, 0, 0, TAU); c.fill(); outline(c, '#0c0f1e', 1);
+  c.fillStyle = '#1d2240'; c.beginPath(); c.ellipse(14, 0.5, 5, 4.8, 0, 0, TAU); c.fill(); outline(c, '#0a0d1a', 1);
+  c.fillStyle = 'rgba(170,200,255,0.35)'; c.beginPath(); c.ellipse(13, -2.6, 2.4, 0.8, -0.2, 0, TAU); c.fill();
+  // antennae: elbowed, clubbed tips, twitch
+  const tw = Math.sin(P.t * (mv ? 14 : 4) + P.seed * 5) * 1.2 + w * 1.5;
+  c.strokeStyle = LEG; c.lineWidth = 0.9; c.lineCap = 'round';
+  for (const [ax, k] of [[14.5, 0], [16.5, 1]]) {
+    const ex = ax + 4 + k, ey = -9 - tw * (k ? 0.6 : 1);
+    c.beginPath(); c.moveTo(ax, -3.5); c.lineTo(ax + 2, -7.5 - tw * 0.3); c.lineTo(ex, ey); c.stroke();
+    c.fillStyle = LEG; c.beginPath(); c.ellipse(ex + 0.6, ey - 0.4, 1.5, 1, -0.5, 0, TAU); c.fill();
+  }
   // pincers (open on wind-up)
-  c.strokeStyle = '#1a1d2e'; c.lineWidth = 1.8;
+  c.strokeStyle = LEG; c.lineWidth = 1.8;
   const op = 0.3 + w * 0.6 - r * 0.5;
-  c.beginPath(); c.moveTo(15, -2); c.quadraticCurveTo(19, -3 - op * 4, 20, -1 - op * 2); c.stroke();
-  c.beginPath(); c.moveTo(15, 3); c.quadraticCurveTo(19, 4 + op * 4, 20, 2 + op * 2); c.stroke();
-  // face
-  face(c, P, 12, -1, 2.4, 1.9, { look: 0.8, tilt: -1.2 - w });
+  c.beginPath(); c.moveTo(17.5, -2); c.quadraticCurveTo(21.5, -3 - op * 4, 22.5, -1 - op * 2); c.stroke();
+  c.beginPath(); c.moveTo(17.5, 3); c.quadraticCurveTo(21.5, 4 + op * 4, 22.5, 2 + op * 2); c.stroke();
+  // face (brows angled in = cross, not worried)
+  face(c, P, 15, -0.5, 2.3, 1.8, { look: 0.8, tilt: 1.1 + w });
   c.restore();
   c.restore();
   if (w > 0 && P.prog < 0.7) alertMark(c, 0, -30, w);
 }
 
-// ---- Packet Moth: fuzzy moth with envelope-pattern wings, erratic flutter.
+// ---- Packet Moth: fuzzy moth with veined, scalloped envelope-pattern wings, feathery antennae.
 function moth(c, P) {
   const w = windOf(P), r = relOf(P), h = hurtOf(P);
   const bx = Math.sin(P.t * 4.3 + P.seed * 7) * 3 + Math.sin(P.t * 9.1) * 1.2;
@@ -120,30 +177,72 @@ function moth(c, P) {
   c.scale(P.dir, 1);
   c.rotate(r * 0.5 + Math.sin(P.t * 6) * 0.06 - h * 0.4);
   const flap = w > 0 && P.prog < 0.7 ? 1 + w * 0.25 : 0.35 + Math.abs(Math.sin(P.t * (h ? 10 : 26) + P.seed * 3)) * 0.65;
-  const wingCol = mix('#e8dcc0', PALETTE.mint, w * 0.6);
-  // hind wings then fore wings, each side
+  const wingCol = mix('#ecdfc2', PALETTE.mint, w * 0.6);
+  const edge = '#7d6a4a', vein = rgba('#8d7a5a', 0.75);
   for (const side of [-1, 1]) {
     c.save(); c.scale(1, side * flap);
+    // hind wing with eye-spot
     c.fillStyle = shade(wingCol, -0.12);
-    c.beginPath(); c.ellipse(-4, 6, 6, 7, 0.5, 0, TAU); c.fill(); outline(c, '#8d7a5a', 0.8);
+    c.beginPath(); c.ellipse(-4, 6, 6, 7, 0.5, 0, TAU); c.fill(); outline(c, edge, 0.8);
+    c.fillStyle = rgba('#7d6a4a', 0.5); c.beginPath(); c.arc(-6, 8, 1.8, 0, TAU); c.fill();
+    c.fillStyle = '#f7efdc'; c.beginPath(); c.arc(-6.3, 7.6, 0.7, 0, TAU); c.fill();
+    c.strokeStyle = vein; c.lineWidth = 0.5;
+    c.beginPath(); c.moveTo(-1, 1); c.lineTo(-8, 9); c.moveTo(-1, 1); c.lineTo(-4, 12); c.stroke();
+    // fore wing: scalloped trailing edge
     c.fillStyle = wingCol;
-    c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-4, 16, 6, 15); c.quadraticCurveTo(12, 8, 2, 0); c.closePath(); c.fill(); outline(c, '#8d7a5a', 0.9);
+    c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-4, 16, 2, 15.5);
+    c.quadraticCurveTo(3.5, 17, 5, 15); c.quadraticCurveTo(7, 16, 8, 13.5); c.quadraticCurveTo(10.5, 13, 10, 10);
+    c.quadraticCurveTo(11, 6, 2, 0); c.closePath(); c.fill(); outline(c, edge, 0.9);
+    // wing veins fanning from the root
+    c.strokeStyle = vein; c.lineWidth = 0.55;
+    c.beginPath();
+    for (const [vx, vy] of [[-1.5, 14.5], [3, 15.5], [7, 14], [9.6, 10]]) { c.moveTo(0.6, 0.8); c.quadraticCurveTo(vx * 0.35 + 1, vy * 0.5, vx, vy); }
+    c.moveTo(1.5, 4); c.quadraticCurveTo(5, 5.5, 8.5, 5.5);
+    c.stroke();
+    // dusty margin band
+    c.fillStyle = rgba('#8d7a5a', 0.22);
+    c.beginPath(); c.ellipse(5, 14.2, 5.5, 1.6, -0.15, 0, TAU); c.fill();
     // envelope on the wing
-    c.fillStyle = '#fff'; c.fillRect(1, 7, 7, 5);
+    c.fillStyle = '#fff'; c.fillRect(1.5, 7, 6.5, 4.6);
     c.strokeStyle = w > 0 ? PALETTE.mintDeep : '#a8483a'; c.lineWidth = 0.8;
-    c.strokeRect(1, 7, 7, 5); c.beginPath(); c.moveTo(1, 7); c.lineTo(4.5, 10); c.lineTo(8, 7); c.stroke();
+    c.strokeRect(1.5, 7, 6.5, 4.6); c.beginPath(); c.moveTo(1.5, 7); c.lineTo(4.75, 9.6); c.lineTo(8, 7); c.stroke();
     c.restore();
   }
-  // fuzzy body
+  // fuzzy body: abdomen segments + fluffy thorax collar
   c.fillStyle = '#d8c7a0';
-  c.beginPath(); c.ellipse(0, 0, 7, 3.6, 0, 0, TAU); c.fill(); outline(c, '#8d7a5a', 0.8);
+  c.beginPath(); c.ellipse(-1, 0, 7.5, 3.6, 0, 0, TAU); c.fill(); outline(c, '#8d7a5a', 0.8);
   c.strokeStyle = '#b29d70'; c.lineWidth = 0.8;
-  for (let i = -4; i <= 2; i += 2.2) { c.beginPath(); c.moveTo(i, -3); c.lineTo(i, 3); c.stroke(); }
-  // head + antennae
-  c.fillStyle = '#efe2c2'; c.beginPath(); c.arc(7, -0.5, 4, 0, TAU); c.fill(); outline(c, '#8d7a5a', 0.8);
+  for (let i = -6; i <= 0; i += 2) { c.beginPath(); c.moveTo(i, -3); c.quadraticCurveTo(i + 0.8, 0, i, 3); c.stroke(); }
+  // fuzz tufts around thorax + body edge
+  c.strokeStyle = '#f4ead2'; c.lineWidth = 0.7; c.lineCap = 'round';
+  c.beginPath();
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * TAU, rr = 3.6 + (i % 2) * 0.5;
+    const fx = 3.2 + Math.cos(a) * rr, fy = Math.sin(a) * rr;
+    c.moveTo(3.2 + Math.cos(a) * 2.4, Math.sin(a) * 2.4); c.lineTo(fx + Math.cos(a) * 1.4, fy + Math.sin(a) * 1.4);
+  }
+  for (let i = -7; i <= -1; i += 1.5) { c.moveTo(i, 3.2); c.lineTo(i - 0.6, 4.6); c.moveTo(i, -3.2); c.lineTo(i - 0.6, -4.6); }
+  c.stroke();
+  c.fillStyle = '#efe3c4'; c.beginPath(); c.arc(3.2, 0, 3.2, 0, TAU); c.fill();
+  // head
+  c.fillStyle = '#efe2c2'; c.beginPath(); c.arc(7.5, -0.5, 4, 0, TAU); c.fill(); outline(c, '#8d7a5a', 0.8);
+  // feathery (bipectinate) antennae
+  const twitch = Math.sin(P.t * 7 + P.seed * 4) * 0.8 + w * 1.2;
   c.strokeStyle = '#5a4630'; c.lineWidth = 0.9;
-  c.beginPath(); c.moveTo(8, -4); c.quadraticCurveTo(10, -10, 14, -10); c.moveTo(9, -3.5); c.quadraticCurveTo(13, -7, 16, -6); c.stroke();
-  face(c, P, 8, -1, 1.7, 1.25, { look: 0.9, tilt: -0.8 });
+  const ants = [[8.5, -4, 10.5, -11 - twitch, 15, -11.5 - twitch], [9.5, -3.5, 13.5, -8 - twitch * 0.6, 17, -7 - twitch * 0.6]];
+  for (const [x0, y0, cx, cy, x1, y1] of ants) {
+    c.lineWidth = 0.9; c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(cx, cy, x1, y1); c.stroke();
+    c.lineWidth = 0.45; c.beginPath();
+    for (let k = 0.2; k <= 0.95; k += 0.12) {
+      const ix = (1 - k) * (1 - k) * x0 + 2 * (1 - k) * k * cx + k * k * x1;
+      const iy = (1 - k) * (1 - k) * y0 + 2 * (1 - k) * k * cy + k * k * y1;
+      const L = 2.2 * (1 - Math.abs(k - 0.55));
+      c.moveTo(ix, iy); c.lineTo(ix - L * 0.5, iy - L);
+      c.moveTo(ix, iy); c.lineTo(ix + L * 0.6, iy + L * 0.5 - 0.4);
+    }
+    c.stroke();
+  }
+  face(c, P, 8.5, -1, 1.7, 1.25, { look: 0.9, tilt: 0.8 + w * 0.6 });
   c.restore();
   if (w > 0) {
     // data-packet glow on wind-up
@@ -153,7 +252,8 @@ function moth(c, P) {
   }
 }
 
-// ---- Cable Spider: charcoal body, cable legs ending in plugs, sparks on attack.
+// ---- Cable Spider: charcoal body, braided cable legs with ferrite-bead knees ending in plugs,
+// vented power-brick abdomen, sparks on attack.
 function cable_spider(c, P) {
   const w = windOf(P), r = relOf(P), h = hurtOf(P);
   const mv = moving(P);
@@ -164,36 +264,57 @@ function cable_spider(c, P) {
   c.translate(shake(P, 1.3), 0);
   c.scale(P.dir, 1);
   const by = -12 - rise;
-  // 8 cable legs (4 per side), knee up, plug at tip
+  // 8 cable legs (4 per side): hip -> knee (ferrite bead) -> foot (plug). Far side first, dimmer.
   const cables = ['#2b2b33', '#e8e2d2', '#2b2b33', '#d9534f'];
-  for (let i = 0; i < 4; i++) {
-    for (const side of [-1, 1]) {
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 4; i++) {
       const ph = P.t * (mv ? 16 : 2.5) + i * 1.6 + (side > 0 ? Math.PI : 0);
-      const sw = Math.sin(ph) * (mv ? 3 : 0.8);
+      const sw = Math.sin(ph) * (mv ? 3 : 0.8), lift = mv ? Math.max(0, Math.cos(ph)) * 1.6 : 0;
       const ax = -6 + i * 4, ay = by + 2;
-      const fx = ax + (i - 1.5) * 6 + sw, fy = side > 0 ? 1 : -4;
-      const kx = ax + (i - 1.5) * 4 + sw * 0.5, ky = by - 9 - (side < 0 ? 2 : 0);
-      c.strokeStyle = cables[i]; c.lineWidth = 1.8; c.lineCap = 'round';
-      c.beginPath(); c.moveTo(ax, ay); c.quadraticCurveTo(kx, ky, fx, fy - 2); c.stroke();
+      const fx = ax + (i - 1.5) * 8 + sw, fy = (side > 0 ? 1 : -4) - lift;
+      const kx = ax + (i - 1.5) * 6.5 + sw * 0.5, ky = by - 5 - (side < 0 ? 2 : 0) - Math.abs(i - 1.5) * 0.8;
+      const col = side < 0 ? shade(cables[i], -0.25) : cables[i];
+      // cable: dark sheath outline, colour core, braided tick texture
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      const path = () => { c.beginPath(); c.moveTo(ax, ay); c.quadraticCurveTo(lerp(ax, kx, 0.4), ky - 1.5, kx, ky); c.quadraticCurveTo(lerp(kx, fx, 0.7), lerp(ky, fy, 0.3), fx, fy - 3); };
+      path(); c.strokeStyle = '#121219'; c.lineWidth = 2.6; c.stroke();
+      path(); c.strokeStyle = col; c.lineWidth = 1.7; c.stroke();
+      c.setLineDash([0.8, 1.6]); c.lineDashOffset = mv ? -P.t * 10 : 0;
+      path(); c.strokeStyle = rgba(cables[i] === '#e8e2d2' ? '#9a948a' : '#ffffff', 0.35); c.lineWidth = 1.7; c.stroke();
+      c.setLineDash([]);
+      // ferrite bead at the knee
+      c.save(); c.translate(kx, ky); c.rotate(Math.atan2(fy - ky, fx - kx) * 0.5);
+      c.fillStyle = side < 0 ? '#2a2c34' : '#3a3d48'; rrect(c, -2.2, -1.6, 4.4, 3.2, 1.2); c.fill(); outline(c, '#111218', 0.6);
+      c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(-1.6, -1.2, 3.2, 0.6);
+      c.restore();
       // plug
-      c.fillStyle = '#c9ccd4'; c.fillRect(fx - 1.6, fy - 3, 3.2, 3);
-      c.fillStyle = '#e6c25a'; c.fillRect(fx - 1.2, fy, 0.8, 1.6); c.fillRect(fx + 0.4, fy, 0.8, 1.6);
+      c.fillStyle = side < 0 ? '#a9acb4' : '#c9ccd4'; rrect(c, fx - 1.8, fy - 3.4, 3.6, 3.4, 0.8); c.fill(); outline(c, '#6b7080', 0.5);
+      c.fillStyle = '#e6c25a'; c.fillRect(fx - 1.3, fy, 0.8, 1.7); c.fillRect(fx + 0.5, fy, 0.8, 1.7);
     }
   }
-  // abdomen + body
-  const g = c.createRadialGradient(-6, by - 4, 1, -4, by, 12);
-  g.addColorStop(0, '#5a5d6a'); g.addColorStop(1, '#22232b');
+  // abdomen + body drawn over the legs
+  const g = c.createRadialGradient(-7, by - 5, 1, -4, by, 12);
+  g.addColorStop(0, '#62667a'); g.addColorStop(1, '#202129');
   c.fillStyle = g;
-  c.beginPath(); c.ellipse(-5, by, 10, 8, 0, 0, TAU); c.fill(); outline(c, '#111218', 1);
-  // power-brick stripe on abdomen
-  c.fillStyle = '#3a3c48'; rrect(c, -11, by - 2, 10, 4, 1.5); c.fill();
-  c.fillStyle = w > 0 ? '#ffe46a' : PALETTE.mint; c.beginPath(); c.arc(-3, by, 1.1, 0, TAU); c.fill();
+  c.beginPath(); c.ellipse(-5, by, 10, 8, 0, 0, TAU); c.fill(); outline(c, '#0f1015', 1);
+  c.strokeStyle = 'rgba(200,210,235,0.35)'; c.lineWidth = 0.8;
+  c.beginPath(); c.ellipse(-5, by, 8.8, 6.8, 0, Math.PI * 1.1, Math.PI * 1.7); c.stroke();
+  // power-brick stripe with vent slits + status LED
+  c.fillStyle = '#383a46'; rrect(c, -12, by - 2.4, 11, 4.8, 1.5); c.fill(); outline(c, '#15161c', 0.6);
+  c.strokeStyle = '#1b1c23'; c.lineWidth = 0.7;
+  for (let k = 0; k < 4; k++) { c.beginPath(); c.moveTo(-10.5 + k * 1.8, by - 1.3); c.lineTo(-10.5 + k * 1.8, by + 1.3); c.stroke(); }
+  c.fillStyle = w > 0 ? '#ffe46a' : PALETTE.mint; c.beginPath(); c.arc(-2.6, by, 1.1, 0, TAU); c.fill();
+  // spinneret cable trailing behind
+  c.strokeStyle = '#2b2b33'; c.lineWidth = 1.4;
+  c.beginPath(); c.moveTo(-14.5, by + 1); c.quadraticCurveTo(-19, by + 4 + Math.sin(P.t * 3) * 1.5, -20, by + 9); c.stroke();
+  c.fillStyle = '#c9ccd4'; rrect(c, -21.4, by + 8.5, 2.8, 2.6, 0.6); c.fill();
   // head
   c.fillStyle = '#2d2f39'; c.beginPath(); c.ellipse(6, by + 1, 6.5, 5.5, 0, 0, TAU); c.fill(); outline(c, '#111218', 1);
-  // LED cluster
-  for (const [ex, ey] of [[4, by - 2.5], [10, by - 2]]) { c.fillStyle = rgba(PALETTE.danger, 0.9); c.beginPath(); c.arc(ex, ey, 0.9, 0, TAU); c.fill(); }
-  face(c, P, 7.5, by + 1.2, 2.3, 1.8, { look: 0.8, tilt: -1.1 - w * 0.8 });
-  c.fillStyle = '#c9ccd4'; c.fillRect(11, by + 4, 1, 2); c.fillRect(13, by + 4, 1, 2); // fangs (prongs)
+  c.fillStyle = 'rgba(200,210,235,0.3)'; c.beginPath(); c.ellipse(5, by - 2.6, 3, 0.9, -0.2, 0, TAU); c.fill();
+  // LED cluster (extra eyes)
+  for (const [ex, ey] of [[3.5, by - 2.5], [10.5, by - 2], [5, by - 3.6], [9, by - 3.4]]) { c.fillStyle = rgba(PALETTE.danger, 0.9); c.beginPath(); c.arc(ex, ey, 0.8, 0, TAU); c.fill(); }
+  face(c, P, 7.5, by + 1.2, 2.3, 1.8, { look: 0.8, tilt: 1.1 + w * 0.8 });
+  c.fillStyle = '#c9ccd4'; c.fillRect(11, by + 4, 1, 2.2); c.fillRect(13, by + 4, 1, 2.2); // fangs (prongs)
   // electricity
   if (w > 0.2 || r > 0) {
     const k = r > 0 ? 1 - r * 0.5 : w;
@@ -208,7 +329,8 @@ function cable_spider(c, P) {
 }
 
 // ================================================================ KITCHEN
-// ---- Dough Blob: squishy sourdough with air bubbles; stretches tall (about to split) on attack.
+// ---- Dough Blob: mischievous sourdough boule: scored top, flour dust, crusty base, air bubbles.
+// Stretches tall on wind-up (gluten strands across the pinching waist), splats on release.
 function dough_blob(c, P) {
   const w = windOf(P), r = relOf(P), h = hurtOf(P);
   const small = !!P.o?.small;
@@ -227,48 +349,108 @@ function dough_blob(c, P) {
   c.translate(shake(P, 1), -air);
   c.scale(sx, sy);
   const R = 13;
-  const base = '#f3dfb4', crust = '#d9b47a', deep = '#b98b4e';
+  const base = '#f3dfb4', crust = '#d9b47a', deep = '#b98b4e', bake = '#c48a4c';
   // body outline (wobbly)
   const pts = 18;
-  c.beginPath();
-  for (let i = 0; i <= pts; i++) {
-    const a = Math.PI + (i / pts) * Math.PI;
-    const wob = 1 + Math.sin(a * 3 + P.t * 4 + P.seed * 9) * 0.05;
-    const x = Math.cos(a) * R * 1.1 * wob, y = -R * 0.95 + Math.sin(a) * R * wob;
-    if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
-  }
-  c.bezierCurveTo(R * 1.25, -R * 0.2, R * 0.9, 1, 0, 1);
-  c.bezierCurveTo(-R * 0.9, 1, -R * 1.25, -R * 0.2, -R * 1.1, -R * 0.95);
-  c.closePath();
+  const body = () => {
+    c.beginPath();
+    for (let i = 0; i <= pts; i++) {
+      const a = Math.PI + (i / pts) * Math.PI;
+      const wob = 1 + Math.sin(a * 3 + P.t * 4 + P.seed * 9) * 0.05;
+      const x = Math.cos(a) * R * 1.1 * wob, y = -R * 0.95 + Math.sin(a) * R * wob;
+      if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
+    }
+    c.bezierCurveTo(R * 1.25, -R * 0.2, R * 0.9, 1, 0, 1);
+    c.bezierCurveTo(-R * 0.9, 1, -R * 1.25, -R * 0.2, -R * 1.1, -R * 0.95);
+    c.closePath();
+  };
+  body();
   const g = c.createRadialGradient(-4, -R * 1.4, 2, 0, -R * 0.7, R * 1.6);
   g.addColorStop(0, '#fff6e2'); g.addColorStop(0.6, base); g.addColorStop(1, crust);
-  c.fillStyle = g; c.fill(); outline(c, deep, 1.1);
-  // waist pinch (about to split)
+  c.fillStyle = g; c.fill();
+  c.save(); body(); c.clip();
+  // crusty, baked base with blisters
+  const cg = c.createLinearGradient(0, -7, 0, 1);
+  cg.addColorStop(0, rgba(bake, 0)); cg.addColorStop(0.45, rgba(bake, 0.75)); cg.addColorStop(1, shade(bake, -0.2));
+  c.fillStyle = cg; c.fillRect(-R * 1.4, -7, R * 2.8, 9);
+  c.fillStyle = rgba('#8a5a2e', 0.45);
+  for (const [bx, by] of [[-9, -2.2], [-4, -1.2], [2, -1.6], [7.5, -2.4], [10.5, -4]]) { c.beginPath(); c.arc(bx, by, 0.7, 0, TAU); c.fill(); }
+  // flour patches + speckles
+  c.fillStyle = 'rgba(255,255,255,0.72)';
+  c.beginPath(); c.ellipse(-6, -R * 1.62, 5.5, 2, -0.25, 0, TAU); c.fill();
+  c.beginPath(); c.ellipse(8.5, -R * 1.3, 2.8, 1.5, 0.5, 0, TAU); c.fill();
+  c.beginPath(); c.ellipse(-11, -R * 0.75, 1.6, 2.6, 0.2, 0, TAU); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.85)';
+  for (const [fx, fy] of [[-2, -22], [3, -23.5], [-9.5, -17], [10, -14], [5.5, -19.5], [-12, -12], [0, -20.5]]) { c.beginPath(); c.arc(fx, fy, 0.55, 0, TAU); c.fill(); }
+  c.restore();
+  body(); outline(c, deep, 1.1);
+  // bread score: a curved slash across the top that gapes open on wind-up (shows the crumb)
+  const gape = 1.2 + w * 1.8 + h * 0.6;
+  c.fillStyle = '#fffaf0';
+  c.beginPath(); c.moveTo(-8.5, -19.2); c.quadraticCurveTo(-1, -26 - gape, 8.5, -20.5);
+  c.quadraticCurveTo(-0.5, -23.2 + gape * 0.3, -8.5, -19.2); c.fill();
+  c.strokeStyle = deep; c.lineWidth = 0.9; c.stroke();
+  c.strokeStyle = rgba(bake, 0.9); c.lineWidth = 1.4; // the baked "ear" lip
+  c.beginPath(); c.moveTo(-7.5, -19.8); c.quadraticCurveTo(-1, -26.6 - gape, 8, -21.2); c.stroke();
+  c.fillStyle = rgba(deep, 0.35);
+  for (const [px, py] of [[-3, -22.6], [1.5, -22.9], [5, -21.8]]) { c.beginPath(); c.arc(px, py, 0.55, 0, TAU); c.fill(); }
+  // waist pinch + gluten strands (about to split)
   if (w > 0.3) {
-    c.strokeStyle = rgba(deep, (w - 0.3) * 1.4); c.lineWidth = 1.2;
-    c.beginPath(); c.moveTo(-R * 1.05, -R * 0.95); c.quadraticCurveTo(0, -R * 0.75, R * 1.05, -R * 0.95); c.stroke();
+    const k = (w - 0.3) / 0.7, yw = -R * 0.95;
+    c.strokeStyle = rgba(deep, k * 0.9); c.lineWidth = 1.2;
+    c.beginPath(); c.moveTo(-R * 1.05, yw); c.quadraticCurveTo(0, yw + 2.5, R * 1.05, yw); c.stroke();
+    c.strokeStyle = rgba('#fff4dc', 0.9 * k); c.lineWidth = 0.7;
+    for (const x of [-10, -6, -1.5, 3, 7.5, 10.5]) {
+      c.beginPath(); c.moveTo(x, yw - 2.2 - k); c.quadraticCurveTo(x + Math.sin(P.t * 9 + x) * 0.8, yw + 1, x + 0.4, yw + 2.4 + k); c.stroke();
+    }
   }
   // bubbles
-  for (const [bx, by, br] of [[-6, -6, 1.8], [5, -4, 1.3], [7, -16, 1.6], [-3, -19, 1.1], [-9, -13, 1]]) {
+  for (const [bx, by, br] of [[-6, -7, 1.8], [5, -5, 1.3], [9, -13, 1.4], [-3, -15, 1.1], [-10, -10, 1]]) {
     c.fillStyle = rgba(deep, 0.35); c.beginPath(); c.arc(bx, by, br, 0, TAU); c.fill();
     c.fillStyle = 'rgba(255,255,255,0.6)'; c.beginPath(); c.arc(bx - br * 0.3, by - br * 0.3, br * 0.35, 0, TAU); c.fill();
   }
-  // flour dusting
-  c.fillStyle = 'rgba(255,255,255,0.55)'; c.beginPath(); c.ellipse(-4, -R * 1.65, 5, 1.8, -0.2, 0, TAU); c.fill();
   c.restore();
-  // face (not scaled with stretch so eyes stay round)
+  // face (not scaled with stretch so eyes stay round): sly half-lidded eyes + smirk
   c.save();
-  c.translate(shake(P, 1), -air - R * 0.95 * sy);
+  c.translate(shake(P, 1), -air - R * 0.95 * sy + 1);
   c.scale(P.dir, 1);
-  face(c, P, 2, -1, 3.6, 2.4, { look: 0.6, tilt: -1.2 - w });
-  mouth(c, 3, 5, 4, r > 0 ? 0.9 : w * 0.4);
+  const ex = 2, ey = -1, sep = 3.6, er = 2.4;
+  face(c, P, ex, ey, sep, er, { look: 0.7, tilt: 1.3 + w * 0.8 });
+  if (hurtOf(P) <= 0.15) {
+    // heavy lids, slanting down toward the middle: scheming, not scared
+    const lid = 0.25 + (1 - w) * 0.25;
+    for (const sgn of [-1, 1]) {
+      const cx = ex + sgn * sep;
+      c.save();
+      c.beginPath(); c.ellipse(cx, ey, er + 0.2, er * 1.15 + 0.2, 0, 0, TAU); c.clip();
+      const yo = ey - er * 1.15 + er * 2.3 * lid, yi = yo + er * 0.7;
+      c.fillStyle = shade(base, -0.06);
+      c.beginPath(); c.moveTo(cx - sgn * er * 1.3, ey - er * 2); c.lineTo(cx - sgn * er * 1.3, yi * 1 - 0.0); c.lineTo(cx + sgn * er * 1.3, yo); c.lineTo(cx + sgn * er * 1.3, ey - er * 2); c.closePath(); c.fill();
+      c.strokeStyle = INK; c.lineWidth = 0.8;
+      c.beginPath(); c.moveTo(cx - sgn * er * 1.3, yi); c.lineTo(cx + sgn * er * 1.3, yo); c.stroke();
+      c.restore();
+    }
+  }
+  if (h > 0.15) mouth(c, 3, 5, 3.6, 0.2);
+  else if (r > 0 || w > 0.55) mouth(c, 3, 5, 4, r > 0 ? 0.9 : (w - 0.55) * 1.4);
+  else {
+    // lopsided grin with a tooth
+    c.strokeStyle = INK; c.lineWidth = 1.1; c.lineCap = 'round';
+    c.fillStyle = INK;
+    c.beginPath(); c.moveTo(-2, 4); c.quadraticCurveTo(3, 8.6, 8.4, 2.2); c.quadraticCurveTo(3.4, 5.4, -2, 4); c.fill(); c.stroke();
+    c.fillStyle = '#fff'; c.beginPath(); c.moveTo(4.4, 4.9); c.lineTo(6.4, 4.1); c.lineTo(5.6, 5.9); c.closePath(); c.fill();
+    c.fillStyle = '#d9606e'; c.beginPath(); c.arc(2.2, 5.9, 1, 0, Math.PI); c.fill();
+  }
   c.fillStyle = 'rgba(232,120,110,0.35)'; c.beginPath(); c.arc(-4, 3, 1.8, 0, TAU); c.arc(9, 3, 1.8, 0, TAU); c.fill();
   c.restore();
-  // splat droplets on release
+  // splat droplets on release, still tethered by stretchy gluten strands
   if (r > 0) {
     for (let i = 0; i < 5; i++) {
       const a = Math.PI + (i / 4) * Math.PI;
-      c.fillStyle = rgba(base, 1 - r); c.beginPath(); c.arc(Math.cos(a) * (14 + r * 12), -6 + Math.sin(a) * (6 + r * 8), 2, 0, TAU); c.fill();
+      const dx = Math.cos(a) * (14 + r * 12), dy = -6 + Math.sin(a) * (6 + r * 8);
+      c.strokeStyle = rgba(crust, 0.8 * (1 - r)); c.lineWidth = 1.2 * (1 - r) + 0.3;
+      c.beginPath(); c.moveTo(Math.cos(a) * 11, -6 + Math.sin(a) * 5); c.quadraticCurveTo((dx + Math.cos(a) * 11) / 2, (dy - 6 + Math.sin(a) * 5) / 2 + 2, dx, dy); c.stroke();
+      c.fillStyle = rgba(base, 1 - r); c.beginPath(); c.arc(dx, dy, 2, 0, TAU); c.fill();
     }
   }
   if (w > 0 && P.prog < 0.7) alertMark(c, 0, -R * 2 * sy - 8, w);
@@ -327,7 +509,8 @@ function toaster(c, P) {
   if (w > 0 && P.prog < 0.7) alertMark(c, 0, -44, w);
 }
 
-// ---- Screaming Kettle: enamel kettle that reddens, puffs steam, screams a steam cone.
+// ---- Screaming Kettle: polka-dot enamel teapot-kettle with a flower decal, cane-wrapped handle,
+// open spout with a whistle flap. Idles with a lazy steam curl; reddens, rattles and screams a steam cone.
 function kettle(c, P) {
   const w = windOf(P), r = relOf(P), h = hurtOf(P);
   const mv = moving(P);
@@ -339,28 +522,100 @@ function kettle(c, P) {
   c.rotate(wob - h * 0.2 * P.dir);
   c.scale(P.dir, 1);
   const body = mix('#5fb3a8', '#e04a3a', Math.max(w * 0.85, r));
-  const dark = shade(body, -0.3);
-  // spout (pointing forward)
+  const dark = shade(body, -0.3), enamel = '#fff6e5';
+  // spout (pointing forward) with an open, rimmed mouth
   c.fillStyle = body;
   c.beginPath(); c.moveTo(9, -10); c.quadraticCurveTo(17, -11, 20, -20); c.lineTo(23, -19); c.quadraticCurveTo(20, -7, 10, -5); c.closePath(); c.fill(); outline(c, dark, 1);
-  // whistle cap
-  c.fillStyle = '#d8dee8'; c.beginPath(); c.ellipse(21.5, -20.5, 2.8, 1.8, -0.6, 0, TAU); c.fill(); outline(c, '#6b7484', 0.8);
+  c.strokeStyle = rgba('#ffffff', 0.35); c.lineWidth = 0.8;
+  c.beginPath(); c.moveTo(12, -9.6); c.quadraticCurveTo(17, -11.5, 19.6, -18); c.stroke();
+  c.fillStyle = enamel; c.beginPath(); c.ellipse(21.5, -19.6, 2.6, 1.5, -0.45, 0, TAU); c.fill(); outline(c, dark, 0.8);
+  c.fillStyle = '#2b2f3a'; c.beginPath(); c.ellipse(21.6, -19.7, 1.5, 0.75, -0.45, 0, TAU); c.fill();
+  // whistle flap: hinged on the spout, lifts as pressure builds
+  c.save(); c.translate(19.6, -21); c.rotate(-0.45 - Math.min(1, w * 1.3 + r) * 0.9 - (w > 0.5 ? Math.abs(Math.sin(P.t * 45)) * 0.25 : 0));
+  c.fillStyle = '#d8dee8'; rrect(c, 0, -1, 4.6, 1.8, 0.8); c.fill(); outline(c, '#6b7484', 0.6);
+  c.restore();
   // body
+  const bodyPath = () => { c.beginPath(); c.moveTo(-13, -2); c.bezierCurveTo(-16, -14, -9, -24, 0, -24); c.bezierCurveTo(9, -24, 16, -14, 13, -2); c.quadraticCurveTo(0, 1, -13, -2); };
   const g = c.createRadialGradient(-5, -18, 2, 0, -12, 17);
   g.addColorStop(0, shade(body, 0.4)); g.addColorStop(0.6, body); g.addColorStop(1, dark);
-  c.fillStyle = g;
-  c.beginPath(); c.moveTo(-13, -2); c.bezierCurveTo(-16, -14, -9, -24, 0, -24); c.bezierCurveTo(9, -24, 16, -14, 13, -2); c.quadraticCurveTo(0, 1, -13, -2); c.fill(); outline(c, dark, 1.1);
-  c.fillStyle = rgba('#ffffff', 0.4); c.beginPath(); c.ellipse(-7, -16, 2.2, 5, 0.3, 0, TAU); c.fill();
+  c.fillStyle = g; bodyPath(); c.fill();
+  c.save(); bodyPath(); c.clip();
+  // polka dots (skip where the face sits)
+  c.fillStyle = rgba(enamel, 0.8);
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 7; col++) {
+      const dx = -14 + col * 4.6 + (row % 2) * 2.3, dy = -21 + row * 4.4;
+      if (dx > -5 && dx < 8 && dy > -19 && dy < -2) continue;
+      c.beginPath(); c.arc(dx, dy, 0.95, 0, TAU); c.fill();
+    }
+  }
+  // rim bands: shoulder band under the lid + base band
+  c.strokeStyle = enamel; c.lineWidth = 1.4;
+  c.beginPath(); c.ellipse(0, -20.8, 11, 2.6, 0, 0.05, Math.PI - 0.05); c.stroke();
+  c.fillStyle = dark; c.beginPath(); c.moveTo(-15, -4.2); c.quadraticCurveTo(0, -1.2, 15, -4.2); c.lineTo(15, 2); c.lineTo(-15, 2); c.fill();
+  c.strokeStyle = enamel; c.lineWidth = 0.9;
+  c.beginPath(); c.moveTo(-15, -4.4); c.quadraticCurveTo(0, -1.4, 15, -4.4); c.stroke();
+  c.restore();
+  bodyPath(); outline(c, dark, 1.1);
+  // flower decal on the back cheek
+  c.save(); c.translate(-8.6, -10.5); c.rotate(-0.25);
+  c.fillStyle = '#5c9a4f';
+  c.beginPath(); c.ellipse(-2.6, 2.6, 2.2, 1, 0.7, 0, TAU); c.ellipse(2.4, 2.8, 2, 0.9, -0.6, 0, TAU); c.fill();
+  c.fillStyle = '#ff8fb1';
+  for (let i = 0; i < 5; i++) { const a = (i / 5) * TAU - Math.PI / 2; c.beginPath(); c.ellipse(Math.cos(a) * 1.9, Math.sin(a) * 1.9, 1.5, 1.05, a, 0, TAU); c.fill(); }
+  c.strokeStyle = rgba('#b8476b', 0.7); c.lineWidth = 0.4;
+  for (let i = 0; i < 5; i++) { const a = (i / 5) * TAU - Math.PI / 2; c.beginPath(); c.ellipse(Math.cos(a) * 1.9, Math.sin(a) * 1.9, 1.5, 1.05, a, 0, TAU); c.stroke(); }
+  c.fillStyle = '#ffd34a'; c.beginPath(); c.arc(0, 0, 1.1, 0, TAU); c.fill();
+  c.restore();
+  // glaze highlight
+  c.fillStyle = rgba('#ffffff', 0.45); c.beginPath(); c.ellipse(-7, -16.5, 1.8, 4.2, 0.35, 0, TAU); c.fill();
+  c.fillStyle = rgba('#ffffff', 0.6); c.beginPath(); c.arc(-4.6, -20.4, 0.8, 0, TAU); c.fill();
   // lid + knob (rattles)
   const rat = w > 0 ? Math.abs(Math.sin(P.t * 50)) * 2 * w : 0;
   c.fillStyle = shade(body, -0.1); c.beginPath(); c.ellipse(0, -23.5 - rat, 8, 2.6, 0, 0, TAU); c.fill(); outline(c, dark, 0.9);
-  c.fillStyle = '#2b2f3a'; c.beginPath(); c.arc(0, -26.5 - rat, 2, 0, TAU); c.fill();
-  // handle arc
-  c.strokeStyle = '#2b2f3a'; c.lineWidth = 2.6; c.beginPath(); c.moveTo(-9, -22); c.quadraticCurveTo(-2, -36, 8, -22); c.stroke();
+  c.strokeStyle = rgba(enamel, 0.7); c.lineWidth = 0.6; c.beginPath(); c.ellipse(0, -23.7 - rat, 5.2, 1.5, 0, Math.PI * 1.05, Math.PI * 1.95); c.stroke();
+  c.fillStyle = '#2b2f3a'; c.beginPath(); c.ellipse(0, -25 - rat, 1.2, 0.8, 0, 0, TAU); c.fill();
+  c.fillStyle = '#2b2f3a'; c.beginPath(); c.arc(0, -26.8 - rat, 2.1, 0, TAU); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.75)'; c.beginPath(); c.arc(-0.7, -27.6 - rat, 0.75, 0, TAU); c.fill();
+  // cane-wrapped handle on metal posts
+  c.fillStyle = '#4a4f5c';
+  rrect(c, -10.2, -23.4, 2.6, 3.2, 0.8); c.fill(); rrect(c, 6.8, -23.4, 2.6, 3.2, 0.8); c.fill();
+  const hp = (k) => [(1 - k) * (1 - k) * -9 + 2 * (1 - k) * k * -1 + k * k * 8, (1 - k) * (1 - k) * -22.5 + 2 * (1 - k) * k * -37 + k * k * -22.5];
+  c.lineCap = 'round';
+  c.strokeStyle = '#7a4e32'; c.lineWidth = 3.4; c.beginPath(); c.moveTo(-9, -22.5); c.quadraticCurveTo(-1, -37, 8, -22.5); c.stroke();
+  c.strokeStyle = '#d4a373'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(-9, -22.5); c.quadraticCurveTo(-1, -37, 8, -22.5); c.stroke();
+  c.strokeStyle = '#8a5a3a'; c.lineWidth = 0.7;
+  for (let k = 0.1; k < 0.95; k += 0.075) {
+    const [x0, y0] = hp(k), [x1, y1] = hp(k + 0.02);
+    const nx = -(y1 - y0), ny = x1 - x0, L = Math.hypot(nx, ny) || 1;
+    c.beginPath(); c.moveTo(x0 - (nx / L) * 1.3 - 0.4, y0 - (ny / L) * 1.3); c.lineTo(x0 + (nx / L) * 1.3 + 0.4, y0 + (ny / L) * 1.3); c.stroke();
+  }
+  c.strokeStyle = 'rgba(255,240,215,0.6)'; c.lineWidth = 0.6;
+  c.beginPath(); c.moveTo(-6.5, -27); c.quadraticCurveTo(-1, -33.6, 4, -28.4); c.stroke();
   // face
-  face(c, P, 1, -13, 4, 2.5, { look: 0.6, tilt: -1.3 - w * 1.2 });
+  face(c, P, 1, -13, 4, 2.5, { look: 0.6, tilt: 1.1 + w * 1.2 });
   mouth(c, 2, -6.5, 4.5, r > 0 ? 1 : w * 0.6);
+  c.fillStyle = 'rgba(232,120,110,0.4)'; c.beginPath(); c.arc(-4.6, -9, 1.6, 0, TAU); c.arc(8.2, -9, 1.6, 0, TAU); c.fill();
   c.restore();
+  // lazy steam curl from the spout while calm
+  if (w === 0 && r === 0) {
+    c.save(); c.scale(P.dir, 1);
+    c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineCap = 'round';
+    for (let i = 0; i < 2; i++) {
+      const k = (P.t * 0.6 + i * 0.5 + P.seed) % 1;
+      c.globalAlpha *= 1;
+      c.lineWidth = 1.6 - k * 0.8;
+      c.strokeStyle = `rgba(255,255,255,${(0.6 * Math.sin(k * Math.PI)).toFixed(3)})`;
+      c.beginPath();
+      for (let j = 0; j <= 8; j++) {
+        const q = j / 8, yy = -22 - k * 10 - q * 9;
+        const xx = 22 + Math.sin(q * 5 + P.t * 3 + i * 2) * (1.5 + q * 1.5) + q * 1.5;
+        if (j === 0) c.moveTo(xx, yy); else c.lineTo(xx, yy);
+      }
+      c.stroke();
+    }
+    c.restore();
+  }
   // steam puffs from lid during wind-up
   if (w > 0) {
     for (let i = 0; i < 3; i++) {
@@ -813,12 +1068,12 @@ function jack_box(c, P) {
 
 // box sizes: [boxW, boxH] covering x∈[-W/2, W/2], y∈[-(H-8), 8]
 export const PAINTERS = {
-  beetle: [56, 48, beetle],
-  moth: [56, 58, moth],
-  cable_spider: [64, 52, cable_spider],
-  dough_blob: [60, 60, dough_blob],
+  beetle: [56, 48, beetle, { drawScale: 1.45 }],
+  moth: [56, 58, moth, { drawScale: 1.4 }],
+  cable_spider: [64, 52, cable_spider, { drawScale: 1.3 }],
+  dough_blob: [60, 60, dough_blob, { drawScale: 1.4 }],
   toaster: [52, 68, toaster],
-  kettle: [130, 64, kettle],
+  kettle: [130, 64, kettle, { drawScale: 1.35 }],
   flying_plate: [64, 56, flying_plate],
   chair: [96, 76, chair],
   dust_bunny: [52, 56, dust_bunny],

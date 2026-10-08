@@ -1,7 +1,9 @@
 // v2 enemy dispatcher. Owned by: art-world.
 // Each painter module exports PAINTERS = { type: [boxW, boxH, fn(c, P)] } with the origin at the
 // enemy's FEET (ground point). The box is only used for hit-flash compositing: the sprite must fit
-// in [-boxW/2, boxW/2] x [-(boxH-8), 8 + meta.below]. Optional 4th element meta = { barY (HP bar y), below }.
+// in [-boxW/2, boxW/2] x [-(boxH-8), 8 + meta.below]. Optional 4th element meta = { barY (HP bar y), below,
+// drawScale }. drawScale is art-only: it enlarges the painted sprite (flash box and HP bar offset follow)
+// so small foes read next to the 1.35x heroes. Hitboxes live in action and are unaffected.
 import { PALETTE } from '../../core/theme.js';
 import { withFlash, rrect, facingOf, clamp01 } from './kit.js';
 import { PAINTERS as HOUSE } from './foes_house.js';
@@ -38,9 +40,13 @@ export function drawWorldEnemy(ctx, game, type, x, y, o = {}) {
   if (o.alpha != null) ctx.globalAlpha *= o.alpha;
   const hurt = anim === 'hurt' ? 1 - P.prog : 0;
   if (hurt) ctx.translate(Math.sin(t * 60) * 1.6 * hurt, 0);
+  const ds = meta?.drawScale ?? 1;
+  ctx.save();
+  if (ds !== 1) ctx.scale(ds, ds);
   withFlash(ctx, bw, bh + below, bw / 2, bh - 8, o.flash, (c) => fn(c, P));
+  ctx.restore();
   if (o.hpFrac != null && o.hpFrac < 1 && o.hpFrac > 0 && o.hpBar !== false && !BOSS_IDS.has(type)) {
-    const w = Math.min(36, bw * 0.6), yy = meta?.barY ?? -bh + 12;
+    const w = Math.min(36, bw * 0.6), yy = (meta?.barY ?? -bh + 12) * ds;
     ctx.fillStyle = 'rgba(16,19,31,0.6)'; rrect(ctx, -w / 2 - 1, yy - 1, w + 2, 5, 2); ctx.fill();
     ctx.fillStyle = o.hpFrac > 0.35 ? PALETTE.heal : PALETTE.danger;
     rrect(ctx, -w / 2, yy, w * o.hpFrac, 3, 1.5); ctx.fill();
