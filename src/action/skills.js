@@ -44,11 +44,12 @@ export const SKILL_DEF = {
     },
   },
   wrench: {
-    cd: 0.5, tut: 'Click or J: Wrench Whack! Hold to keep whacking.',
+    cd: 0.46, tut: 'Click or J: Wrench Whack! Hold to keep whacking.',
     cast(L, h) {
       h.atkT = h.atkDur;
       playSfx('swing');
-      const range = 58 * (h.growT > 0 ? 1.3 : 1), arc = Math.PI * 0.55;
+      // Long-handled swing: reaches a bit past the kick with a wide arc, so it lands as easily (user playtest).
+      const range = 70 * (h.growT > 0 ? 1.3 : 1), arc = Math.PI * 0.85;
       const n = arcHit(L, h, range, arc, 1.15, { knock: 280, stun: 0.25, src: 'basic' });
       if (n) { L.fx.addShake(3.5); L.fx.burst(h.x + Math.cos(h.facing) * 40, h.y - 16 + Math.sin(h.facing) * 30, PALETTE.sun, 6, 140); }
       clearEnemyShots(L, h.x, h.y - 10, range + 10, h.facing, arc);

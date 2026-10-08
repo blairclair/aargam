@@ -102,11 +102,15 @@ export const STAGES = {
       ['bookshelf', 330, 168, { w: 90 }],
     ],
     gate: (L) => L.tut.moved,
+    // Playtest: the old waves (half-speed beetles, one at a time) were a walkover. Wave 1 still teaches the
+    // kick; after that waves overlap (`at`), bugs pour out of the laptop, and the last push has two spiders.
     waves: [
-      { spawn: [['beetle', 3, { speedMul: 0.55, dmgMul: 0.6 }]], delay: 0.3 },
-      { spawn: [['beetle', 4, { speedMul: 0.6, dmgMul: 0.7 }], ['moth', 1, { speedMul: 0.7 }]], delay: 1.2 },
-      { spawn: [['beetle', 3, { speedMul: 0.65, dmgMul: 0.7 }], ['moth', 2, { speedMul: 0.75 }]], delay: 1.2 },
-      { spawn: [['cable_spider', 1, { speedMul: 0.8 }], ['beetle', 2, { speedMul: 0.65, dmgMul: 0.7 }]], delay: 1.2 },
+      { spawn: [['beetle', 4, { speedMul: 0.8, dmgMul: 0.8 }]], delay: 0.3 },
+      { spawn: [['beetle', 5, { speedMul: 0.95 }], ['moth', 2]], at: 1, delay: 1 },
+      { spawn: [['beetle', 6]], from: { x: 500, y: 250, spread: 30 }, at: 2, delay: 0.8 },
+      { spawn: [['moth', 3], ['cable_spider', 1], ['beetle', 3, { speedMul: 1.1 }]], at: 2, delay: 1 },
+      { spawn: [['beetle', 7]], from: { x: 500, y: 250, spread: 40 }, at: 3, delay: 0.8 },
+      { spawn: [['cable_spider', 2, { hpMul: 1.2 }], ['moth', 3], ['beetle', 4, { hpMul: 1.4 }]], at: 1, delay: 1.2 },
     ],
   }),
 

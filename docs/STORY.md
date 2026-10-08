@@ -21,8 +21,8 @@ const log = logLine();                                        // -> 'optimizing 
 
 - **Aaron**: earnest, enthusiastic, explains things in programmer terms, a bit goofy, owns his mistakes.
   Nods: karate, World of Warcraft (tanking), Magic: The Gathering, Marching Ravens drums.
-- **Victoria**: warm, dry, competent, calm under pressure, never mean. Drops short, obvious Spanish
-  when exasperated ("Ay, no.", "¿Qué hiciste?", "Vamos.", "Perfecto."). Nods: crochet, fixing things,
+- **Victoria**: warm, dry, competent, calm under pressure, never mean. Speaks Spanish, but it's one thing
+  she can do, not her personality: one Spanish line in the whole script ("¿Qué hiciste?"). Nods: crochet, fixing things,
   teens social work (lightly).
 - **PartyPlanner.exe**: literal-minded and well-meaning. Lowercase log lines, cheerful status reports,
   occasional `:)`. Each room is one of its functions gone wrong.
@@ -48,7 +48,7 @@ const log = logLine();                                        // -> 'optimizing 
 - **NARRATOR**: Party day. Aaron and Victoria's housewarming starts at 7 PM.
 - **VICTORIA** (*lean*): New house, guests at seven, and not one room is ready. We need a plan.
 - **AARON** (*sparkle*): Already on it! I wrote PartyPlanner.exe to automate the whole prep.
-- **VICTORIA** (*nod*, face: neutral): You wrote it at 2 AM, mi amor.
+- **VICTORIA** (*nod*, face: neutral): You wrote it at 2 AM.
 - **AARON** (*bounce*, sfx: click): Peak coding hours. What could go wrong? Hitting Run...
 - **PARTYPLANNER.EXE** (fx: spark, sfx: error)
   ```
@@ -150,7 +150,7 @@ during outros it shows a **NEW SKILLS** card.
   > chairs set to CHARGE. table: set
   ```
 - **AARON** (*shake*): The plates are flying like frisbees and the chairs are charging like bulls!
-- **VICTORIA** (*shake*, face: neutral): Ay, no. Those plates are for the guests, not for throwing.
+- **VICTORIA** (*shake*, face: neutral): No. Those plates are for the guests, not for throwing.
 - **AARON** (*lean*): A chair scrapes the floor right before it charges. That's your cue to dodge.
 - **VICTORIA** (*nod*): Wrangle the dining set. Then we pour the drinks.
 
@@ -161,7 +161,7 @@ during outros it shows a **NEW SKILLS** card.
   > set_table(): plates: on table. chairs: sitting
   > drinks: poured, one per glass
   ```
-- **VICTORIA** (*sparkle*): Table set, drinks poured, and nothing is charging at me. Perfecto.
+- **VICTORIA** (*sparkle*): Table set, drinks poured, and nothing is charging at me. Perfect.
 - **AARON** (*bounce*): I caught so many plates, I learned to block with them.
 - **NARRATOR** (sfx: unlock): New skill for both! Aaron and Victoria learned Plate Shield (block + reflect).
 
@@ -400,7 +400,7 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 - **minigameClose**: A: "Build is almost done. Last bugs, hurry!" · V: "Seconds left, Aaron. Finish them."
 - **start**: A: "Squash every bug! Step on them, kick them, whatever works." · V: "Bugs on my keyboard. Absolutely not." · PP: "> init(): bugs are a feature"
 - **boss**: A: "Cable spider! Its webs slow you down. Stay out of them." · V: "Big spider. Unplug it."
-- **lowhp**: A: "These bugs bite harder than my code reviews." · V: "Ay. Step back and heal."
+- **lowhp**: A: "These bugs bite harder than my code reviews." · V: "Step back and heal."
 - **hit**: A: "Squashed!" · V: "Exterminated." · A: "Bug fixed!"
 - **win**: A: "Zero bugs! First time in my career." · V: "Office clean. Now the code."
 - **minigame**: A: "Click the bugs before they compile!" · V: "Click each bug before it reaches the end."
@@ -440,12 +440,12 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 ### Dining Room
 
 - **sabotage**: PP: "> set_table(): drinks looked boring. adding variety :)" · PP: "> set_table(): swapped two drinks. for fun"
-- **minigameCombo**: A: "Clean pours! Zero spills!" · V: "One glass, one drink. Así."
-- **minigameTwist**: A: "It swapped a drink! Re-sort that one." · V: "Ay, it mixed my glasses. Fix it."
+- **minigameCombo**: A: "Clean pours! Zero spills!" · V: "One glass, one drink. Like that."
+- **minigameTwist**: A: "It swapped a drink! Re-sort that one." · V: "It mixed my glasses. Fix it."
 - **minigameClose**: A: "Guests are thirsty. Pour faster!" · V: "Last pours. Make them count."
 - **start**: A: "Wrangle the dining set! Dodge the flying plates." · V: "Chair scrapes the floor, then charges. Move!" · PP: "> set_table(): table is set. to KILL"
 - **boss**: A: "That chair is stampeding! Sidestep it!" · V: "Let it charge into the wall."
-- **lowhp**: A: "Took a plate to the face. Dignity: low." · V: "Ay, ay. Fall back."
+- **lowhp**: A: "Took a plate to the face. Dignity: low." · V: "Okay, fall back."
 - **hit**: A: "Plate caught!" · V: "Sit. Down." · A: "Table for zero!"
 - **win**: V: "Dining set wrangled." · A: "Chairs are chairs again!"
 - **minigame**: V: "Pour until each glass holds one drink." · A: "Color sort! It's basically a sorting algorithm."
@@ -529,15 +529,15 @@ Ambient lines for the hub ticker, title screen, loading. `logLine()` picks one.
 
 ### Generic (any room)
 
-- **start**: A: "Let's do this!" · V: "Okay. Vamos." · PP: "> intruders detected. hosting them"
+- **start**: A: "Let's do this!" · V: "Okay. Let's go." · PP: "> intruders detected. hosting them"
 - **boss**: A: "That's the big one. Watch its windup!" · V: "Big one. Dodge first, hit second."
-- **lowhp**: A: "Ow. Okay. Regrouping!" · V: "I need a second. Back off and heal." · A: "Health low. Kite it. Kite it!" · V: "Ay. Careful, careful."
+- **lowhp**: A: "Ow. Okay. Regrouping!" · V: "I need a second. Back off and heal." · A: "Health low. Kite it. Kite it!" · V: "Careful, careful."
 - **hit**: A: "Hi-yah!" · V: "Got it." · A: "Critical hit!" · V: "Fixed."
 - **skillEarned**: A: "New skill: {skill}! Equip it before a room." · V: "{skill}. Oh, I like that."
 - **win**: A: "Room cleared! High five!" · V: "Done. Next." · PP: "> room status: NOT MY FAULT"
 - **lose**: A: "Respawning... Let me try that again." · V: "Okay. New plan. Try again." · PP: "> user defeated. hosting continues"
 - **minigame**: A: "Puzzle time. I love puzzle time." · V: "Hands on. Let me fix it."
-- **minigameWin**: A: "Nailed it!" · V: "Perfecto." · PP: "> fine. FINE."
+- **minigameWin**: A: "Nailed it!" · V: "Done. Next." · PP: "> fine. FINE."
 - **minigameFail**: A: "So close. One more try!" · V: "Again. Slower this time."
 - **sabotage**: PP: "> helping :)" · PP: "> optimizing your progress. backwards"
 - **minigameCombo**: A: "Combo! Keep it going!" · V: "Nice streak." · A: "I am on fire! The good kind."
