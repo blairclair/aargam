@@ -147,9 +147,6 @@ export function drawMouse(c, x, y, o = {}) {
   };
   if (pose === 'throw') {
     arm(8, -60, -18 + Math.sin(t * 20) * 4, -86, true);
-  } else if (pose === 'taunt') {
-    // thumb-to-nose: hand waggles at the snout
-    arm(10, -60, 40, -76 + Math.sin(t * 22) * 2, true);
   } else if (o.loaf !== false && pose !== 'dive') arm(4, -60, loafX - 18, loafY - 6, true);
   if (o.loaf !== false && pose !== 'throw') {
     c.save();
@@ -213,6 +210,12 @@ export function drawMouse(c, x, y, o = {}) {
   if (o.panic) { c.fillStyle = '#9fd8ff'; c.beginPath(); c.moveTo(-14, -2); c.quadraticCurveTo(-19, 6, -14, 8); c.quadraticCurveTo(-9, 6, -14, -2); c.fill(); }
   c.restore();
 
+  if (pose === 'taunt') { // thumb-to-nose, fingers waggling (drawn over the head)
+    const wg = Math.sin(t * 22) * 2;
+    arm(14, -64, hx + 46, hy + 2 + wg, false);
+    c.fillStyle = PINK; c.strokeStyle = PINK_DK; c.lineWidth = 1;
+    for (let i = 0; i < 3; i++) { c.beginPath(); c.ellipse(hx + 52 + i * 5, hy - 3 + wg - i * 3 + Math.sin(t * 30 + i) * 2, 2.2, 4, 0.6, 0, TAU); c.fill(); c.stroke(); }
+  }
   c.restore(); // lean
   // dizzy stars
   if (dizzy) { c.fillStyle = PALETTE.sun; for (let i = 0; i < 3; i++) { const a = t * 4 + i * TAU / 3; starP(c, 14 + Math.cos(a) * 22, -112 + Math.sin(a) * 6, 4); } }

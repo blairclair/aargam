@@ -129,8 +129,9 @@ export class Cheer {
   react(mood, event, force = false) {
     this.mood = mood; this.moodT = 0.9;
     if (event && (force || this.cool <= 0)) {
-      const s = line(this.p.roomId, event, this.hero);
-      if (s) { this.bubble = s; this.bubbleT = 2.2; this.cool = 3; }
+      let s = line(this.p.roomId, event, this.hero);
+      for (let i = 0; i < 3 && s && s === this.lastLine; i++) s = line(this.p.roomId, event, this.hero); // avoid saying the same line twice in a row
+      if (s) { this.bubble = s; this.bubbleT = 2.2; this.cool = 3; this.lastLine = s; }
     }
   }
   say(str, dur = 2.2) { this.bubble = str; this.bubbleT = dur; }

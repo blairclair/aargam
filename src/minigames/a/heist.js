@@ -54,7 +54,7 @@ export class MouseHeist {
     this.cheer = o.cheer; this.loafColor = o.loafColor ?? '#d99a48';
     this.easy = o.easy ?? 0; this.tm = o.tm ?? 1;
     this.fx = new Fx();
-    this.state = 'idle'; this.st = 0; this.t = 0;
+    this.state = 'idle'; this.st = 0; this.t = 0; this.cam = 0;
     this.retry = 0; this.done = false; this.score = 0; this.tutorialShown = false;
   }
 
@@ -134,11 +134,11 @@ export class MouseHeist {
     const r = this.retry, easy = this.easy;
     this.state = 'go'; this.st = 0;
     this.cheer.showBust = true; this.cheer.place(900, 540, 112, 'right');
-    this.vh = 296 + 10 * easy + 22 * r;               // hero base speed
+    this.vh = 296 + 10 * easy + 14 * r;               // hero base speed
     this.vm = 322;                                     // mouse base speed
     this.D = 322 * 42 * this.tm * (1 + 0.08 * r);     // mouse's run to the pantry hole
     this.space = 1 + 0.12 * r + 0.08 * easy;          // obstacle spacing multiplier
-    this.hx = 0; this.mx = 470; this.mx0 = this.mx; this.hx0 = 0;
+    this.hx = 0; this.mx = 470; this.cam = 0; this.mx0 = this.mx; this.hx0 = 0;
     this.jumpY = 0; this.vy = 0; this.ducking = false; this.duckT = 0;
     this.stamina = 1; this.sprinting = false; this.trip = 0; this.trips = 0;
     this.obs = []; this.nextX = 900; this.throwT = 2.6; this.windT = -1; this.windKind = null;
@@ -165,7 +165,12 @@ export class MouseHeist {
     }
     if (this.state === 'run') return this.updRun(dt);
     if (this.state === 'caught') return this.updCaught(dt);
-    if (this.state === 'escaped') { if (this.st > 2.2) { this.state = 'again'; this.st = 0; playSfx('whack'); } return; }
+    if (this.state === 'escaped') {
+      // pan over to the pantry so you SEE it dive in with your loaf
+      this.cam = lerp(this.cam, clamp(this.gap - 380, 0, 2400), 1 - Math.exp(-dt * 5));
+      if (this.st > 2.2) { this.state = 'again'; this.st = 0; playSfx('whack'); }
+      return;
+    }
     if (this.state === 'again') { if (this.st > 1.6) { this.retry++; this.startChase(); } }
   }
 
@@ -271,7 +276,7 @@ export class MouseHeist {
     if (this.mx - this.mx0 >= this.D) return this.escape();
   }
 
-  sx(wx) { return HERO_X + (wx - this.hx); }
+  sx(wx) { return HERO_X + (wx - this.hx) - this.cam; }
 
   pickThrow() {
     // towel unless a floor obstacle sits where it would meet the hero (no jump+slide combos)
@@ -279,7 +284,8 @@ export class MouseHeist {
     const lowNear = this.obs.some((o) => KIND[o.kind].low && !o.passed && Math.abs(o.x - meet) < 240);
     const highNear = this.obs.some((o) => KIND[o.kind].high && !o.passed && Math.abs(o.x - (this.mx - 90)) < 240);
     // crumbs land ~45 px behind it after 0.4 s, while the hero runs ~160 px: keep them >= ~230 px ahead on landing
-    const crumbsOk = !highNear && this.gap > 440;
+    const land = this.mx - 45;
+    const crumbsOk = !highNear && this.gap > 440 && !this.obs.some((o) => !o.passed && Math.abs(o.x - land) < 230);
     const towelOk = !lowNear;
     if (crumbsOk && towelOk) return hash(this.t * 13) < 0.5 ? 'towel' : 'crumbs';
     return towelOk ? 'towel' : crumbsOk ? 'crumbs' : null;
@@ -378,7 +384,7 @@ export class MouseHeist {
   }
 
   drawWorld(ctx) {
-    const camL = this.hx - HERO_X;
+    const camL = this.hx - HERO_X + this.cam;
     const wallBot = GROUND - 26;
     // wall by section
     for (let i = 0; i < 3; i++) {
@@ -523,8 +529,8 @@ export class MouseHeist {
     const caught = this.state === 'caught';
     if (caught) { x = this.catchFrom; pose = this.st > 0.32 ? 'dizzy' : 'run'; }
     else if (this.state === 'escaped') {
-      const k = clamp(this.st / 0.5, 0, 1); pose = k < 1 ? 'dive' : null;
-      if (!pose) return;
+      if (this.st > 0.9) return;
+      pose = 'dive'; x += Math.min(this.st, 0.5) * 60; y = GROUND - 10;
     } else if (this.state === 'run') {
       if (this.windT >= 0) { pose = 'throw'; look = -1; }
       else if (this.tauntT > 0) { pose = 'taunt'; look = -1; }
@@ -564,7 +570,7 @@ export class MouseHeist {
       }
       return;
     }
-    const x = HERO_X, y = GROUND - this.jumpY;
+    const x = HERO_X - this.cam, y = GROUND - this.jumpY;
     if (this.state === 'again' || this.state === 'escaped') {
       Sprites.drawHero(ctx, game, this.hero, x, GROUND, { anim: 'idle', facing: 0, t, scale: HERO_SCALE });
       return;
@@ -646,7 +652,7 @@ export class MouseHeist {
       ctx.restore();
       text(ctx, 'It is getting tired. You are faster now.', 480, 310, { align: 'center', font: BOLD(20), color: PALETTE.paper, alpha: k });
     }
-    if (this.state === 'caught' && s > 1.15) {
+    if (this.state === 'caught' && s > 1.15 && !this.done) {
       const k = ease((s - 1.15) / 0.3);
       ctx.save(); ctx.translate(480, 170); ctx.scale(0.5 + 0.5 * k, 0.5 + 0.5 * k); ctx.globalAlpha = k;
       text(ctx, 'Bread rescued!', 0, 0, { align: 'center', baseline: 'middle', font: BOLD(54), color: PALETTE.sun, outline: PALETTE.choc });
