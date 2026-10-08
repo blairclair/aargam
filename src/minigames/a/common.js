@@ -6,7 +6,8 @@
 //             ease_level(p) (0|1|2 by attempt)
 //   voice:    setBark(fn), line(roomId, event, hero)   events: start|good|great|bad|win|lose (+ story ids; combo|twist|close map to minigameCombo/Twist/Close),
 //             ppLine(seed?, roomId?, event?='sabotage'), drawTerminal(ctx, str, t, dur, {y,w,banner,bannerY,bannerAt})
-//   bust:     new Cheer(game, p, {x,y,h,side}) .react(mood 'cheer'|'oops'|'idle', event?, force?) .say(str,dur) .update(dt) .render(ctx)
+//   bust:     new Cheer(game, p, {x,y,h,side,showBust?}) .react(mood 'cheer'|'oops'|'idle', event?, force?) .say(str,dur) .update(dt) .render(ctx)
+//             .place(x?,y?,h?,side?)  .showBust = false draws only the speech bubble (scene draws its own bust)
 //   end card: new Outro(game, p, {y?=250}) .start(success, score0to1, headline, sub?) .update(dt) .render(ctx) .active
 //             (calls finishMinigame after 3.2s or click/Enter)
 //   tutorial: drawHand(ctx,x,y,press0to1,{alpha}), drawHighlight(ctx,x,y,w,h,t,color?), drawArrow(ctx,ax,ay,bx,by,t,color?,bend?),
@@ -53,12 +54,30 @@ export const ease_level = (p) => Math.min(2, p.attempt - 1);
 let barkFn = bark;
 export function setBark(fn) { barkFn = typeof fn === 'function' ? fn : bark; }
 const STORY_EVENT = { start: 'minigame', win: 'minigameWin', lose: 'minigameFail', combo: 'minigameCombo', twist: 'minigameTwist', close: 'minigameClose' };
-const STORY_EVENTS = new Set(['start', 'boss', 'lowhp', 'hit', 'win', 'lose', 'minigame', 'minigameWin', 'minigameFail', 'sabotage', 'minigameCombo', 'minigameTwist', 'minigameClose']);
-const FALLBACK = { start: 'Here we go!', good: 'Nice!', great: 'Yes!', bad: 'Oops!', win: 'We did it!', lose: 'One more try.', combo: 'Combo!', twist: 'Whoa!', close: 'Hurry!' };
+const STORY_EVENTS = new Set(['start', 'boss', 'lowhp', 'hit', 'win', 'lose', 'minigame', 'minigameWin', 'minigameFail', 'sabotage', 'minigameCombo', 'minigameTwist', 'minigameClose',
+  // kitchen: Bread Bake step results + the Mouse Heist chase
+  'stepGood', 'stepBad', 'chaseSteal', 'chaseStart', 'chaseClose', 'chaseNear', 'chaseTrip', 'chaseHole', 'chaseCatch', 'chaseMiss']);
+const FALLBACK = {
+  start: 'Here we go!', good: 'Nice!', great: 'Yes!', bad: 'Oops!', win: 'We did it!', lose: 'One more try.', combo: 'Combo!', twist: 'Whoa!', close: 'Hurry!',
+  stepGood: 'Nice!', stepBad: 'Oops!', chaseSteal: 'HEY!', chaseStart: 'Get back here!', chaseClose: 'Almost!', chaseNear: 'Close one!',
+  chaseTrip: 'Ow!', chaseHole: 'Where did it go?!', chaseCatch: 'Gotcha!', chaseMiss: 'Again!',
+};
+/**
+ * The hero's line for an event (a string), or a tiny fallback. Only lines spoken BY that hero are used:
+ * bark() can fall back to the other hero's or PartyPlanner's lines when a pool is missing, and those must
+ * never appear in this hero's speech bubble.
+ */
 export function line(roomId, event, hero) {
   const ev = STORY_EVENT[event] ?? (STORY_EVENTS.has(event) ? event : null);
   if (ev && barkFn) {
-    try { const s = barkFn(roomId, ev, { hero }); if (s) return typeof s === 'string' ? s : s.text ?? null; } catch { /* ignore */ }
+    for (let i = 0; i < 4; i++) {
+      try {
+        const s = barkFn(roomId, ev, { hero });
+        if (!s) break;
+        if (typeof s === 'string') return s;
+        if (!hero || !s.who || s.who === hero) return s.text ?? null;
+      } catch { break; }
+    }
   }
   return FALLBACK[event] ?? null;
 }
@@ -102,7 +121,10 @@ export class Cheer {
     this.game = game; this.p = p; this.hero = p.hero;
     this.x = o.x ?? 860; this.y = o.y ?? 540; this.h = o.h ?? 170; this.side = o.side ?? 'right';
     this.mood = 'idle'; this.moodT = 0; this.bubble = null; this.bubbleT = 0; this.t = 0; this.cool = 0;
+    this.showBust = o.showBust ?? true; // false = bubble only (the scene draws its own bust there)
   }
+  /** Move the bust (and its bubble). Any omitted field keeps its value. */
+  place(x, y, h, side) { if (x != null) this.x = x; if (y != null) this.y = y; if (h != null) this.h = h; if (side) this.side = side; }
   /** mood: 'cheer' | 'oops' | 'idle'. event: bark event id (optional speech bubble). */
   react(mood, event, force = false) {
     this.mood = mood; this.moodT = 0.9;
@@ -119,6 +141,7 @@ export class Cheer {
   render(ctx) {
     const img = this.game.assets.image(`bust.${this.hero}.smile`);
     const t = this.t, h = this.h;
+    if (!this.showBust) { this.renderBubble(ctx); return; }
     let dy = Math.sin(t * 2) * 2, dx = 0, rot = 0, sc = 1;
     if (this.mood === 'cheer') { const k = this.moodT / 0.9; dy -= Math.abs(Math.sin(t * 14)) * 14 * k; sc = 1 + 0.05 * k; }
     if (this.mood === 'oops') { const k = this.moodT / 0.9; dx = Math.sin(t * 40) * 5 * k; rot = -0.06 * k; }
@@ -141,18 +164,37 @@ export class Cheer {
       for (let i = 0; i < 3; i++) star(ctx, Math.cos(t * 3 + i * 2.1) * h * 0.45, -h * 0.9 + Math.sin(t * 4 + i) * 10, 7, t * 3 + i);
     }
     ctx.restore();
+    this.renderBubble(ctx);
+  }
+  renderBubble(ctx) {
+    const h = this.h;
     if (this.bubble && this.bubbleT > 0) {
       const a = clamp(this.bubbleT / 0.3, 0, 1);
       ctx.save(); ctx.globalAlpha = a; ctx.font = BOLD(15);
-      const w = Math.min(300, ctx.measureText(this.bubble).width + 26), bh = 34;
+      // long lines wrap onto two rows instead of being squashed
+      const rows = wrap2(ctx, this.bubble, 290);
+      const w = Math.min(316, Math.max(...rows.map((r) => ctx.measureText(r).width)) + 26), bh = 14 + rows.length * 20;
       const bx = clamp(this.side === 'right' ? this.x - w + 30 : this.x - 30, 8, 952 - w), by = this.y - h - bh - 8;
       ctx.fillStyle = PALETTE.paper; rr(ctx, bx, by, w, bh, 14); ctx.fill();
       ctx.beginPath(); ctx.moveTo(this.x - 6, by + bh - 1); ctx.lineTo(this.x + 6, by + bh - 1); ctx.lineTo(this.x, by + bh + 10); ctx.fill();
       ctx.strokeStyle = PALETTE.sunDeep; ctx.lineWidth = 2; rr(ctx, bx, by, w, bh, 14); ctx.stroke();
-      text(ctx, this.bubble, bx + w / 2, by + bh / 2 + 1, { align: 'center', baseline: 'middle', color: PALETTE.ink, font: BOLD(15), shadow: false, maxWidth: w - 16 });
+      rows.forEach((r, i) => text(ctx, r, bx + w / 2, by + 17 + i * 20, { align: 'center', baseline: 'middle', color: PALETTE.ink, font: BOLD(15), shadow: false, maxWidth: w - 16 }));
       ctx.restore();
     }
   }
+}
+
+/** Split str into at most two rows that fit maxW (ctx.font must be set). */
+function wrap2(ctx, str, maxW) {
+  if (ctx.measureText(str).width <= maxW) return [str];
+  const words = str.split(' ');
+  let best = [str], bestW = 1e9;
+  for (let i = 1; i < words.length; i++) {
+    const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+    const w = Math.max(ctx.measureText(a).width, ctx.measureText(b).width);
+    if (w < bestW) { bestW = w; best = [a, b]; }
+  }
+  return best;
 }
 
 export function star(ctx, x, y, r, rot = 0) {

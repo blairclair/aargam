@@ -4,7 +4,10 @@
 //   2 SHAPE  hold the mouse and trace the dotted loaf outline (a hand traces it first)
 //   3 PROOF  stop the rising dough in the gold zone (a ghost run shows how)
 //   4 BAKE   pull the loaf out when it's golden (color strip with a star target)
-// Final: the finished loaf, its look shaped by the scores. Never fails; score = mean of the steps.
+// Final: the finished loaf, its look shaped by the scores. The bake never fails.
+// Then MOUSE HEIST (a/heist.js): a giant mouse steals the cooling loaf and the hero chases it through the
+// house. A lost chase retries only the chase. Score = 0.5 * bake (mean of the steps) + 0.5 * chase.
+// Dev: &phase=chase jumps straight to the chase, &phase=steal to the steal beat (bake scored 0.8).
 import { text, panel } from '../ui/widgets.js';
 import { Fx } from '../art/fx.js';
 import { playSfx, playMusic } from '../audio/sfx.js';
@@ -12,6 +15,7 @@ import {
   PALETTE, TAU, clamp, lerp, ease, easeInOut, BOLD, rr, normParams, timeMul, ease_level, Cheer, Outro,
   drawHand, drawHighlight, drawArrow, prompt, titleTag, vignette, mix, mixRgbStops, star, ppLine, drawTerminal,
 } from './a/common.js';
+import { MouseHeist } from './a/heist.js';
 
 const STEPS = [
   { id: 'knead', name: 'Knead', verb: 'Kneaded' },
@@ -38,9 +42,33 @@ export default class BreadBake {
     this.scores = [];
     this.easy = ease_level(this.p);
     this.tm = timeMul(this.p);
+    this.stage = 'bake';    // bake -> steal -> chase (MouseHeist owns steal + chase) -> outro
+    this.heist = null; this.bake = undefined; this._pulledAt = undefined;
     this.startStep(0);
     playMusic('minigame');
     this.cheer.react('cheer', 'start', true);
+    const ph = String(params?.phase ?? '');
+    if (ph === 'chase' || ph === 'steal') {
+      this.scores = STEPS.map(() => 0.8); this.bake = this.goldC ?? 0.42; this.phase = 'reveal'; this.pt = 0;
+      this.cheer.bubble = null; this.cheer.cool = 0;
+      this.startHeist(ph === 'chase');
+    }
+  }
+
+  startHeist(skipSteal = false) {
+    this.stage = 'heist';
+    this.heist = new MouseHeist(this.game, this.p, {
+      cheer: this.cheer, easy: this.easy, tm: this.tm,
+      loafColor: toHex(mixRgbStops(BAKE_STOPS, this.bake ?? 0.42)),
+    });
+    if (skipSteal) this.heist.startChase(); else this.heist.startSteal();
+  }
+  finishAll() {
+    const bake = this.total, chase = this.heist?.score ?? 0;
+    const s = 0.5 * bake + 0.5 * chase;
+    const sub = `Bake ${'★'.repeat(stars(bake))}   Chase ${'★'.repeat(stars(chase))}${this.heist?.retry ? `  (${this.heist.retry + 1} tries)` : ''}`;
+    this.outro.start(true, s, 'Bread rescued!', sub);
+    this.cheer.react('cheer', 'win', true);
   }
   exit() {}
 
@@ -80,7 +108,7 @@ export default class BreadBake {
     this.fx.floatText(CX, 150, grade(score), score >= 0.6 ? PALETTE.sun : PALETTE.paper, { big: true, size: 34 });
     this.fx.sparkle(CX, 170, PALETTE.sun, Math.round(6 + score * 12), 80);
     playSfx(score >= 0.6 ? 'star' : 'blip');
-    this.cheer.react(score >= 0.6 ? 'cheer' : 'oops', score >= 0.85 ? 'great' : score >= 0.6 ? 'good' : 'bad');
+    this.cheer.react(score >= 0.6 ? 'cheer' : 'oops', score >= 0.6 ? 'stepGood' : 'stepBad');
   }
 
   get total() { return this.scores.reduce((a, b) => a + b, 0) / STEPS.length; }
@@ -89,6 +117,11 @@ export default class BreadBake {
     this.t += dt; this.pt += dt;
     this.fx.update(dt); this.cheer.update(dt); this.outro.update(dt);
     if (this.outro.active) return;
+    if (this.stage === 'heist') {
+      this.heist.update(dt);
+      if (this.heist.done) this.finishAll();
+      return;
+    }
     if (this.phase === 'card') { if (this.pt > 1.1) { this.phase = 'play'; this.pt = 0; } return; }
     if (this.phase === 'done') {
       if (this.pt > 1.5) { if (this.si + 1 < STEPS.length) this.startStep(this.si + 1); else { this.phase = 'reveal'; this.pt = 0; this.revealFx(); } }
@@ -96,11 +129,8 @@ export default class BreadBake {
     }
     if (this.phase === 'reveal') {
       if (Math.random() < 0.08) this.fx.sparkle(CX + (Math.random() - 0.5) * 260, CY - 30 + (Math.random() - 0.5) * 80, PALETTE.sun, 1, 4);
-      if (this.pt > 3.4 || (this.pt > 1.2 && this.game.input.mouse.pressed)) {
-        const s = this.total;
-        this.outro.start(true, s, 'Fresh bread!', STEPS.map((st, i) => `${st.name} ${'★'.repeat(stars(this.scores[i]))}`).join('   '));
-        this.cheer.react('cheer', 'win', true);
-      }
+      // the loaf cools for a moment... then the heist
+      if (this.pt > 2.8 || (this.pt > 1.2 && this.game.input.mouse.pressed)) this.startHeist();
       return;
     }
     const id = STEPS[this.si].id;
@@ -276,6 +306,12 @@ export default class BreadBake {
 
   // ================================================================== RENDER
   render(ctx) {
+    if (this.stage === 'heist') {
+      this.heist.render(ctx, (c, loafOn) => this.drawCounter(c, loafOn));
+      titleTag(ctx, 'kitchen');
+      this.outro.render(ctx);
+      return;
+    }
     const sh = this.fx.shakeOffset();
     ctx.save(); ctx.translate(sh.x, sh.y);
     this.drawKitchen(ctx);
@@ -578,6 +614,28 @@ export default class BreadBake {
     if (this.phase === 'play' && !this.pulled && this.pt < 3) drawHand(ctx, (z0 + z1) / 2 + 4, sy + shh + 30, 0, { alpha: 0.9 });
   }
   pulledAt() { return this._pulledAt ?? (this._pulledAt = this.pt); }
+
+  /** Steal-beat backdrop: the kitchen, the board and (until it's grabbed) the cooling loaf. */
+  drawCounter(ctx, loafOn) {
+    this.drawKitchen(ctx);
+    this.board(ctx);
+    if (loafOn) {
+      const col = mixRgbStops(BAKE_STOPS, this.bake ?? this.goldC);
+      ctx.save(); ctx.translate(CX, CY + 40); ctx.scale(0.9, 0.9);
+      drawLoaf(ctx, 0, 0, 150, 78, col, this.scores[1] ?? 0.8, this.t, 1, this.scores[2] ?? 0.8);
+      ctx.restore();
+      ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+      for (let i = 0; i < 3; i++) {
+        const x = CX - 50 + i * 50, ph = this.t * 1.6 + i * 1.3;
+        ctx.globalAlpha = 0.5 + 0.5 * Math.sin(ph);
+        ctx.beginPath(); ctx.moveTo(x, CY - 30);
+        for (let s = 1; s <= 6; s++) ctx.lineTo(x + Math.sin(ph + s) * 10, CY - 30 - s * 16);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    vignette(ctx);
+  }
 
   // ---------------------------------------------------------------- REVEAL
   drawReveal(ctx) {
