@@ -148,7 +148,7 @@ export function drawMouse(c, x, y, o = {}) {
   if (pose === 'throw') {
     arm(8, -60, -18 + Math.sin(t * 20) * 4, -86, true);
   } else if (o.loaf !== false && pose !== 'dive') arm(4, -60, loafX - 18, loafY - 6, true);
-  if (o.loaf !== false && pose !== 'throw') {
+  if (o.loaf !== false) {
     c.save();
     if (pose === 'dive') c.translate(26, -30);
     else c.translate(loafX, loafY + (run ? Math.sin(ph) * 1.5 : 0));
@@ -156,8 +156,8 @@ export function drawMouse(c, x, y, o = {}) {
     drawStolenLoaf(c, 0, 8 + ((o.loafW ?? 50) - 50) * 0.2, o.loafW ?? 50, o.loafColor);
     c.restore();
   }
-  if (o.loaf !== false && pose !== 'dive' && pose !== 'throw') arm(10, -58, loafX + 12, loafY - 2, false);
-  if (pose === 'throw' || pose === 'taunt') arm(10, -58, 22, -46, false);
+  if (o.loaf !== false && pose !== 'dive') arm(10, -58, loafX + 12, loafY - 2, false);
+  else if (pose === 'throw' || pose === 'taunt') arm(10, -58, 22, -46, false);
 
   // ---- head (big, snouty)
   const hx = pose === 'grab' ? 18 : 12, hy = pose === 'grab' ? -86 : -82;
