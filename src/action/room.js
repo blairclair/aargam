@@ -28,6 +28,7 @@ const W = 960, H = 540;
 const INTRO = 2.4;      // stage card length (hero can already move)
 const WIN_BEAT = 2.8;   // victory beat before handing off
 const LOSE_BEAT = 2.4;
+const SKIP_HP = 0.4;    // skipped fight scores like finishing on 40% health
 // the room's headline threat: its first appearance triggers the 'boss' bark
 const HEADLINER = { cable_spider: 1, kettle: 1, roomba: 1, chair: 1, jack_box: 1, sock_monster: 1, pipe_snake: 1, grill_dragon: 1, partyplanner: 1 };
 
@@ -155,6 +156,13 @@ export default class RoomScene {
     this.say('lose', true);
   }
 
+  /** Pause-menu skip: straight to the minigame, scored as if half the health was lost (SKIP_HP). */
+  skipFight() {
+    if (this.finished) return;
+    this.finished = true;
+    finishAction(this.game, { roomId: this.roomId, hero: this.hero.id, victory: true, hpFrac: SKIP_HP, timeSec: Math.round(this.time), enemiesDefeated: this.kills, skipped: true });
+  }
+
   finish(victory) {
     if (this.finished) return;
     this.finished = true;
@@ -226,8 +234,9 @@ export default class RoomScene {
     const g = this.game, inp = g.input;
     if ((this.phase === 'play' || this.phase === 'intro') && inp.pressed('pause')) { this.paused = !this.paused; playSfx('click'); }
     if (this.paused) {
-      if (button(null, g, 'Resume', W / 2 - 110, 330, 220, 44)) this.paused = false;
-      else if (button(null, g, 'Give up (retry)', W / 2 - 110, 384, 220, 44)) { this.paused = false; this.phase = 'play'; this.lose(); }
+      if (button(null, g, 'Resume', W / 2 - 110, 318, 220, 40)) this.paused = false;
+      else if (button(null, g, 'Give up (retry)', W / 2 - 110, 364, 220, 40)) { this.paused = false; this.phase = 'play'; this.lose(); }
+      else if (button(null, g, 'Skip this fight', W / 2 - 110, 410, 220, 40)) { this.paused = false; this.skipFight(); }
       return;
     }
     this.fx.update(dt);
@@ -668,7 +677,7 @@ export default class RoomScene {
   drawPause(ctx) {
     const g = this.game;
     ctx.fillStyle = 'rgba(16,19,31,0.65)'; ctx.fillRect(0, 0, W, H);
-    panel(ctx, W / 2 - 250, 90, 500, 360, { radius: 20 });
+    panel(ctx, W / 2 - 250, 90, 500, 376, { radius: 20 });
     text(ctx, 'Paused', W / 2, 140, { align: 'center', font: FONT.big, color: PALETTE.sun });
     text(ctx, `${this.room.name}: ${this.room.objective}`, W / 2, 172, { align: 'center', color: this.accent });
     const s = this.slots;
@@ -678,8 +687,9 @@ export default class RoomScene {
     if (s.ult) lines.push(`Space: ${SKILLS[s.ult].name}`);
     lines.push('Esc / P: resume');
     lines.forEach((l, i) => text(ctx, l, W / 2, 204 + i * 20, { align: 'center', font: FONT.small }));
-    button(ctx, g, 'Resume', W / 2 - 110, 330, 220, 44);
-    button(ctx, g, 'Give up (retry)', W / 2 - 110, 384, 220, 44);
+    button(ctx, g, 'Resume', W / 2 - 110, 318, 220, 40);
+    button(ctx, g, 'Give up (retry)', W / 2 - 110, 364, 220, 40);
+    button(ctx, g, 'Skip this fight', W / 2 - 110, 410, 220, 40);
   }
 }
 
