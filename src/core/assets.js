@@ -6,14 +6,11 @@ export const MANIFEST = {
   // Tight face-only crops (little background) — best for small in-world chibi heads.
   'face.aaron': 'assets/portraits/aaron_face.jpg',
   'face.victoria': 'assets/portraits/victoria_face.jpg',
-  // Transparent photo cutouts (real face + hair). Busts for cutscenes/dialog/select; full = body reference.
+  // Transparent photo cutouts (real face + hair). Busts for cutscenes/dialog/select.
+  // (assets/cutouts/*_full.png are body-proportion references for artists only; never loaded at runtime.)
   'bust.aaron.smile': 'assets/cutouts/aaron_smile.png',
   'bust.victoria.smile': 'assets/cutouts/victoria_smile.png',
   'bust.victoria.neutral': 'assets/cutouts/victoria_neutral.png',
-  'full.aaron.crouch': 'assets/cutouts/aaron_1_full.png',
-  'full.aaron.sit': 'assets/cutouts/aaron_2_full.png',
-  'full.victoria.sit': 'assets/cutouts/victoria_2_full.png',
-  'full.victoria.jacket': 'assets/cutouts/victoria_3_full.png',
 };
 
 export class Assets {

@@ -28,6 +28,7 @@ real photo heads + hair, outfits from the photos.
 3. Two invented personal details in the script to confirm or cut (see below).
 
 ## Where everything lives
+- **Hosted (private) as a Claude artifact:** https://claude.ai/artifact/VqKd2EP9PjuDJSSVQMViCC — page shell in the supervisor's scratchpad (sup-artifact/housewarming.html) + src/**/*.js + the 7 runtime photo assets. Republish after changes.
 - `main` on GitHub — integrated, playable game (always green: check + smoke).
 - `first-pass` branch / `v0.1-first-pass` tag — round 1 ("The Great Scoop Heist"), kept forever.
 - `origin/wip/<team>` — each agent's in-progress backup (`tools/backup.sh <team>`, ≤10 min old).
