@@ -12,3 +12,9 @@ export { drawRoom, drawWater, drawStringLights, ROOM_KINDS, WALL_H, SIDE, FRONT,
 
 // Enemies: drawWorldEnemy(ctx, game, type, x, y, {facing, t, flash, anim, progress, phase, hpFrac, scale, seed, alpha, hpBar})
 export { WORLD_ENEMY_KINDS, drawWorldEnemy } from './enemies.js';
+
+// Office gross-out (goo.js): drawGooSplat(ctx, game, x, y, {type, seed, r, age, ang, alpha}) floor splat decal;
+// drawGooPiece(ctx, game, x, y, {type, piece:'shell'|'leg'|'wing'|'plug', rot, z, seed, alpha}) flung bits;
+// drawGooDrip(ctx, game, x, y, {type, seed, r, alpha}) ooze drop; drawGooSpurt(ctx, game, x, y, {type, k, ang}) hit spurt;
+// drawSlime(ctx, game, x, y, r, {t, seed, warn, grow, life}) oozing floor slime. GOO_COLORS[type] = {goo, deep, hi, ...}.
+export { drawGooSplat, drawGooPiece, drawGooDrip, drawGooSpurt, drawSlime, GOO_COLORS } from './goo.js';

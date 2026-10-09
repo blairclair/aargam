@@ -4,6 +4,7 @@ import { PALETTE } from '../core/theme.js';
 import { dist, angleTo } from '../core/math.js';
 import { playSfx } from '../audio/sfx.js';
 import { shotBlocker, SIDE } from './arena.js';
+import { goreHit, goreKill } from './goo.js';
 
 export const angDiff = (a, b) => {
   let d = (a - b) % (Math.PI * 2);
@@ -82,6 +83,7 @@ export function damageEnemy(L, e, amount, sx, sy, o = {}) {
   L.fx.burst(e.x, e.y - e.h * 0.5, e.color ?? PALETTE.paper, 6, 110);
   if (!o.silent) playSfx(L.hero?.id === 'victoria' && o.src === 'basic' ? 'whack' : 'hit');
   e.onHurt?.(L, e, dmg);
+  if (e.hp > 0) goreHit(L, e, sx, sy);
   if (e.hp <= 0) killEnemy(L, e);
   return true;
 }
@@ -97,6 +99,7 @@ export function killEnemy(L, e, { silent = false } = {}) {
     L.fx.sparkle?.(e.x, e.y - e.h * 0.5, PALETTE.sun, e.boss ? 20 : 5, e.boss ? 60 : 20);
     L.fx.addShake(e.boss ? 14 : 3);
     playSfx(e.boss ? 'victory' : 'squish');
+    goreKill(L, e);
   }
   e.onDeath?.(L, e);
   // occasional heart drop keeps runs forgiving (more likely when hurt)

@@ -17,6 +17,7 @@ import { SKILL_DEF, updateBoundary, beatPhase } from './skills.js';
 import { createEnemy, updateEnemies, enemyDrawOpts } from './enemies.js';
 import { updateShots, updateWaves, updateTelegraphs, updateZones, updatePickups, killEnemy } from './combat.js';
 import { STAGES, scaling } from './stages.js';
+import { createGoo, updateGoo, drawGooFloor, drawGooAir } from './goo.js';
 import {
   drawRoomFallback, drawFurnitureFallback, drawEnemyFallback, drawShotFallback, drawTelegraph, drawWave, drawZone,
   drawBoundary, drawLaser, drawHose, drawVfx, drawHeart, drawBeatRing, drawMark,
@@ -56,6 +57,7 @@ export default class RoomScene {
     this.hero = createHero(g, hero, roomId, this.slots);
     this.hero.x = this.arena.start.x; this.hero.y = this.arena.start.y;
     this.enemies = []; this.shots = []; this.waves = []; this.tele = []; this.zones = []; this.pickups = []; this.vfx = []; this.timers = [];
+    this.goo = createGoo();
     this.boundary = null; this.laser = null; this.hoseVfx = null; this.boss = null;
     this.time = 0; this.defeated = 0; this.kills = 0; this.damageTaken = 0; this.movedT = 0;
     this.mouseAimT = 0; this.lastMouse = { x: g.input.mouse.x, y: g.input.mouse.y };
@@ -263,6 +265,7 @@ export default class RoomScene {
     updateWaves(this, dt);
     updateTelegraphs(this, dt);
     updateZones(this, dt);
+    updateGoo(this, dt);
     updatePickups(this, dt);
     if (this.enemies.length > 60) this.enemies = this.enemies.filter((e) => !e.dead || e === this.boss);
     if (this.laser && !(this.boss && this.boss.state === 'laser' && !this.boss.dead && !(this.boss.stun > 0))) this.laser = null;
@@ -300,6 +303,8 @@ export default class RoomScene {
     // ground layer: deco furniture (rugs, lily pads), water, zones, telegraphs, rings
     for (const p of A.props) if (p.deco) this.drawFurniture(ctx, p);
     this.drawWater(ctx);
+    const vx0 = cx - 160, vx1 = cx + W + 160, vy0 = cy - 120, vy1 = cy + H + 200;
+    drawGooFloor(ctx, this, { x0: vx0, x1: vx1, y0: vy0, y1: vy1 });
     for (const z of this.zones) {
       if (artZone(z.kind)) Sprites.drawZone(ctx, this.game, z.kind, z.x, z.y, z.r * Math.min(1, z.t * 5), { t: this.time, life: Math.max(0, 1 - z.t / z.dur), seed: z.x });
       else drawZone(ctx, z, this.time);
@@ -320,7 +325,6 @@ export default class RoomScene {
     else if (h.aggroT > 0) { ctx.save(); ctx.globalAlpha = 0.3 + Math.sin(this.time * 10) * 0.1; ctx.fillStyle = PALETTE.danger; ctx.beginPath(); ctx.ellipse(h.x, h.y, 34, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
 
     // Y-sorted drawables (culled to the view).
-    const vx0 = cx - 160, vx1 = cx + W + 160, vy0 = cy - 120, vy1 = cy + H + 200;
     const inView = (o) => o.x > vx0 && o.x < vx1 && o.y > vy0 && o.y < vy1;
     const list = [];
     for (const p of A.props) if (!p.deco && !p.broken && inView(p)) list.push({ y: p.y, k: 0, o: p });
@@ -330,6 +334,7 @@ export default class RoomScene {
     list.push({ y: h.y, k: 5, o: h });
     list.sort((a, b) => a.y - b.y);
     for (const it of list) this.drawItem(ctx, it.k, it.o);
+    drawGooAir(ctx, this);
 
     this.drawLights(ctx);
     if (this.laser) {

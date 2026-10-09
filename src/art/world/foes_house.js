@@ -1,6 +1,7 @@
 // Enemy painters: office, kitchen, dining, living, playroom. Owned by: art-world.
 // Contract: see enemies.js. Origin = feet point. Each painter gets (c, P).
 import { TAU, INK, PALETTE, shade, rgba, mix, rrect, shadow, eyes, googly, sparkle, telegraph, alertMark, clamp01, lerp, ease, WOOD, CREAM } from './kit.js';
+import { drawWounds } from './goo.js';
 
 // ---------------------------------------------------------------- shared helpers
 /** Attack wind-up 0..1 (first 70% of progress). */
@@ -143,6 +144,7 @@ function beetle(c, P) {
   // gloss
   c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.ellipse(-4, -5.6, 3.6, 1.2, -0.15, 0, TAU); c.fill();
   c.fillStyle = 'rgba(255,255,255,0.35)'; c.beginPath(); c.arc(1.2, -6.2, 0.8, 0, TAU); c.fill();
+  if (P.hpFrac < 0.5) drawWounds(c, 'beetle', -2, 0, 11, 7.5, 1 - P.hpFrac * 2, P.t, P.seed);
   // head
   c.fillStyle = '#1d2240'; c.beginPath(); c.ellipse(14, 0.5, 5, 4.8, 0, 0, TAU); c.fill(); outline(c, '#0a0d1a', 1);
   c.fillStyle = 'rgba(170,200,255,0.35)'; c.beginPath(); c.ellipse(13, -2.6, 2.4, 0.8, -0.2, 0, TAU); c.fill();
@@ -224,6 +226,7 @@ function moth(c, P) {
   for (let i = -7; i <= -1; i += 1.5) { c.moveTo(i, 3.2); c.lineTo(i - 0.6, 4.6); c.moveTo(i, -3.2); c.lineTo(i - 0.6, -4.6); }
   c.stroke();
   c.fillStyle = '#efe3c4'; c.beginPath(); c.arc(3.2, 0, 3.2, 0, TAU); c.fill();
+  if (P.hpFrac < 0.5) drawWounds(c, 'moth', -2, 0, 7, 3.4, 1 - P.hpFrac * 2, P.t, P.seed);
   // head
   c.fillStyle = '#efe2c2'; c.beginPath(); c.arc(7.5, -0.5, 4, 0, TAU); c.fill(); outline(c, '#8d7a5a', 0.8);
   // feathery (bipectinate) antennae
@@ -308,6 +311,7 @@ function cable_spider(c, P) {
   c.strokeStyle = '#2b2b33'; c.lineWidth = 1.4;
   c.beginPath(); c.moveTo(-14.5, by + 1); c.quadraticCurveTo(-19, by + 4 + Math.sin(P.t * 3) * 1.5, -20, by + 9); c.stroke();
   c.fillStyle = '#c9ccd4'; rrect(c, -21.4, by + 8.5, 2.8, 2.6, 0.6); c.fill();
+  if (P.hpFrac < 0.5) drawWounds(c, 'cable_spider', -6, by, 9, 7, 1 - P.hpFrac * 2, P.t, P.seed);
   // head
   c.fillStyle = '#2d2f39'; c.beginPath(); c.ellipse(6, by + 1, 6.5, 5.5, 0, 0, TAU); c.fill(); outline(c, '#111218', 1);
   c.fillStyle = 'rgba(200,210,235,0.3)'; c.beginPath(); c.ellipse(5, by - 2.6, 3, 0.9, -0.2, 0, TAU); c.fill();

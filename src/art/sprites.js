@@ -12,6 +12,8 @@ import { drawWorldEnemy, drawFurniture, WORLD_ENEMY_KINDS, FURNITURE_KINDS } fro
 export { drawDenimShield, warmGround, groundKind };
 // Room interiors + furniture sizes come from art-world (src/art/world); re-exported here so everyone imports one module.
 export { drawRoom, drawWater, drawStringLights, ROOM_KINDS, FURNITURE_KINDS, FURNITURE_SIZE, FURNITURE_ALIASES, WALL_H, roomGeometry } from './world/index.js';
+// Office goo (bug splats, flung bits, floor slime) from art-world; options documented in src/art/world/index.js.
+export { drawGooSplat, drawGooPiece, drawGooDrip, drawGooSpurt, drawSlime, GOO_COLORS } from './world/index.js';
 
 /** Enemy type ids drawEnemy really draws (v2 roster from art-world + legacy). Anything else falls back. */
 export const ENEMY_KINDS = [...new Set([...(WORLD_ENEMY_KINDS ?? []), ...LEGACY_ENEMY_KINDS])];

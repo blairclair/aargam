@@ -78,16 +78,30 @@ export function updateHero(L, dt) {
   if (!h.channel || !h.channel.lockAim) h.facing = aimAngle(L, h);
   if (h.moving) L.movedT += dt;
 
-  if (h.rootT <= 0) {
-    const chSlow = h.channel ? (h.channel.moveMul ?? 0.5) : 1;
-    const sp = h.speed * (h.slowT > 0 ? 0.55 : 1) * (h.shieldT > 0 ? 0.6 : 1) * (h.atkT > 0 && h.id === 'aaron' ? 0.7 : 1) * chSlow;
+  // Slime (office, goo.js) sets slickT: grip drops, so the hero accelerates slowly, keeps sliding and
+  // overshoots, like ice. Top speed never exceeds normal. Off slime, movement is the usual instant response.
+  h.slickT = Math.max(0, (h.slickT ?? 0) - dt);
+  const slick = h.slickT > 0;
+  const chSlow = h.channel ? (h.channel.moveMul ?? 0.5) : 1;
+  const sp = h.rootT > 0 ? 0 : h.speed * (h.slowT > 0 ? 0.55 : 1) * (h.shieldT > 0 ? 0.6 : 1) * (h.atkT > 0 && h.id === 'aaron' ? 0.7 : 1) * chSlow;
+  if (slick || h.svx || h.svy) {
+    // on slime: ease toward the wanted velocity; just off it: regain grip over ~0.15s
+    const k = 1 - Math.exp(-(slick ? 2.6 : 22) * dt);
+    h.svx = (h.svx ?? 0) + (ax.x * sp - (h.svx ?? 0)) * k;
+    h.svy = (h.svy ?? 0) + (ax.y * sp - (h.svy ?? 0)) * k;
+    h.x += h.svx * dt; h.y += h.svy * dt;
+    if (!slick && Math.abs(h.svx - ax.x * sp) + Math.abs(h.svy - ax.y * sp) < 4) { h.svx = 0; h.svy = 0; }
+    if (slick && !h.moving && Math.hypot(h.svx, h.svy) > 40) h.moving = true; // feet scramble while sliding
+  } else {
     h.x += ax.x * sp * dt;
     h.y += ax.y * sp * dt;
   }
   h.x += h.kvx * dt; h.y += h.kvy * dt;
-  const f = Math.exp(-9 * dt);
+  const f = Math.exp(-(slick ? 6 : 9) * dt);
   h.kvx *= f; h.kvy *= f;
+  const px = h.x, py = h.y;
   collide(L.arena, h);
+  if (h.svx && (h.x !== px || h.y !== py)) { h.svx *= 0.3; h.svy *= 0.3; } // bonk: slides stop at walls/props
 
   if (h.channel) updateChannel(L, h, dt);
 

@@ -5,6 +5,7 @@ import { dist } from '../core/math.js';
 import { openEdgePoint, isOpen } from './arena.js';
 import { addTelegraph, addZone } from './combat.js';
 import { playSfx } from '../audio/sfx.js';
+import { officeSlime } from './goo.js';
 
 export const DEPTH = { office: 0, kitchen: 1, living: 1, dining: 2, playroom: 2, primary: 2, guest: 3, backyard: 4, pond: 5 };
 
@@ -102,6 +103,8 @@ export const STAGES = {
       ['bookshelf', 330, 168, { w: 90 }],
     ],
     gate: (L) => L.tut.moved,
+    // Second half: slime oozes out of the floor (movement hazard only; tuning below is untouched).
+    update(L, dt) { officeSlime(L, dt, waveProgress(L, L.W)); },
     // Playtest: the old waves (half-speed beetles, one at a time) were a walkover. Wave 1 still teaches the
     // kick; after that waves overlap (`at`), bugs pour out of the laptop, and the last push has two spiders.
     waves: [
