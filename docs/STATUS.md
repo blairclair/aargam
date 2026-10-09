@@ -54,7 +54,7 @@ real photo heads + hair, outfits from the photos.
 | art-world | src/art/world | ✅ DONE (b69567f): 9 rooms, 41 furniture, 24 enemies, drawWater, drawStringLights. Open: dough blob looks more worried than menacing |
 
 ## User feedback log (most recent first)
-- 2026-10-07 round 3: Victoria's Spanish cut to ONE line (opening). Office action too easy (now ~40 bugs, overlapping waves). More detail on bugs/dough/kettle (drawScale + detail pass). Wrench was harder to land than the kick (now 70px / 153°). Victoria's kitchen popups were dry (rewritten, parity with Aaron). Bread Bake boring → Mouse Heist chase after it (hero = whoever is playing).
+- 2026-10-07 round 3: Victoria's Spanish cut entirely (2026-10-09: last line removed too). Office action too easy (now ~40 bugs, overlapping waves). More detail on bugs/dough/kettle (drawScale + detail pass). Wrench was harder to land than the kick (now 70px / 153°). Victoria's kitchen popups were dry (rewritten, parity with Aaron). Bread Bake boring → Mouse Heist chase after it (hero = whoever is playing).
 - Drumline: D/F = left/right drum, J/K = left/right cymbal.
 - Pipe Fixer "kinda boring" → all minigames need pressure, motion, surprise.
 - Dining minigame = Pour the Drinks (color-sort logic). Kitchen = Bread Bake (they make bread).

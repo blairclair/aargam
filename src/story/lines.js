@@ -30,7 +30,7 @@ export const CUTSCENES = {
       { who: 'aaron', text: 'Peak coding hours. What could go wrong? Hitting Run...', expr: 'bounce', sfx: 'click' },
       { who: 'partyplanner', text: '> RUN PartyPlanner.exe\n> FATAL: escaped laptop. Preparing house anyway :)', fx: 'spark', sfx: 'error' },
       { who: 'narrator', text: 'The laptop sparks, and the program crashes into the house itself.', fx: 'glitch' },
-      { who: 'victoria', text: 'Aaron. ¿Qué hiciste? Every room in the house just went haywire.', face: 'neutral', expr: 'shake' },
+      { who: 'victoria', text: 'Aaron. What did you do? Every room in the house just went haywire.', face: 'neutral', expr: 'shake' },
       { who: 'aaron', text: "My bad. Each room is one of its functions now. We'll fix them one by one.", expr: 'sweat' },
       { who: 'narrator', text: 'Pick a room on the house map. Fix all nine before the guests arrive at 7 PM.' },
     ],

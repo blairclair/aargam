@@ -13,9 +13,8 @@ Voice: earnest, enthusiastic, explains things in programmer terms, a little goof
 
 **Victoria** — Aaron's wife. Strong, kind. Social worker for teens. Blonde, blue-eyed, speaks Spanish.
 A fix-it girl. Crochets. Does not take any shit. Long wavy honey-blond hair, denim jacket, jeans,
-white sneakers. Voice: warm, dry, competent, calm under pressure, never mean. She speaks Spanish, but it is
-one thing she can do, not her personality: exactly one Spanish line in the whole script (the opening
-"Aaron. ¿Qué hiciste?"). Don't add more.
+white sneakers. Voice: warm, dry, competent, calm under pressure, never mean. No Spanish in her dialogue at all —
+the user asked for it cut entirely. Don't add any.
 
 Together: they just bought a really nice house, and they make bread together.
 
@@ -101,4 +100,4 @@ in the hub on **Party Touches** (small perks: "Good Coffee" +10% speed, "Playlis
 - Every line either tells the player what to do or shows who these two are. No unexplained references.
 - Lines ≤ 90 chars, ≤ 6 lines per cutscene beat. Humor is gentle and specific to them.
 - First time any mechanic appears, a one-line prompt + visual shows how ("Press K: Debug").
-- No Spanish filler from Victoria (no "Ay", "Vamos", "Perfecto") — user feedback, round 3.
+- No Spanish in Victoria's dialogue, not even one word — user feedback, round 3.

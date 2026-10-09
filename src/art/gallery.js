@@ -66,7 +66,7 @@ const pages = {
     const conv = [
       { who: 'aaron', text: 'I wrote PartyPlanner.exe to automate the prep. What could go wrong?', expr: 'happy' },
       { who: 'partyplanner', text: 'make_snacks(): sourdough starter granted sentience. You are welcome.' },
-      { who: 'victoria', text: 'Aaron. ¿Qué hiciste?', expr: 'annoyed' },
+      { who: 'victoria', text: 'Aaron. What did you do?', expr: 'annoyed' },
       { who: 'narrator', text: 'Meanwhile, the sourdough starter began to grow.' },
     ];
     const steps = [0, 1, 2, 3];

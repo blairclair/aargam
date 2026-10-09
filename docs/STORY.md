@@ -21,8 +21,8 @@ const log = logLine();                                        // -> 'optimizing 
 
 - **Aaron**: earnest, enthusiastic, explains things in programmer terms, a bit goofy, owns his mistakes.
   Nods: karate, World of Warcraft (tanking), Magic: The Gathering, Marching Ravens drums.
-- **Victoria**: warm, dry, competent, calm under pressure, never mean. Speaks Spanish, but it's one thing
-  she can do, not her personality: one Spanish line in the whole script ("¿Qué hiciste?"). Nods: crochet, fixing things,
+- **Victoria**: warm, dry, competent, calm under pressure, never mean. No Spanish in her dialogue at all
+  (user request). Nods: crochet, fixing things,
   teens social work (lightly).
 - **PartyPlanner.exe**: literal-minded and well-meaning. Lowercase log lines, cheerful status reports,
   occasional `:)`. Each room is one of its functions gone wrong.
@@ -56,7 +56,7 @@ const log = logLine();                                        // -> 'optimizing 
   > FATAL: escaped laptop. Preparing house anyway :)
   ```
 - **NARRATOR** (fx: glitch): The laptop sparks, and the program crashes into the house itself.
-- **VICTORIA** (*shake*, face: neutral): Aaron. ¿Qué hiciste? Every room in the house just went haywire.
+- **VICTORIA** (*shake*, face: neutral): Aaron. What did you do? Every room in the house just went haywire.
 - **AARON** (*sweat*): My bad. Each room is one of its functions now. We'll fix them one by one.
 - **NARRATOR**: Pick a room on the house map. Fix all nine before the guests arrive at 7 PM.
 
