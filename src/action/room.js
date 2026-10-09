@@ -16,7 +16,7 @@ import { buildArena } from './arena.js';
 import { createHero, updateHero, heroDrawOpts, SLOT_KEYS } from './heroes.js';
 import { SKILL_DEF, updateBoundary, beatPhase } from './skills.js';
 import { createEnemy, updateEnemies, enemyDrawOpts } from './enemies.js';
-import { updateShots, updateWaves, updateTelegraphs, updateZones, updatePickups, killEnemy } from './combat.js';
+import { updateShots, updateWaves, updateTelegraphs, updateZones, updatePickups, killEnemy, scatterHeart } from './combat.js';
 import { STAGES, scaling } from './stages.js';
 import { createGoo, updateGoo, drawGooFloor, drawGooAir } from './goo.js';
 import {
@@ -91,6 +91,9 @@ export default class RoomScene {
   startPlay() {
     this.phase = 'play';
     this.stage.setup?.(this);
+    // healing hearts scattered on the floor: a few at the start, more over time (amounts per difficulty)
+    this.heartT = 0;
+    for (let i = 0; i < this.diff.heartStart; i++) scatterHeart(this);
     this.later(0.6, () => this.say('start', true));
     if (this.p.attempt > 1 && this.stage === STAGES.office) this.tut.moved = true;
   }
@@ -282,6 +285,13 @@ export default class RoomScene {
     updateZones(this, dt);
     updateGoo(this, dt);
     updatePickups(this, dt);
+    if (this.phase === 'play') {
+      this.heartT += dt;
+      if (this.heartT >= this.diff.heartEvery * (0.8 + Math.random() * 0.4)) {
+        this.heartT = 0;
+        if (this.pickups.filter((p) => p.floor).length < 3) scatterHeart(this);
+      }
+    }
     if (this.enemies.length > 60) this.enemies = this.enemies.filter((e) => !e.dead || e === this.boss);
     if (this.laser && !(this.boss && this.boss.state === 'laser' && !this.boss.dead && !(this.boss.stun > 0))) this.laser = null;
 

@@ -3,7 +3,7 @@
 import { PALETTE } from '../core/theme.js';
 import { dist, angleTo } from '../core/math.js';
 import { playSfx } from '../audio/sfx.js';
-import { shotBlocker, SIDE } from './arena.js';
+import { shotBlocker, SIDE, isOpen } from './arena.js';
 import { goreHit, goreKill } from './goo.js';
 
 export const angDiff = (a, b) => {
@@ -106,7 +106,7 @@ export function killEnemy(L, e, { silent = false } = {}) {
   const h = L.hero;
   if (!silent && h && !e.noDrops && e.counts !== false) {
     const need = 1 - h.hp / h.maxHp;
-    if (Math.random() < 0.05 + need * 0.18) spawnPickup(L, 'heart', e.x, e.y);
+    if (Math.random() < (0.05 + need * 0.18) * (L.diff?.dropMul ?? 1)) spawnPickup(L, 'heart', e.x, e.y);
   }
   L.game.events.emit('enemy:defeated', { type: e.type, x: e.x, y: e.y });
   L.stage?.onKill?.(L, e);
@@ -305,6 +305,20 @@ export function spawnPickup(L, kind, x, y) {
   L.pickups.push({ kind, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, z: 0, vz: 160 + Math.random() * 80, t: 0, seed: Math.floor(Math.random() * 1000) });
 }
 
+/** A heart that drops onto an open spot of the floor (difficulty-scaled scatter), away from the hero. */
+export function scatterHeart(L) {
+  const A = L.arena, h = L.hero;
+  for (let i = 0; i < 30; i++) {
+    const x = 60 + Math.random() * (A.w - 120), y = A.wallH + 40 + Math.random() * (A.h - A.wallH - 80);
+    if (!isOpen(A, x, y, 18) || (h && dist(x, y, h.x, h.y) < 140)) continue;
+    if (L.pickups.some((p) => dist(x, y, p.x, p.y) < 160)) continue; // spread them out
+    L.pickups.push({ kind: 'heart', x, y, vx: 0, vy: 0, z: 260, vz: 0, t: 0, life: 28, floor: true, seed: Math.floor(Math.random() * 1000) });
+    L.fx.sparkle?.(x, y - 10, PALETTE.heal, 6, 16);
+    return true;
+  }
+  return false;
+}
+
 export function updatePickups(L, dt) {
   const h = L.hero;
   for (const p of L.pickups) {
@@ -327,7 +341,7 @@ export function updatePickups(L, dt) {
         continue;
       }
     }
-    if (p.t > 14) p.dead = true;
+    if (p.t > (p.life ?? 14)) p.dead = true;
     p.x += p.vx * dt; p.y += p.vy * dt;
     p.x = Math.max(40, Math.min(L.arena.w - 40, p.x));
     p.y = Math.max(L.arena.wallH + 10, Math.min(L.arena.h - 30, p.y));
