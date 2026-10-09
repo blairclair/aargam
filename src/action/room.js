@@ -233,6 +233,8 @@ export default class RoomScene {
   update(dt) {
     const g = this.game, inp = g.input;
     if ((this.phase === 'play' || this.phase === 'intro') && inp.pressed('pause')) { this.paused = !this.paused; playSfx('click'); }
+    // corner Skip button (same spot as the minigame one) opens the pause menu, which has "Skip this fight"
+    if (!this.paused && (this.phase === 'play' || this.phase === 'intro') && inp.mouse.pressed && inSkip(inp.mouse)) { this.paused = true; playSfx('click'); return; }
     if (this.paused) {
       if (button(null, g, 'Resume', W / 2 - 110, 318, 220, 40)) this.paused = false;
       else if (button(null, g, 'Give up (retry)', W / 2 - 110, 364, 220, 40)) { this.paused = false; this.phase = 'play'; this.lose(); }
@@ -376,6 +378,7 @@ export default class RoomScene {
     this.drawPrompt(ctx);
     if ((this.phase === 'won' || this.phase === 'lost') && typeof Sprites.drawBust === 'function') this.drawEndBust(ctx);
     if (this.bannerData) this.drawBanner(ctx);
+    if (!this.paused && (this.phase === 'play' || this.phase === 'intro')) drawSkipChip(ctx, this.game.input.mouse);
     if (this.paused) this.drawPause(ctx);
   }
 
@@ -694,6 +697,17 @@ export default class RoomScene {
 }
 
 // ------------------------------------------------------------ tiny local drawings
+const SKIP_BTN = { x: 884, y: 62, w: 70, h: 22 }; // under the objective panel
+const inSkip = (m) => m.x >= SKIP_BTN.x && m.x <= SKIP_BTN.x + SKIP_BTN.w && m.y >= SKIP_BTN.y && m.y <= SKIP_BTN.y + SKIP_BTN.h;
+function drawSkipChip(ctx, m) {
+  const hov = inSkip(m), b = SKIP_BTN;
+  ctx.save();
+  ctx.globalAlpha = hov ? 1 : 0.6;
+  ctx.fillStyle = hov ? 'rgba(255,201,74,0.95)' : 'rgba(16,19,31,0.7)';
+  ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, 11); ctx.fill();
+  text(ctx, 'Skip ⏭', b.x + b.w / 2, b.y + 15, { align: 'center', font: 'bold 12px "Trebuchet MS", sans-serif', color: hov ? PALETTE.ink : PALETTE.paper, shadow: false });
+  ctx.restore();
+}
 const artZone = (kind) => Sprites.ZONE_KINDS?.includes?.(kind) && typeof Sprites.drawZone === 'function';
 
 function drawStars(ctx, x, y, t) {
