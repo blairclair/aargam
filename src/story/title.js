@@ -112,7 +112,7 @@ export default class TitleScene {
     panel(ctx, x, y, w, h, { style: 'dark', radius: 14, alpha: 0.92 });
     text(ctx, 'CONTROLS', W / 2, y + 18, { align: 'center', baseline: 'middle', font: 'bold 13px "Trebuchet MS", sans-serif', color: PALETTE.sun });
     const rows = [
-      [['W', 'A', 'S', 'D'], 'Move', [['Click', 'J']], 'Attack'],
+      [['←', '↑', '↓', '→'], 'Move', [['Click', 'J']], 'Attack'],
       [['K'], 'Skill 1', [['E']], 'Skill 2'],
       [['Space'], 'Ultimate', [['Esc']], 'Pause / skip scene'],
     ];

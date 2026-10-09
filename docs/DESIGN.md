@@ -65,7 +65,7 @@ Fail the action stage → retry (or swap hero). Fail the minigame → retry mini
 
 ## Heroes & skills (earned — the player starts with ONE attack)
 Movement, animation, and color from round 1 are loved — **keep them**. One hero on the field per room
-(no tag-swap). Controls: WASD/arrows move, mouse aim, **click/J** basic attack, **K/Shift** skill 1,
+(no tag-swap). Controls: arrow keys move (WASD still works but is never shown), mouse aim, **click/J** basic attack, **K/Shift** skill 1,
 **E/L** skill 2, **Space** ultimate (once unlocked), **Esc/P** pause.
 
 | Earned in | Aaron | Victoria |

@@ -172,7 +172,7 @@ export default class RoomScene {
     const office = this.roomId === 'office';
     this.tut = { moved: !office || !!flags['action.tut.move'] };
     this.prompts = [];
-    if (office && !flags['action.tut.move']) this.prompts.push({ flag: 'action.tut.move', key: 'WASD', text: 'Move with WASD or the arrow keys. The mouse aims.', done: (L) => L.movedT > 1.2 });
+    if (office && !flags['action.tut.move']) this.prompts.push({ flag: 'action.tut.move', key: '←↑↓→', text: 'Move with the arrow keys. The mouse aims.', done: (L) => L.movedT > 1.2 });
     const add = (slot) => {
       const id = this.slots[slot];
       if (!id || flags[`action.tut.${id}`]) return;
@@ -672,7 +672,7 @@ export default class RoomScene {
     text(ctx, 'Paused', W / 2, 140, { align: 'center', font: FONT.big, color: PALETTE.sun });
     text(ctx, `${this.room.name}: ${this.room.objective}`, W / 2, 172, { align: 'center', color: this.accent });
     const s = this.slots;
-    const lines = ['WASD / arrows: move  ·  mouse: aim', `Click / J: ${SKILLS[s.basic].name}`];
+    const lines = ['Arrow keys: move  ·  mouse: aim', `Click / J: ${SKILLS[s.basic].name}`];
     if (s.s1) lines.push(`K / Shift: ${SKILLS[s.s1].name}`);
     if (s.s2) lines.push(`E / L: ${SKILLS[s.s2].name}`);
     if (s.ult) lines.push(`Space: ${SKILLS[s.ult].name}`);

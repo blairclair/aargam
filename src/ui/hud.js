@@ -180,7 +180,7 @@ export function drawPauseOverlay(ctx, game, o = {}) {
   ctx.fillStyle = 'rgba(16,19,31,0.6)'; ctx.fillRect(0, 0, W, H);
   panel(ctx, W / 2 - 200, H / 2 - 130, 400, 260, { radius: 20 });
   text(ctx, o.title ?? 'Paused', W / 2, H / 2 - 88, { align: 'center', baseline: 'middle', font: 'bold 34px "Trebuchet MS", system-ui, sans-serif', color: PALETTE.sun });
-  const lines = o.lines ?? ['WASD / arrows: move', 'Mouse / J: attack', 'Shift / K / right-click: ability', 'E / L: special', 'Q / Tab: swap hero', 'Esc / P: resume'];
+  const lines = o.lines ?? ['Arrow keys: move', 'Mouse / J: attack', 'Shift / K / right-click: ability', 'E / L: special', 'Q / Tab: swap hero', 'Esc / P: resume'];
   lines.forEach((l, i) => text(ctx, l, W / 2, H / 2 - 44 + i * 26, { align: 'center', baseline: 'middle', color: PALETTE.paper }));
   ctx.restore();
 }
