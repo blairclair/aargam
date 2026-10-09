@@ -10,6 +10,7 @@
 //   after pond: cutscene 'party' {partyScore} ──▶ ending handled by story
 import { ROOMS, ROOM_IDS, SKILLS, HERO_IDS } from './theme.js';
 import { saveGame, newGame, availableRooms } from './state.js';
+import { diff } from './difficulty.js';
 
 /**
  * @typedef {Object} RoomParams        hub/select -> action  ('room' scene)
@@ -17,6 +18,7 @@ import { saveGame, newGame, availableRooms } from './state.js';
  * @property {'aaron'|'victoria'} hero
  * @property {string[]} loadout        up to 2 skill ids (basic + ultimate implied)
  * @property {number} attempt          1-based
+ * @property {'easy'|'medium'|'hard'} difficulty   core/difficulty.js (Medium = original tuning)
  */
 /**
  * @typedef {Object} ActionResult      action -> flow
@@ -33,6 +35,7 @@ import { saveGame, newGame, availableRooms } from './state.js';
  * @property {'aaron'|'victoria'} hero
  * @property {number} attempt
  * @property {string[]} perks          Party Touch ids that minigames may honor (e.g. 'playlist' = +20% time)
+ * @property {'easy'|'medium'|'hard'} difficulty   host scales the minigame clock; a minigame may also read it
  */
 /**
  * @typedef {Object} MinigameResult    minigames -> flow
@@ -64,12 +67,15 @@ export function enterRoom(game, roomId) {
 }
 
 /** Select screen calls this after hero + loadout are chosen. */
-export function launchRoom(game, { roomId, hero, loadout = [] }) {
+export function launchRoom(game, { roomId, hero, loadout = [], difficulty }) {
   const r = game.state.rooms[roomId];
   r.attempts = (r.attempts || 0) + 1;
-  game._run = { roomId, hero, loadout, attempt: r.attempts, action: null, minigame: null };
+  difficulty = diff(difficulty ?? r.difficulty).id;
+  r.difficulty = difficulty;
+  game.state.flags.lastDifficulty = difficulty;
+  game._run = { roomId, hero, loadout, difficulty, attempt: r.attempts, action: null, minigame: null };
   game.events.emit('room:launched', game._run);
-  go(game, 'room', { roomId, hero, loadout, attempt: r.attempts });
+  go(game, 'room', { roomId, hero, loadout, difficulty, attempt: r.attempts });
 }
 
 /** Action calls this when the action stage ends. */
@@ -85,7 +91,7 @@ export function finishAction(game, result) {
     go(game, 'select', { roomId: run.roomId, retry: true, lastHero: run.hero });
     return;
   }
-  go(game, 'minigame', { roomId: run.roomId, hero: run.hero, attempt: 1, perks: game.state.purchases.slice() });
+  go(game, 'minigame', { roomId: run.roomId, hero: run.hero, attempt: 1, perks: game.state.purchases.slice(), difficulty: run.difficulty ?? 'medium' });
 }
 
 /** Minigame calls this when it ends. Fail → replay the minigame. */
@@ -96,11 +102,11 @@ export function finishMinigame(game, result) {
   game.events.emit('room:minigameFinished', result);
   if (!result.success) {
     game.state.stats.minigamesFailed++;
-    go(game, 'minigame', { roomId: run.roomId, hero: run.hero, attempt: (result.attempt || 1) + 1, perks: game.state.purchases.slice() });
+    go(game, 'minigame', { roomId: run.roomId, hero: run.hero, attempt: (result.attempt || 1) + 1, perks: game.state.purchases.slice(), difficulty: run.difficulty ?? 'medium' });
     return;
   }
   const stars = computeStars(run);
-  go(game, 'results', { roomId: run.roomId, hero: run.hero, stars, action: run.action, minigame: result, newSkills: skillsFor(run.roomId) });
+  go(game, 'results', { roomId: run.roomId, hero: run.hero, difficulty: run.difficulty ?? 'medium', stars, action: run.action, minigame: result, newSkills: skillsFor(run.roomId) });
 }
 
 /** 1..3 stars from action hp + minigame score. */

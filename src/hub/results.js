@@ -1,8 +1,9 @@
 // Room results. Owned by: hub team.
-// params: { roomId, hero, stars, action: ActionResult, minigame: MinigameResult, newSkills: string[] }
+// params: { roomId, hero, difficulty, stars, action: ActionResult, minigame: MinigameResult, newSkills: string[] }
 // Continue -> finishRoom(game, roomId, stars).
 import { ROOMS, SKILLS, HEROES, PALETTE, FONT } from '../core/theme.js';
 import { finishRoom } from '../core/flow.js';
+import { DIFFICULTY } from '../core/difficulty.js';
 import { button, text, panel, chip, bar, wrapText } from '../ui/widgets.js';
 import { playSfx, playMusic } from '../audio/sfx.js';
 import { MONO, BOLD, rr, star, drawBustImg, skillIcon, Sparks } from './common.js';
@@ -99,6 +100,7 @@ export default class ResultsScene {
     text(ctx, `${room.name} fixed!`, 0, 0, { align: 'center', font: BOLD(40), color: PALETTE.sun, outline: PALETTE.choc, outlineWidth: 6 });
     ctx.restore();
     text(ctx, `> ${room.fn} ... OK`, 480, 92, { align: 'center', font: MONO, color: PALETTE.mint, shadow: false, alpha: Math.min(1, t * 2) });
+    if (DIFFICULTY[this.p.difficulty]) { const d = DIFFICULTY[this.p.difficulty]; ctx.save(); ctx.globalAlpha = Math.min(1, t * 2); chip(ctx, `on ${d.name}`, 480, 112, { align: 'center', fill: d.color, color: PALETTE.ink }); ctx.restore(); }
 
     // stars
     for (let i = 0; i < 3; i++) {

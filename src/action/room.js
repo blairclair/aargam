@@ -3,12 +3,13 @@
 // One hero on the field; stats from game.state.party[hero]; favored hero +15% damage.
 import { ROOMS, HEROES, SKILLS, PALETTE, FONT } from '../core/theme.js';
 import { finishAction } from '../core/flow.js';
+import { diff } from '../core/difficulty.js';
 import { saveGame } from '../core/state.js';
 import { clamp, lerp } from '../core/math.js';
 import * as Sprites from '../art/sprites.js';
 import { Fx } from '../art/fx.js';
 import * as HUD from '../ui/hud.js';
-import { panel, text, button, bar, ring, keycap, wrapText } from '../ui/widgets.js';
+import { panel, text, button, bar, ring, keycap, wrapText, chip } from '../ui/widgets.js';
 import { playSfx, playMusic } from '../audio/sfx.js';
 import { bark } from '../story/lines.js';
 import { buildArena } from './arena.js';
@@ -43,7 +44,10 @@ export default class RoomScene {
     this.room = ROOMS[roomId];
     this.accent = this.room.accent ?? PALETTE.sun;
     this.stage = STAGES[roomId];
-    this.scl = scaling(roomId);
+    this.diff = diff(params.difficulty);
+    this.p.difficulty = this.diff.id;
+    const sc = scaling(roomId), d = this.diff; // depth ramp × chosen difficulty (Medium = ×1)
+    this.scl = { ...sc, hp: sc.hp * d.hp, dmg: sc.dmg * d.dmg, speed: sc.speed * d.speed, aggro: sc.aggro * d.aggro, tele: sc.tele * d.tele };
     this.arena = buildArena(this.stage);
     this.fitFurniture();
 
@@ -582,6 +586,7 @@ export default class RoomScene {
     text(ctx, `Goal: ${this.room.objective}`, W / 2, 236, { align: 'center', font: 'bold 20px "Trebuchet MS", system-ui, sans-serif' });
     const fav = this.hero.favored ? `  ·  ${HEROES[this.hero.id].name}'s room: +15% damage` : '';
     text(ctx, `${k > 0.6 ? 'GO!' : 'Get ready...'}${fav}`, W / 2, 272, { align: 'center', color: k > 0.6 ? PALETTE.sun : PALETTE.paper });
+    chip(ctx, this.diff.name, W / 2, 150, { align: 'center', fill: this.diff.color, color: PALETTE.ink });
     ctx.restore();
   }
 

@@ -3,6 +3,7 @@
 import { ROOMS, SKILLS, HEROES, PALETTE, FONT } from '../core/theme.js';
 import { saveGame } from '../core/state.js';
 import { launchRoom, continueGame } from '../core/flow.js';
+import { DIFFICULTY, DIFF_IDS, roomDifficulty } from '../core/difficulty.js';
 import { button, text, panel, chip, keycap, wrapText } from '../ui/widgets.js';
 import { playSfx, playMusic } from '../audio/sfx.js';
 import { MONO, BOLD, rr, ROLE, FAVORED_BONUS, drawBustImg, skillIcon, Sparks } from './common.js';
@@ -13,6 +14,8 @@ const RIGHT = { x: 484, y: 96, w: 452, h: 334 };
 const TILE = (i) => ({ x: RIGHT.x + 14 + (i % 2) * 216, y: RIGHT.y + 92 + Math.floor(i / 2) * 58, w: 208, h: 52 });
 const GO = { x: 736, y: 446, w: 200, h: 52 };
 const BACK = { x: 24, y: 452, w: 120, h: 40 };
+// Easy / Medium / Hard segmented control, top-right of the header (F cycles it)
+const DIFF_BTN = (i) => ({ x: 712 + i * 76, y: 26, w: 72, h: 30 });
 
 // Retry tips: first entry whose hero knows the skill wins (other hero preferred).
 const TIPS = {
@@ -45,6 +48,7 @@ export default class SelectScene {
     this.focus = -1; // -1 = Go button, 0..n-1 = skill tiles
     this.tip = this.p.retry ? retryTip(s, this.p.roomId, this.p.lastHero) : null;
     this.selT = 0;
+    this.difficulty = roomDifficulty(s, this.p.roomId);
     playMusic('house');
   }
 
@@ -74,7 +78,15 @@ export default class SelectScene {
     s.flags['hub.lastHero'] = this.hero;
     saveGame(s);
     playSfx('shout');
-    launchRoom(g, { roomId: this.p.roomId, hero: this.hero, loadout });
+    launchRoom(g, { roomId: this.p.roomId, hero: this.hero, loadout, difficulty: this.difficulty });
+  }
+
+  setDifficulty(id) {
+    if (id === this.difficulty || !DIFFICULTY[id]) return;
+    this.difficulty = id;
+    playSfx('blip');
+    const c = DIFF_BTN(DIFF_IDS.indexOf(id));
+    this.sparks.burst(c.x + c.w / 2, c.y + c.h / 2, [DIFFICULTY[id].color, PALETTE.paper], 8, 70, { g: 60 });
   }
 
   update(dt) {
@@ -94,12 +106,14 @@ export default class SelectScene {
       else { this.launch(); return; }
     }
     if (inp.pressed('back')) { continueGame(g); return; }
+    if (inp.pressed('KeyF')) this.setDifficulty(DIFF_IDS[(DIFF_IDS.indexOf(this.difficulty) + 1) % DIFF_IDS.length]);
 
     // mouse
     const m = inp.mouse;
     if (m.pressed) {
       HEROES_ORDER.forEach((h, i) => { const c = CARD(i); if (m.x >= c.x && m.x <= c.x + c.w && m.y >= c.y && m.y <= c.y + c.h) this.setHero(h); });
       list.forEach((id, i) => { const c = TILE(i); if (m.x >= c.x && m.x <= c.x + c.w && m.y >= c.y && m.y <= c.y + c.h) { this.focus = i; this.toggle(id); } });
+      DIFF_IDS.forEach((id, i) => { const c = DIFF_BTN(i); if (m.x >= c.x && m.x <= c.x + c.w && m.y >= c.y && m.y <= c.y + c.h) this.setDifficulty(id); });
     }
     if (button(null, g, "Let's go!", GO.x, GO.y, GO.w, GO.h, { primary: true })) { this.launch(); return; }
     if (button(null, g, 'Back', BACK.x, BACK.y, BACK.w, BACK.h)) { continueGame(g); }
@@ -122,7 +136,8 @@ export default class SelectScene {
     text(ctx, `> ${room.fn}`, 40, 72, { font: MONO, color: PALETTE.mint, shadow: false });
     ctx.font = MONO; const fw = ctx.measureText(`> ${room.fn}`).width;
     text(ctx, `${room.weird}.  Goal: ${room.objective}.`, 52 + fw, 72, { font: FONT.small, color: 'rgba(255,246,229,0.85)', maxWidth: 880 - fw });
-    if (this.p.retry) chip(ctx, `Attempt ${(s.rooms[this.p.roomId]?.attempts ?? 0) + 1}`, 936, 32, { align: 'right', fill: '#ffb3a8' });
+    if (this.p.retry) chip(ctx, `Attempt ${(s.rooms[this.p.roomId]?.attempts ?? 0) + 1}`, 700, 41, { align: 'right', fill: '#ffb3a8' });
+    this.drawDifficulty(ctx);
 
     HEROES_ORDER.forEach((h, i) => this.drawCard(ctx, h, i));
     this.drawLoadout(ctx);
@@ -133,14 +148,28 @@ export default class SelectScene {
     const firstRoom = this.p.roomId === 'office' && !s.rooms.office.done && !this.p.retry;
     const msg = this.tip ?? (firstRoom
       ? 'First room! Click a hero (or press Left/Right), then press Enter. The gold tag shows who gets a bonus here.'
-      : `Left/Right: hero  ·  Up/Down + Enter (or 1-${Math.max(1, Math.min(9, this.skills().length))}): toggle skills  ·  Enter on Let's go!`);
+      : `Left/Right: hero  ·  Up/Down + Enter (or 1-${Math.max(1, Math.min(9, this.skills().length))}): toggle skills  ·  F: difficulty  ·  Enter on Let's go!`);
     panel(ctx, 160, 446, 562, 52, { style: 'paper', radius: 12 });
     const lines = wrapText(ctx, msg, 530, BOLD(14));
     lines.slice(0, 2).forEach((l, k) => text(ctx, l, 176, (lines.length > 1 ? 467 : 477) + k * 18, { font: BOLD(14), color: this.tip ? '#8a3f2a' : PALETTE.choc, shadow: false }));
     const lo = this.loadouts[this.hero];
     button(ctx, g, "Let's go!", GO.x, GO.y, GO.w, GO.h, {
       primary: true, selected: this.focus === -1,
-      sub: `${HEROES[this.hero].name}${lo.length ? ' · ' + lo.map((id) => SKILLS[id].name).join(' + ') : ''}`,
+      sub: `${HEROES[this.hero].name} · ${DIFFICULTY[this.difficulty].name}${lo.length ? ' · ' + lo.map((id) => SKILLS[id].name).join(' + ') : ''}`,
+    });
+  }
+
+  drawDifficulty(ctx) {
+    const m = this.game.input.mouse;
+    text(ctx, 'Difficulty', DIFF_BTN(0).x, 19, { font: 'bold 11px "Trebuchet MS", sans-serif', color: 'rgba(255,246,229,0.7)', shadow: false });
+    keycap(ctx, 'F', DIFF_BTN(2).x + DIFF_BTN(2).w - 8, 15, { small: true });
+    DIFF_IDS.forEach((id, i) => {
+      const c = DIFF_BTN(i), d = DIFFICULTY[id], on = id === this.difficulty;
+      const hover = m.x >= c.x && m.x <= c.x + c.w && m.y >= c.y && m.y <= c.y + c.h;
+      ctx.fillStyle = on ? d.color : hover ? 'rgba(255,246,229,0.14)' : 'rgba(255,246,229,0.05)';
+      rr(ctx, c.x, c.y, c.w, c.h, 9); ctx.fill();
+      ctx.strokeStyle = on ? d.color : 'rgba(255,246,229,0.25)'; ctx.lineWidth = on ? 2 : 1; rr(ctx, c.x, c.y, c.w, c.h, 9); ctx.stroke();
+      text(ctx, d.name, c.x + c.w / 2, c.y + 20, { align: 'center', font: BOLD(14), color: on ? PALETTE.ink : d.color, shadow: false });
     });
   }
 

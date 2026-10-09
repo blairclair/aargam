@@ -3,6 +3,7 @@
 // falls back to a visual clock when audio is locked/unavailable.
 import { PALETTE, FONT } from '../core/theme.js';
 import { finishMinigame } from '../core/flow.js';
+import { diff } from '../core/difficulty.js';
 import { text, panel, bar, keycap, chip } from '../ui/widgets.js';
 import { Fx } from '../art/fx.js';
 import { drawHero } from '../art/sprites.js';
@@ -53,7 +54,7 @@ export default class Drumline {
   enter(params) {
     this.p = readParams(params);
     const { attempt, playlist } = this.p;
-    this.bpm = 104 - (playlist ? 8 : 0) - (attempt >= 3 ? 8 : attempt === 2 ? 4 : 0);
+    this.bpm = 104 + diff(params?.difficulty).bpm - (playlist ? 8 : 0) - (attempt >= 3 ? 8 : attempt === 2 ? 4 : 0);
     const ease = attempt >= 3 ? 2 : attempt === 2 ? 1 : 0;
     this.chart = buildChart(this.bpm, ease);
     const m = (playlist ? 1.2 : 1) * (attempt >= 3 ? 1.4 : attempt === 2 ? 1.2 : 1);
