@@ -44,7 +44,7 @@ export const CUTSCENES = {
       { who: 'aaron', text: 'The bugs in my code crawled out of the laptop. Real bugs. With legs!', expr: 'shake' },
       { who: 'victoria', text: 'Literal bugs. Perfect. How do we get rid of them?', face: 'neutral', expr: 'lean' },
       { who: 'aaron', text: 'Squash every bug in the office. Then we hunt the rest inside the code.', expr: 'bounce' },
-      { who: 'victoria', text: "You stomp, I'll unplug things. Pick who goes in first.", expr: 'nod' },
+      { who: 'victoria', text: "You stomp, I'll unplug things. Pick who goes in first.", expr: 'sparkle' },
     ],
   },
   'kitchen.intro': {
@@ -53,7 +53,7 @@ export const CUTSCENES = {
       { who: 'partyplanner', text: '> make_snacks(): fed sourdough starter x9000.\n> snacks are now self-serving', sfx: 'squish' },
       { who: 'victoria', text: 'Our sourdough starter is alive. Like, alive alive. It ate a spatula.', expr: 'shake' },
       { who: 'aaron', text: 'Dough blobs split in two when you hit them. And the toaster shoots toast!', expr: 'surprise' },
-      { who: 'victoria', text: 'Beat back the dough. Then we bake a real loaf for the party. Together.', expr: 'nod' },
+      { who: 'victoria', text: 'Beat back the dough. Then we bake a real loaf for the party. Together.', expr: 'sparkle' },
     ],
   },
   'living.intro': {
@@ -101,7 +101,7 @@ export const CUTSCENES = {
       { who: 'partyplanner', text: '> fix_everything(): set all pipes to FREE.\n> water is now everywhere. you are welcome', sfx: 'splash' },
       { who: 'victoria', text: 'It "fixed" the plumbing. The ceiling leaks and the tub is launching ducks.', face: 'neutral', expr: 'lean' },
       { who: 'aaron', text: 'Hundreds of rubber ducks. Squeaking. With intent.', expr: 'sweat' },
-      { who: 'victoria', text: 'Plumbing, finally something I can fix. Survive the flood while I work.', expr: 'bounce' },
+      { who: 'victoria', text: 'Plumbing, finally something I can fix. Survive the flood while I work.', expr: 'sparkle' },
       { who: 'victoria', text: 'Then I rotate the pipes and route the water outside.', expr: 'nod' },
     ],
   },
@@ -122,7 +122,7 @@ export const CUTSCENES = {
       { who: 'aaron', text: "It packed all its code into one giant koi. That's the whole program. One fish.", expr: 'surprise' },
       { who: 'victoria', text: "Guests arrive in an hour. Let's end this.", face: 'neutral', expr: 'nod' },
       { who: 'aaron', text: 'Between its attack phases, its code is exposed. That is when we patch it.', expr: 'lean' },
-      { who: 'victoria', text: 'Defeat PartyPlanner, then patch it. You debug, I weld.', expr: 'bounce' },
+      { who: 'victoria', text: 'Defeat PartyPlanner, then patch it. You debug, I weld.', expr: 'sparkle' },
     ],
   },
 

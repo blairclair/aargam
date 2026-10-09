@@ -78,7 +78,7 @@ during outros it shows a **NEW SKILLS** card.
 - **AARON** (*shake*): The bugs in my code crawled out of the laptop. Real bugs. With legs!
 - **VICTORIA** (*lean*, face: neutral): Literal bugs. Perfect. How do we get rid of them?
 - **AARON** (*bounce*): Squash every bug in the office. Then we hunt the rest inside the code.
-- **VICTORIA** (*nod*): You stomp, I'll unplug things. Pick who goes in first.
+- **VICTORIA** (*sparkle*): You stomp, I'll unplug things. Pick who goes in first.
 
 #### Outro  `office.outro`  (background: office)
 
@@ -102,7 +102,7 @@ during outros it shows a **NEW SKILLS** card.
   ```
 - **VICTORIA** (*shake*): Our sourdough starter is alive. Like, alive alive. It ate a spatula.
 - **AARON** (*surprise*): Dough blobs split in two when you hit them. And the toaster shoots toast!
-- **VICTORIA** (*nod*): Beat back the dough. Then we bake a real loaf for the party. Together.
+- **VICTORIA** (*sparkle*): Beat back the dough. Then we bake a real loaf for the party. Together.
 
 #### Outro  `kitchen.outro`  (background: kitchen)
 
@@ -225,7 +225,7 @@ during outros it shows a **NEW SKILLS** card.
   ```
 - **VICTORIA** (*lean*, face: neutral): It "fixed" the plumbing. The ceiling leaks and the tub is launching ducks.
 - **AARON** (*sweat*): Hundreds of rubber ducks. Squeaking. With intent.
-- **VICTORIA** (*bounce*): Plumbing, finally something I can fix. Survive the flood while I work.
+- **VICTORIA** (*sparkle*): Plumbing, finally something I can fix. Survive the flood while I work.
 - **VICTORIA** (*nod*): Then I rotate the pipes and route the water outside.
 
 #### Outro  `guest.outro`  (background: guest)
@@ -276,7 +276,7 @@ during outros it shows a **NEW SKILLS** card.
 - **AARON** (*surprise*): It packed all its code into one giant koi. That's the whole program. One fish.
 - **VICTORIA** (*nod*, face: neutral): Guests arrive in an hour. Let's end this.
 - **AARON** (*lean*): Between its attack phases, its code is exposed. That is when we patch it.
-- **VICTORIA** (*bounce*): Defeat PartyPlanner, then patch it. You debug, I weld.
+- **VICTORIA** (*sparkle*): Defeat PartyPlanner, then patch it. You debug, I weld.
 
 #### Outro  `pond.outro`  (background: pond)
 
