@@ -6,6 +6,8 @@ import { angleTo } from '../core/math.js';
 import { collide } from './arena.js';
 import { castSkill, updateChannel, SKILL_DEF } from './skills.js';
 
+const TAU = Math.PI * 2;
+
 /** Build the hero from game.state.party[hero] (hub already folded stat perks in). */
 export function createHero(game, id, roomId, slots) {
   const base = HEROES[id] ?? HEROES.aaron;
@@ -80,15 +82,28 @@ export function updateHero(L, dt) {
 
   // Slime (office, goo.js) sets slickT: grip drops, so the hero accelerates slowly, keeps sliding and
   // overshoots, like ice. Top speed never exceeds normal. Off slime, movement is the usual instant response.
+  // Water (guest bedroom puddles) sets wetT: much worse than slime. Almost no grip, you carry your speed in,
+  // get flung up to 1.5x faster than you can run, and the hero skids off sideways at random.
   h.slickT = Math.max(0, (h.slickT ?? 0) - dt);
-  const slick = h.slickT > 0;
+  h.wetT = Math.max(0, (h.wetT ?? 0) - dt);
+  const wet = h.wetT > 0;
+  const slick = h.slickT > 0 || wet;
   const chSlow = h.channel ? (h.channel.moveMul ?? 0.5) : 1;
   const sp = h.rootT > 0 ? 0 : h.speed * (h.slowT > 0 ? 0.55 : 1) * (h.shieldT > 0 ? 0.6 : 1) * (h.atkT > 0 && h.id === 'aaron' ? 0.7 : 1) * chSlow;
   if (slick || h.svx || h.svy) {
-    // on slime: ease toward the wanted velocity; just off it: regain grip over ~0.15s
-    const k = 1 - Math.exp(-(slick ? 2.6 : 22) * dt);
+    // carry the current speed onto the slick patch instead of stopping dead at its edge
+    if (wet && !h.svx && !h.svy) { h.svx = ax.x * sp; h.svy = ax.y * sp; }
+    // on slime/water: ease toward the wanted velocity; just off it: regain grip over ~0.15s
+    const k = 1 - Math.exp(-(wet ? 0.9 : slick ? 2.6 : 22) * dt);
     h.svx = (h.svx ?? 0) + (ax.x * sp - (h.svx ?? 0)) * k;
     h.svy = (h.svy ?? 0) + (ax.y * sp - (h.svy ?? 0)) * k;
+    if (wet) {
+      // skid: a wandering sideways shove, so you slide all over the place
+      h.skidA = (h.skidA ?? Math.random() * TAU) + (Math.random() - 0.5) * 9 * dt;
+      h.svx += Math.cos(h.skidA) * 330 * dt; h.svy += Math.sin(h.skidA) * 330 * dt;
+      const v = Math.hypot(h.svx, h.svy), cap = h.speed * 1.5;
+      if (v > cap) { h.svx *= cap / v; h.svy *= cap / v; }
+    }
     h.x += h.svx * dt; h.y += h.svy * dt;
     if (!slick && Math.abs(h.svx - ax.x * sp) + Math.abs(h.svy - ax.y * sp) < 4) { h.svx = 0; h.svy = 0; }
     if (slick && !h.moving && Math.hypot(h.svx, h.svy) > 40) h.moving = true; // feet scramble while sliding
@@ -101,7 +116,11 @@ export function updateHero(L, dt) {
   h.kvx *= f; h.kvy *= f;
   const px = h.x, py = h.y;
   collide(L.arena, h);
-  if (h.svx && (h.x !== px || h.y !== py)) { h.svx *= 0.3; h.svy *= 0.3; } // bonk: slides stop at walls/props
+  if (h.svx && (h.x !== px || h.y !== py)) { // bonk: slides stop at walls/props; on water you bounce off
+    if (wet) { const nx = h.x - px, ny = h.y - py, d = Math.hypot(nx, ny) || 1, dot = (h.svx * nx + h.svy * ny) / d;
+      if (dot < 0) { h.svx -= 1.6 * dot * nx / d; h.svy -= 1.6 * dot * ny / d; } h.svx *= 0.7; h.svy *= 0.7; }
+    else { h.svx *= 0.3; h.svy *= 0.3; }
+  }
 
   if (h.channel) updateChannel(L, h, dt);
 

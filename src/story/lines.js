@@ -81,9 +81,9 @@ export const CUTSCENES = {
     shots: [
       { who: 'partyplanner', text: '> add_entertainment(): games now play themselves.\n> deck deployed in formation', sfx: 'card' },
       { who: 'aaron', text: 'The board games came alive! The playing cards are marching like an army!', expr: 'sparkle' },
-      { who: 'victoria', text: 'You look way too happy about this.', face: 'neutral', expr: 'lean' },
+      { who: 'victoria', text: 'Look at you light up! I love it.', face: 'neutral', expr: 'lean' },
       { who: 'aaron', text: 'I played a LOT of Magic: The Gathering as a teen. Card battles are my thing.', expr: 'bounce' },
-      { who: 'victoria', text: 'Then clear the toy army, card nerd. Watch out for the jack-in-the-box.', expr: 'nod' },
+      { who: 'victoria', text: "Then go get 'em, champ! I've got your back. Watch out for the jack-in-the-box.", expr: 'nod' },
     ],
   },
   'primary.intro': {
@@ -168,7 +168,7 @@ export const CUTSCENES = {
     shots: [
       { who: 'partyplanner', text: '> add_entertainment(): toy army disbanded\n> cards returned to deck. gg', sfx: 'card' },
       { who: 'aaron', text: 'Did you see me win that card duel? Teenage me is SO proud right now.', expr: 'sparkle' },
-      { who: 'victoria', text: 'Very cool, nerd. Now help me pick up four hundred tiny plastic houses.', expr: 'nod' },
+      { who: 'victoria', text: "That was AMAZING, babe! I'm so proud of you. Now help me pick up four hundred tiny plastic houses.", expr: 'nod' },
       { who: 'narrator', text: 'New skills! Aaron learned Tap a Card. Victoria learned Bouncy Ball.', sfx: 'unlock' },
     ],
   },
@@ -418,7 +418,7 @@ export const BARKS = {
     lowhp: [A('I need to tap out. Not yet, not yet!'), V('Toy army hurts. Heal up.')],
     hit: [A('Your turn is over!'), V('Game over.'), A('Discard!')],
     win: [A('Toy army disbanded. Victory!'), V('Toys back on the shelf.')],
-    minigame: [A('Card Duel! Play cards to beat its hand.'), V('Okay, card nerd. Show me.')],
+    minigame: [A('Card Duel! Play cards to beat its hand.'), V("You've got this, babe! Show them how it's done!")],
     minigameWin: [A('GG! Teenage me is proud.'), P('opponent: concedes')],
     minigameFail: [A('Bad draw. Shuffle up, again!'), V('Try a different card order.')],
   },

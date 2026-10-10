@@ -74,7 +74,7 @@ Movement, animation, and color from round 1 are loved — **keep them**. One her
 | Office | **Debug** — reveal & mark hidden enemies (crit on marked) | **Short Circuit** — a bolt that chains through up to 6 enemies; machines take extra damage and are stunned |
 | Kitchen | **Bread Toss** — lob a baguette (ranged) | **Hot Pan** — wide sizzling swing, burns |
 | Dining | **Plate Shield** — block & reflect | **Plate Shield** — block & reflect |
-| Living | **Karate Sweep** — spinning kick, knockback | **Throw Pillow** — ricocheting ranged |
+| Living | **Karate Sweep** — wide leg sweep trips everything (stun), then a spin kick launches it | **Throw Pillow** — ricocheting ranged |
 | Playroom | **Tap a Card** — summon a random spell card | **Bouncy Ball** — bounces between enemies |
 | Primary | **Sock Sling** — slow-on-hit ranged | **Crochet Net** — snare enemies in an area |
 | Guest | **Mop Spin** — spinning, pushes water/enemies | **Wrench Throw** — boomerang wrench |

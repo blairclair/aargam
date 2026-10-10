@@ -141,14 +141,28 @@ export const SKILL_DEF = {
 
   // ---------------------------------------------------------------- living
   karate_sweep: {
-    cd: 5.5, tut: 'Press {key}: Karate Sweep spins and knocks everything away.',
+    cd: 4.5, tut: 'Press {key}: Karate Sweep trips everything around you, then spin-kicks it all away.',
+    // Two beats (user playtest: the old single 1.4x tap was too weak). A low leg sweep trips everyone nearby
+    // (big hit + long stun, little knockback so they stay in reach), then a spinning kick launches them.
     cast(L, h) {
       playSfx('kick');
-      h.spinT = 0.35; h.atkT = h.atkDur;
-      const n = arcHit(L, h, 100, TAU, 1.4, { knock: 520, stun: 0.6 });
-      clearEnemyShots(L, h.x, h.y, 110);
-      vfx(L, { kind: 'spin', x: h.x, y: h.y - 12, r: 96, dur: 0.35, color: PALETTE.paper });
-      L.fx.addShake(n ? 7 : 3);
+      const big = h.growT > 0 ? 1.3 : 1, R = 150 * big;
+      h.spinT = 0.5; h.atkT = h.atkDur; h.invuln = Math.max(h.invuln, 0.5);
+      const n = arcHit(L, h, R, TAU, 2.2, { knock: 140, stun: 1.4 });
+      clearEnemyShots(L, h.x, h.y, R + 10);
+      vfx(L, { kind: 'spin', x: h.x, y: h.y - 4, r: R, dur: 0.3, color: PALETTE.paper });
+      vfx(L, { kind: 'ring', x: h.x, y: h.y, r: R, dur: 0.35, color: PALETTE.sun });
+      L.fx.floatText(h.x, h.y - 120, n ? 'SWEEP!' : 'Sweep!', PALETTE.sun, n ? { big: true } : undefined);
+      L.fx.addShake(n ? 6 : 3);
+      L.later(0.22, () => {
+        if (h.down) return;
+        playSfx('kick');
+        h.spinT = Math.max(h.spinT, 0.3);
+        const m = arcHit(L, h, R * 1.05, TAU, 1.8, { knock: 480, stun: 0.5 });
+        clearEnemyShots(L, h.x, h.y, R + 10);
+        vfx(L, { kind: 'spin', x: h.x, y: h.y - 22, r: R * 1.05, dur: 0.35, color: PALETTE.sun });
+        if (m) { L.fx.addShake(8); for (let i = 0; i < 10; i++) { const a = i * TAU / 10; L.fx.burst(h.x + Math.cos(a) * R * 0.8, h.y + Math.sin(a) * R * 0.55, PALETTE.paper, 2, 90); } }
+      });
     },
   },
   throw_pillow: {

@@ -73,7 +73,7 @@ export const SKILLS = {
   hot_pan:      { id: 'hot_pan', hero: 'victoria', slot: 'skill', name: 'Hot Pan', desc: 'Wide sizzling swing that burns.', earnedIn: 'kitchen' },
   plate_shield_a: { id: 'plate_shield_a', hero: 'aaron', slot: 'skill', name: 'Plate Shield', desc: 'Block and reflect shots.', earnedIn: 'dining' },
   plate_shield_v: { id: 'plate_shield_v', hero: 'victoria', slot: 'skill', name: 'Plate Shield', desc: 'Block and reflect shots.', earnedIn: 'dining' },
-  karate_sweep: { id: 'karate_sweep', hero: 'aaron', slot: 'skill', name: 'Karate Sweep', desc: 'Spinning kick with knockback.', earnedIn: 'living' },
+  karate_sweep: { id: 'karate_sweep', hero: 'aaron', slot: 'skill', name: 'Karate Sweep', desc: 'Trips everything around you, then spin-kicks it away.', earnedIn: 'living' },
   throw_pillow: { id: 'throw_pillow', hero: 'victoria', slot: 'skill', name: 'Throw Pillow', desc: 'Ricocheting pillow.', earnedIn: 'living' },
   tap_card:     { id: 'tap_card', hero: 'aaron', slot: 'skill', name: 'Tap a Card', desc: 'Cast a random spell card.', earnedIn: 'playroom' },
   bouncy_ball:  { id: 'bouncy_ball', hero: 'victoria', slot: 'skill', name: 'Bouncy Ball', desc: 'Bounces between enemies.', earnedIn: 'playroom' },

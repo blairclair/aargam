@@ -919,6 +919,37 @@ function roomba(c, P) {
 }
 
 // ================================================================ PLAYROOM
+// The playroom toys are meant to be unsettling (user ask): hollow eyes with pinprick glowing pupils that
+// track you, too-wide stitched grins full of little teeth, stains, cracks, and the odd twitch.
+/** Hollow black eyes with tiny glowing pupils. look: -1..1 sideways drift. */
+function hollowEyes(c, x, y, sep, r, P, glow = '#ff4a3a') {
+  const look = Math.sin(P.t * 0.9 + P.seed * 7) * 0.35;
+  for (const ex of [x - sep, x + sep]) {
+    c.fillStyle = '#0b0710'; c.beginPath(); c.ellipse(ex, y, r * 1.15, r * 1.35, 0, 0, TAU); c.fill();
+    const blink = ((P.t + P.seed * 13) % 5.3) < 0.08; // they almost never blink
+    if (blink) continue;
+    c.fillStyle = glow; c.shadowColor = glow; c.shadowBlur = r * 2.5;
+    c.beginPath(); c.arc(ex + look * r * 0.5, y + r * 0.1, Math.max(0.55, r * 0.3), 0, TAU); c.fill();
+    c.shadowBlur = 0;
+  }
+}
+/** A grin that's too wide, with little square teeth. open 0..1 */
+function toothyGrin(c, x, y, w, open = 0, lip = '#7a1a20') {
+  const hgt = w * (0.22 + open * 0.35);
+  c.fillStyle = '#12080c';
+  c.beginPath(); c.moveTo(x - w, y - hgt * 0.4); c.quadraticCurveTo(x, y + hgt * 2.1, x + w, y - hgt * 0.4); c.quadraticCurveTo(x, y + hgt * 0.5, x - w, y - hgt * 0.4); c.fill();
+  c.strokeStyle = lip; c.lineWidth = Math.max(0.6, w * 0.12); c.stroke();
+  c.fillStyle = '#f3ead2';
+  const n = Math.max(4, Math.round(w * 1.1));
+  for (let i = 1; i < n; i++) {
+    const k = i / n, tx = x - w + k * 2 * w;
+    const top = y - hgt * 0.4 + Math.sin(k * Math.PI) * hgt * 0.45;
+    c.fillRect(tx - w / n * 0.4, top, w / n * 0.8, hgt * 0.5);
+  }
+}
+/** Rare sudden twitch (a jerk of a few px + tilt) so idle toys never feel quite still. */
+function twitch(P) { const k = (P.t * 1.3 + P.seed * 11) % 3.7; return k < 0.09 ? (P.seed > 0.5 ? 1 : -1) : 0; }
+
 const SUITS = [['♠', INK], ['♥', '#d9343f'], ['♦', '#d9343f'], ['♣', INK]];
 // ---- Card Soldier: a playing card with tiny legs and a spear, marching.
 function card_soldier(c, P) {
@@ -929,9 +960,10 @@ function card_soldier(c, P) {
   shadow(c, 11, 3.5, 0.24);
   if (w > 0 && P.prog < 0.7) telegraph(c, 16, 6, w);
   c.save();
-  c.translate(shake(P, 0.8), mv ? -Math.abs(Math.sin(step)) * 1.5 : 0);
+  const tw = twitch(P);
+  c.translate(shake(P, 0.8) + tw * 2, mv ? -Math.abs(Math.sin(step)) * 1.5 : 0);
   c.scale(P.dir, 1);
-  c.rotate(h * -0.3 + (r > 0 ? 0.1 : -w * 0.06));
+  c.rotate(h * -0.3 + (r > 0 ? 0.1 : -w * 0.06) + tw * 0.25);
   // legs (marching high-step)
   c.strokeStyle = INK; c.lineWidth = 1.6; c.lineCap = 'round';
   const l1 = mv ? Math.max(0, Math.sin(step)) * 4 : 0, l2 = mv ? Math.max(0, -Math.sin(step)) * 4 : 0;
@@ -945,7 +977,11 @@ function card_soldier(c, P) {
   c.fillStyle = '#c9ccd4'; c.beginPath(); c.moveTo(spX + 5, spY - 3.5); c.lineTo(spX + 12, spY - 1.5); c.lineTo(spX + 5, spY + 1.5); c.closePath(); c.fill(); outline(c, '#7d8796', 0.7);
   if (w > 0.4 && !r) sparkle(c, spX + 10, spY - 2, 2.2, w, '#fff');
   // card body
-  c.fillStyle = '#fbfaf6'; rrect(c, -9, -33, 18, 27, 2.5); c.fill(); outline(c, '#9aa3b2', 1);
+  c.fillStyle = '#ece2c6'; rrect(c, -9, -33, 18, 27, 2.5); c.fill(); outline(c, '#6d6252', 1);
+  // old, stained, torn: a brown water stain, a dark drip and a ripped corner
+  c.fillStyle = 'rgba(120,84,40,0.28)'; c.beginPath(); c.ellipse(-3 + P.seed * 6, -12, 5, 3.5, P.seed * 3, 0, TAU); c.fill();
+  c.fillStyle = 'rgba(90,10,16,0.55)'; c.fillRect(4 - P.seed * 8, -21, 1.1, 6 + P.seed * 5);
+  c.fillStyle = '#2b2232'; c.beginPath(); c.moveTo(9, -33); c.lineTo(9, -27); c.lineTo(6.5, -29.5); c.lineTo(5, -33); c.closePath(); c.fill();
   c.strokeStyle = sc; c.lineWidth = 0.7; rrect(c, -7.5, -31.5, 15, 24, 1.5); c.stroke();
   // corner indices
   c.fillStyle = sc; c.font = 'bold 5px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
@@ -955,8 +991,9 @@ function card_soldier(c, P) {
   // hand holding spear
   c.fillStyle = '#fbfaf6'; c.beginPath(); c.arc(spX - 0.5, spY + 0.6, 1.8, 0, TAU); c.fill(); outline(c, INK, 0.6);
   // face
-  face(c, P, 1, -23.5, 3, 2, { look: 0.8, tilt: -1 - w });
-  mouth(c, 1.5, -18.8, 3, r > 0 ? 0.6 : 0);
+  if (h > 0.15) face(c, P, 1, -23.5, 3, 2, { look: 0.8, tilt: -1 - w });
+  else hollowEyes(c, 1, -23.5, 3, 1.9, P);
+  toothyGrin(c, 1.5, -18.6, 4.6, r > 0 ? 0.8 : w * 0.3);
   c.restore();
   if (w > 0 && P.prog < 0.7) alertMark(c, 0, -42, w);
 }
@@ -974,9 +1011,9 @@ function pawn(c, P) {
   shadow(c, 12 - air * 0.25, 4 - air * 0.08, 0.25);
   if (crouch) telegraph(c, 22, 9, w);
   c.save();
-  c.translate(shake(P, 1), -air);
+  c.translate(shake(P, 1) + twitch(P) * 2, -air);
   c.scale(1 + land * 0.18 + crouch * 0.15 + h * 0.12, 1 - land * 0.18 - crouch * 0.2 - h * 0.12);
-  c.rotate(h * 0.25 * Math.sin(P.t * 20));
+  c.rotate(h * 0.25 * Math.sin(P.t * 20) + twitch(P) * 0.3 + Math.sin(P.t * 0.7 + P.seed * 5) * 0.06);
   c.scale(P.dir, 1);
   const g = c.createLinearGradient(-10, 0, 10, 0);
   g.addColorStop(0, shade(base, -0.15)); g.addColorStop(0.35, light); g.addColorStop(0.6, base); g.addColorStop(1, dark);
@@ -992,8 +1029,18 @@ function pawn(c, P) {
   // head
   c.beginPath(); c.arc(0, -28, 7, 0, TAU); c.fill(); outline(c, dark, 1);
   c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.ellipse(-3, -31, 1.8, 2.6, -0.4, 0, TAU); c.fill();
-  face(c, P, 1.5, -28.5, 2.6, 1.9, { look: 0.7, tilt: -1.2 - w, white: ivory ? '#fff' : '#f1e6cf' });
-  mouth(c, 2, -24.5, 3, r > 0 ? 0.5 : 0);
+  // hairline cracks through the paint
+  c.strokeStyle = ivory ? 'rgba(60,40,30,0.55)' : 'rgba(200,190,220,0.45)'; c.lineWidth = 0.7;
+  c.beginPath(); c.moveTo(-3, -34.5); c.lineTo(-1, -30); c.lineTo(-3.5, -27); c.lineTo(-2, -22); c.moveTo(-1, -30); c.lineTo(1.5, -31.5);
+  c.moveTo(5, -16); c.lineTo(3, -12); c.lineTo(5.5, -9); c.stroke();
+  if (h > 0.15) face(c, P, 1.5, -28.5, 2.6, 1.9, { look: 0.7, tilt: -1.2 - w, white: ivory ? '#fff' : '#f1e6cf' });
+  else {
+    // black tears that run down from the eyes
+    c.strokeStyle = 'rgba(16,8,14,0.7)'; c.lineWidth = 0.9;
+    for (const ex of [-1.1, 4.1]) { c.beginPath(); c.moveTo(ex, -27); c.quadraticCurveTo(ex + 0.6, -24, ex - 0.3, -20 - P.seed * 3); c.stroke(); }
+    hollowEyes(c, 1.5, -28.5, 2.6, 1.8, P, ivory ? '#ff4a3a' : '#c6ff6a');
+  }
+  toothyGrin(c, 2, -24.3, 3.8, r > 0 ? 0.8 : crouch * 0.4);
   c.restore();
   if (r > 0.85) { c.strokeStyle = rgba(PALETTE.sun, 1 - (r - 0.85) * 6); c.lineWidth = 2; c.beginPath(); c.ellipse(0, 0, 14 + (r - 0.85) * 60, 5 + (r - 0.85) * 20, 0, 0, TAU); c.stroke(); }
   if (crouch) alertMark(c, 0, -44, w);
@@ -1050,12 +1097,17 @@ function jack_box(c, P) {
     // hat
     c.fillStyle = PALETTE.sky; c.beginPath(); c.moveTo(hx - 6, hy - 4); c.lineTo(hx + 2, hy - 17); c.lineTo(hx + 6, hy - 4); c.closePath(); c.fill();
     c.fillStyle = '#ffc94a'; c.beginPath(); c.arc(hx + 2, hy - 17, 2, 0, TAU); c.fill();
-    // hair tufts
-    c.fillStyle = '#ff7a3a'; c.beginPath(); c.arc(hx - 7, hy, 2.6, 0, TAU); c.arc(hx + 7, hy, 2.6, 0, TAU); c.fill();
+    // hair tufts (matted, dull)
+    c.fillStyle = '#b5482a'; c.beginPath(); c.arc(hx - 7, hy, 2.8, 0, TAU); c.arc(hx - 7.5, hy + 3, 2, 0, TAU); c.arc(hx + 7, hy, 2.8, 0, TAU); c.arc(hx + 7.5, hy + 3, 2, 0, TAU); c.fill();
+    // chalk-white face, sunken bruised eye rings
+    c.fillStyle = '#f4f1ea'; c.beginPath(); c.arc(hx, hy, 6.4, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(70,30,60,0.55)'; c.beginPath(); c.ellipse(hx - 1.6, hy - 1.2, 2.4, 2.9, 0, 0, TAU); c.ellipse(hx + 3.6, hy - 1.2, 2.4, 2.9, 0, 0, TAU); c.fill();
     if (h > 0.2) dizzyEyes(c, hx + 1, hy - 1, 2.6, 1.8, P.t);
-    else eyes(c, hx + 1, hy - 1, 2.6, 1.9, 0.6, -1.3);
-    c.fillStyle = '#d9343f'; c.beginPath(); c.arc(hx + 1.5, hy + 2, 1.6, 0, TAU); c.fill();
-    c.strokeStyle = INK; c.lineWidth = 1; c.beginPath(); c.arc(hx + 1, hy + 3, 3, 0.1, Math.PI - 0.1); c.stroke();
+    else hollowEyes(c, hx + 1, hy - 1, 2.6, 1.6, P);
+    // smeared red smile that goes up past the cheeks, full of teeth
+    c.fillStyle = 'rgba(200,30,40,0.55)'; c.beginPath(); c.ellipse(hx + 1, hy + 3.3, 6.2, 2.8, 0, 0, TAU); c.fill();
+    toothyGrin(c, hx + 1, hy + 2.6, 5.4, r > 0 ? 0.9 : 0.4, '#a01822');
+    c.fillStyle = '#d9343f'; c.beginPath(); c.arc(hx + 1.5, hy + 0.8, 1.4, 0, TAU); c.fill();
   } else {
     // closed lid with a rattle gap during wind-up
     const lift = w > 0 ? Math.abs(Math.sin(P.t * 40)) * 2.5 * w : h > 0 ? 3 * h : 0;
@@ -1064,7 +1116,14 @@ function jack_box(c, P) {
     if (lift > 0.5) { c.fillStyle = 'rgba(16,19,31,0.6)'; c.fillRect(x0, y0 - lift, S, lift); }
     // peeking eyes in the gap
     if (h > 0.2) for (let i = 0; i < 3; i++) { const a = P.t * 6 + i * 2.1; sparkle(c, Math.cos(a) * 12 + 3, y0 - D - 8 + Math.sin(a) * 3, 2.4, h, '#ffe46a'); }
-    if (w > 0.3) { c.fillStyle = '#fff'; c.beginPath(); c.arc(x0 + S / 2 - 1, y0 - lift / 2, 1.2, 0, TAU); c.arc(x0 + S / 2 + 4, y0 - lift / 2, 1.2, 0, TAU); c.fill(); }
+    // something in there is watching: red eyes through the gap (it cracks the lid to look out now and then)
+    const peek = Math.max(lift, ((P.t * 0.6 + P.seed * 4) % 4) < 1.1 ? 2.2 : 0);
+    if (peek > 0.5) {
+      if (lift <= 0.5) { c.fillStyle = 'rgba(16,19,31,0.75)'; c.fillRect(x0, y0 - peek, S, peek); }
+      c.fillStyle = '#ff3a2a'; c.shadowColor = '#ff3a2a'; c.shadowBlur = 5;
+      c.beginPath(); c.arc(x0 + S / 2 - 1, y0 - peek / 2, 1.1, 0, TAU); c.arc(x0 + S / 2 + 4, y0 - peek / 2, 1.1, 0, TAU); c.fill();
+      c.shadowBlur = 0;
+    }
   }
   c.restore();
   if (w > 0 && P.prog < 0.7) alertMark(c, 0, -50, w);
@@ -1082,7 +1141,7 @@ export const PAINTERS = {
   chair: [96, 76, chair],
   dust_bunny: [52, 56, dust_bunny],
   roomba: [140, 96, roomba],
-  card_soldier: [64, 58, card_soldier],
-  pawn: [52, 60, pawn],
+  card_soldier: [64, 58, card_soldier, { drawScale: 1.35 }],
+  pawn: [52, 60, pawn, { drawScale: 1.3 }],
   jack_box: [64, 108, jack_box, { barY: -64 }],
 };

@@ -6,6 +6,7 @@
 //   tier 3 "nightmare"  — cracked and torn, hollow red-dot eyes. They FREEZE while you face them and rush
 //                         you when you look away (some appear right behind you).
 // The room also darkens and flickers with each tier. Stage hooks: creepyDirector (update), drawCreepyDark (overlay).
+// The playroom reuses the toys + darkness through playroomCreep (its waves bring the toys).
 import { PALETTE } from '../core/theme.js';
 import { dist, angleTo } from '../core/math.js';
 import { playSfx } from '../audio/sfx.js';
@@ -218,6 +219,46 @@ function spawnToy(L, tier) {
   const name = e?.toyName ?? 'Something';
   L.fx.floatText(x, y - 64, SPAWN_SAY[behind ? 2 : tier === 1 ? 0 : 1](name), tier === 3 ? '#ff7a6b' : '#c9a0dc');
   if (behind) playSfx('stitch');
+}
+
+// ---------------------------------------------------------------- playroom (stage update)
+// The playroom fight gets the same mood, driven by how far through the toy army you are: the room dims,
+// lights flicker, the toys whisper, and a music box plays somewhere. Dolls & teddies march in the waves.
+const WHISPERS = [
+  ['play with us', 'your move', 'hee hee hee', 'we were here first'],
+  ['forever and ever', "it's our turn now", 'stay and play', 'nobody leaves the game'],
+  ['NO TAKE-BACKS', 'we can see you', 'turn around', 'the game never ends'],
+];
+const MUSIC_BOX = ['> music_box.play(\'pop goes the weasel\')', '> music_box: wind... wind... wind...', '> toy_box.lid: creaking', '> toys.count(): one more than before'];
+const PLAY_LINES = {
+  2: { aaron: 'Why is the card soldier smiling. Cards do not have mouths.', victoria: 'Okay. The pawns are crying. Black stuff. Let\'s go faster.' },
+  3: { aaron: 'I never want to play a board game again.', victoria: 'Keep your eyes on them. All of them.' },
+};
+export function playroomCreep(L, dt) {
+  const C = (L.creepy ??= { t: 0, tier: 0, dark: 0, flick: 0, done: false, whisperT: 5 });
+  C.t += dt;
+  if (!L.W || (L.W.done && L.aliveCounted() === 0)) { C.dark = Math.max(0, C.dark - dt * 0.6); C.flick = 0; return; }
+  const tier = L.W.i >= 4 ? 3 : L.W.i >= 2 ? 2 : 1;
+  if (tier !== C.tier) {
+    const first = !C.tier; C.tier = tier;
+    const who = L.hero.id;
+    if (!first) {
+      L.banner(tier === 2 ? 'The toys are smiling at you...' : "Don't turn your back on them", tier === 3 ? '#ff7a6b' : '#c9a0dc', 2.6);
+      L.barkData = { who, text: PLAY_LINES[tier][who] ?? PLAY_LINES[tier].aaron, t: 3.4 };
+      L.log(pick(MUSIC_BOX)); playSfx('error'); if (tier === 3) L.fx.addShake(5);
+    }
+  }
+  const want = [0, 0.18, 0.38, 0.56][C.tier]; // the pale playroom carpet needs more than the living room
+  C.dark += (want - C.dark) * Math.min(1, dt * 1.2);
+  C.flick = Math.max(0, C.flick - dt);
+  if (C.tier >= 2 && C.flick <= 0 && R() < dt * (C.tier === 3 ? 0.4 : 0.15)) C.flick = rnd(0.05, 0.14);
+  C.whisperT -= dt;
+  if (C.whisperT <= 0) {
+    C.whisperT = rnd(5, 9) / C.tier;
+    const foes = L.enemies.filter((e) => !e.dead && e.spawning <= 0 && !e.hidden);
+    if (foes.length) { const e = pick(foes); L.fx.floatText(e.x, e.y - (e.h ?? 40) - 18, pick(WHISPERS[C.tier - 1]), C.tier === 3 ? '#ff7a6b' : 'rgba(255,246,229,0.7)'); }
+    if (R() < 0.25) L.log(pick(MUSIC_BOX));
+  }
 }
 
 // ---------------------------------------------------------------- overlay (screen space, over the world)

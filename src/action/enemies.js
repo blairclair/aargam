@@ -4,7 +4,7 @@ import { ENEMIES, PALETTE } from '../core/theme.js';
 import { dist, angleTo } from '../core/math.js';
 import { playSfx } from '../audio/sfx.js';
 import { collide, inWater, isOpen } from './arena.js';
-import { angDiff, hurtHero, lob, addTelegraph, addZone, spawnShot } from './combat.js';
+import { angDiff, hurtHero, lob, addTelegraph, addZone, spawnShot, spawnPickup } from './combat.js';
 import { BOSS_AI, BOSS_SHAPE } from './bosses.js';
 import { CREEPY_AI, CREEPY_INIT, CREEPY_SHAPE } from './creepies.js';
 
@@ -195,6 +195,33 @@ export function updateEnemies(L, dt) {
 }
 
 // ---------------------------------------------------------------- per-type setup
+// Rubber duck variety (guest bedroom): every duck rolls one of these. Looks are painted by foes_yard.js
+// rubber_duck from e.duck; a few also change how the duck plays. w = roll weight.
+const DUCKS = [
+  { id: 'classic', w: 4, name: 'Rubber Duck' },
+  { id: 'duckling', w: 3, name: 'Duckling', scale: 0.7, hp: 0.5, speed: 1.35, body: '#fff07a', deep: '#e8c43a' },
+  { id: 'mama', w: 1, name: 'Mama Duck', scale: 1.5, hp: 2.6, speed: 0.8, dmg: 1.3, bonnet: true },
+  { id: 'pirate', w: 2, name: 'Pirate Duck', patch: true, bandana: '#d9343f' },
+  { id: 'devil', w: 2, name: 'Devil Duck', body: '#e0453a', deep: '#a82a22', beak: '#2b2232', horns: true, tail: true },
+  { id: 'ninja', w: 2, name: 'Ninja Duck', body: '#3a3046', deep: '#1d1826', mask: '#d9343f', dash: true },
+  { id: 'ghost', w: 1, name: 'Ghost Duck', body: '#eef6ff', deep: '#b9cde0', beak: '#cfe0f0', ghost: true, speed: 1.1 },
+  { id: 'zombie', w: 1, name: 'Zombie Duck', body: '#9cc48a', deep: '#6d8f5e', beak: '#b88a5a', stitches: true, xeye: true, speed: 0.75, hp: 1.6 },
+  { id: 'disco', w: 1, name: 'Disco Duck', disco: true, shades: true },
+  { id: 'cool', w: 2, name: 'Cool Duck', shades: true },
+  { id: 'viking', w: 1, name: 'Viking Duck', helmet: true, hp: 1.4 },
+  { id: 'drummer', w: 1, name: 'Drummer Duck', shako: true }, // Marching Ravens shako
+  { id: 'wizard', w: 1, name: 'Wizard Duck', wizard: true },
+  { id: 'punk', w: 1, name: 'Punk Duck', body: '#ff8fb1', deep: '#d9607f', mohawk: '#7fd8a6' },
+  { id: 'squirt', w: 2, name: 'Squirt Duck', body: '#7fc8f0', deep: '#4f8fb3', squirt: true },
+  { id: 'golden', w: 0.5, name: 'Golden Duck', body: '#f5b908', deep: '#a8740a', beak: '#fff1a8', gold: true, hp: 1.8, speed: 1.25 },
+];
+const DUCK_W = DUCKS.reduce((a, d) => a + d.w, 0);
+function rollDuck(L) {
+  let r = Math.random() * DUCK_W;
+  for (const d of DUCKS) if ((r -= d.w) <= 0) return d;
+  return DUCKS[0];
+}
+
 const INIT = {
   toaster(L, e) { e.anchored = true; e.ax = e.x; e.ay = e.y; },
   jack_box(L, e) { e.anchored = true; e.ax = e.x; e.ay = e.y; e.hidden = true; e.state = 'closed'; },
@@ -217,6 +244,15 @@ const INIT = {
     };
   },
   pawn(L, e) { e.hopCd = 0.4 + Math.random() * 0.6; },
+  rubber_duck(L, e) {
+    const d = e.duck ? DUCKS.find((x) => x.id === e.duck.id) ?? rollDuck(L) : rollDuck(L);
+    e.duck = d; e.name = d.name; e.dashT = 1 + Math.random() * 2; e.squirtT = 2 + Math.random() * 3;
+    if (d.scale) { e.scale *= d.scale; e.r *= d.scale; e.h *= d.scale; e.mass *= d.scale; }
+    if (d.hp) { e.maxHp = Math.max(1, Math.round(e.maxHp * d.hp)); e.hp = e.maxHp; }
+    if (d.speed) e.speed *= d.speed;
+    if (d.dmg) e.damage *= d.dmg;
+    if (d.gold) e.onDeath = (LL, me) => { spawnPickup(LL, 'heart', me.x, me.y); LL.fx.sparkle?.(me.x, me.y - 10, '#ffd96a', 14, 30); LL.fx.floatText(me.x, me.y - 40, 'Golden duck!', '#ffd96a', { big: true }); };
+  },
   code_fish(L, e) { e.swim = true; e.hidden = !!inWater(L.arena, e.x, e.y); e.state = e.hidden ? 'swim' : 'flop'; e.st = e.hidden ? 1 + Math.random() * 2 : 1; },
   pipe_snake(L, e) {
     // emerges from the nearest wall
@@ -574,12 +610,31 @@ const AI = {
 
   // swarm, squeaks: waddles in a flock; squeaks when bonked
   rubber_duck(L, e, dt, sp) {
-    const h = L.hero;
+    const h = L.hero, d = e.duck ?? {};
     e.anim = 'move';
-    const a = angleTo(e.x, e.y, h.x, h.y) + Math.sin(e.animT * 3 + e.seed) * 0.35;
-    e.facing = steer(L, e, e.x + Math.cos(a) * 40, e.y + Math.sin(a) * 40, sp * (0.75 + 0.25 * Math.abs(Math.sin(e.animT * 8))), dt);
-    contact(L, e, e.damage, 0.8);
     if (!e.onHurt) e.onHurt = () => playSfx('boing');
+    // ninja: a quick dash at you every few seconds
+    if (d.dash) {
+      e.dashT -= dt;
+      if (e.dashT <= 0 && e.dashT > -0.3) { e.facing = steer(L, e, h.x, h.y, sp * 3.4, dt); contact(L, e, e.damage, 0.8); return; }
+      if (e.dashT <= -0.3) e.dashT = 2 + Math.random() * 1.5;
+    }
+    // squirt: stops to spit water at you, which leaves a (slippery) puddle
+    if (d.squirt && dist(e.x, e.y, h.x, h.y) < 340) {
+      e.squirtT -= dt;
+      if (e.squirtT <= 0) {
+        e.squirtT = 4 + Math.random() * 2;
+        const tx = h.x + (h.svx ?? 0) * 0.3, ty = h.y + (h.svy ?? 0) * 0.3;
+        playSfx('splash');
+        lob(L, 'water', e.x, e.y - e.h, tx, ty, e.damage * 0.5, { splash: 30, color: PALETTE.lake, h: 70,
+          onLand: (LL, s) => { if (isOpen(LL.arena, s.x, s.y, 10)) addZone(LL, { kind: 'puddle', x: s.x, y: s.y, r: 44, dur: 4.5 }); } });
+      }
+    }
+    // golden: rare and skittish, it runs AWAY (catch it for a heart)
+    const away = d.gold && dist(e.x, e.y, h.x, h.y) < 260;
+    const a = angleTo(e.x, e.y, h.x, h.y) + (away ? Math.PI : 0) + Math.sin(e.animT * 3 + e.seed) * (d.ghost ? 0.8 : 0.35);
+    e.facing = steer(L, e, e.x + Math.cos(a) * 40, e.y + Math.sin(a) * 40, sp * (0.75 + 0.25 * Math.abs(Math.sin(e.animT * 8))), dt);
+    if (!d.gold) contact(L, e, e.damage, 0.8);
   },
 
   // bursts from walls: lurks in the wall, telegraphs a line, lunges out, then slithers
@@ -720,7 +775,7 @@ export function enemyDrawOpts(e) {
     facing: e.facing, t: e.animT, flash: e.flash, hpFrac: e.boss ? undefined : e.hp / e.maxHp,
     anim: e.stun > 0 ? 'hurt' : e.flash > 0.05 ? 'hurt' : e.anim,
     phase: e.phase, state: e.state, scale: e.scale !== 1 ? e.scale : undefined,
-    marked: e.markT > 0, hidden: !!e.hidden,
+    marked: e.markT > 0, hidden: !!e.hidden, duck: e.duck,
     alpha: e.spawning > 0 ? Math.max(0.15, 1 - e.spawning / 0.7) : e.hidden ? 0.28 : 1,
   };
 }

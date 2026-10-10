@@ -6,7 +6,7 @@ import { openEdgePoint, isOpen } from './arena.js';
 import { addTelegraph, addZone } from './combat.js';
 import { playSfx } from '../audio/sfx.js';
 import { officeSlime } from './goo.js';
-import { creepyDirector, drawCreepyDark } from './creepies.js';
+import { creepyDirector, drawCreepyDark, playroomCreep } from './creepies.js';
 
 export const DEPTH = { office: 0, kitchen: 1, living: 1, dining: 2, playroom: 2, primary: 2, guest: 3, backyard: 4, pond: 5 };
 
@@ -172,12 +172,15 @@ export const STAGES = {
     w: 1240, h: 700, wallH: 130, floor: 'carpet', start: { x: 620, y: 640 },
     props: [['rug', 620, 540, { w: 420, d: 250 }], ['toy_box', 200, 210], ['block_tower', 1040, 260], ['play_table', 620, 330], ['bookshelf', 1080, 168], ['block_tower', 150, 600]],
     setup(L) { for (const [x, y] of [[330, 520], [920, 600], [760, 260]]) L.spawnEnemy('jack_box', x, y, { spawnDelay: 0 }); },
+    // creepy toys (creepies.js): dolls & teddies join the army, creepier each wave; the room dims as you go
     waves: [
       { spawn: [['card_soldier', 4, { formation: 'row' }]], delay: 0.5, at: 3 },
-      { spawn: [['pawn', 3]], at: 4, delay: 1 },
-      { spawn: [['card_soldier', 5, { formation: 'row' }], ['pawn', 2]], at: 3, delay: 1.2 },
-      { spawn: [['card_soldier', 4, { formation: 'row' }], ['card_soldier', 4, { formation: 'row' }], ['pawn', 2]], at: 1, delay: 1.5 },
+      { spawn: [['pawn', 3], ['creepy_doll', 1, { tier: 1 }]], at: 4, delay: 1 },
+      { spawn: [['card_soldier', 5, { formation: 'row' }], ['pawn', 2], ['creepy_teddy', 1, { tier: 2 }], ['creepy_doll', 1, { tier: 2 }]], at: 3, delay: 1.2 },
+      { spawn: [['card_soldier', 4, { formation: 'row' }], ['card_soldier', 4, { formation: 'row' }], ['pawn', 2], ['creepy_doll', 1, { tier: 3, hpMul: 1.3 }], ['creepy_teddy', 1, { tier: 3, hpMul: 1.3 }]], at: 1, delay: 1.5 },
     ],
+    update(L, dt) { playroomCreep(L, dt); },
+    drawOver(ctx, L) { drawCreepyDark(ctx, L); },
   }),
 
   // 6 ── Primary bedroom: lint + hanger hawks, then the Sock Monster climbs out of the laundry.
@@ -215,8 +218,8 @@ export const STAGES = {
         L.dripT = 2.6 - k * 1.2;
         const h = L.hero, x = h.x + (Math.random() - 0.5) * 220, y = h.y + (Math.random() - 0.5) * 140;
         if (isOpen(L.arena, x, y, 10)) {
-          addTelegraph(L, { kind: 'circle', x, y, r: 46, dur: 1.0 * L.scl.tele, color: PALETTE.lake });
-          L.later(1.0 * L.scl.tele, () => { addZone(L, { kind: 'puddle', x, y, r: 50, dur: 7, dmg: 3 }); L.fx.burst(x, y, PALETTE.lake, 10, 120); playSfx('splash'); });
+          addTelegraph(L, { kind: 'circle', x, y, r: 60, dur: 1.0 * L.scl.tele, color: PALETTE.lake });
+          L.later(1.0 * L.scl.tele, () => { addZone(L, { kind: 'puddle', x, y, r: 64, dur: 7, dmg: 3 }); L.fx.burst(x, y, PALETTE.lake, 10, 120); playSfx('splash'); });
         }
       }
       L.duckT -= dt;

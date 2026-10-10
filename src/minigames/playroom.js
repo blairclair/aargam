@@ -15,6 +15,7 @@ const HAND_Y = 384, CARD_W = 112, CARD_H = 150;
 const END_BTN = { x: 790, y: 452, w: 140, h: 56 };
 const FOE_BADGE = { x: 120, y: FOE_Y }, YOU_BADGE = { x: 120, y: YOU_Y };
 
+const TUTORIAL_HAND = ['golem', 'bolt', 'guest'];
 const unitFrom = (def, side) => ({ id: def.id, name: def.name, atk: def.atk, hp: def.hp, maxHp: def.hp, first: !!def.first, color: def.color, side, spawn: 0, lunge: 0, flash: 0, dead: false });
 
 export default class CardDuel {
@@ -29,6 +30,7 @@ export default class CardDuel {
     this.shownHp = { ...this.hp };
     this.board = { you: [null, null, null], foe: [null, null, null] };
     this.hand = [];
+    this.deck = this._shuffle(PARTY_POOL.filter((id) => !TUTORIAL_HAND.includes(id))); // one of each: no repeats
     this.round = 0; this.mana = 0; this.maxMana = 0;
     this.sel = -1;
     this.queue = []; this.cur = null;
@@ -58,9 +60,12 @@ export default class CardDuel {
   _banner(text, sub, color = PALETTE.paper, dur = 1) { this.banner = { text, sub, color, t: 0, dur }; }
   _bark(ev, dur = 2.4) { const b = bark('playroom', ev, { hero: this.p.hero }); if (b?.text) { this.say = b.text; this.sayT = dur; } }
   _react(mood, k = 1) { this.mood = mood; this.moodK = k; }
+  _shuffle(a) { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  /** Deal the next card. Each card is in the deck once; only if a very long duel empties it is it reshuffled
+   *  (never with a card that's already in your hand). */
   _draw() {
-    const id = PARTY_POOL[Math.floor(Math.random() * PARTY_POOL.length)];
-    return { ...PARTY_CARDS[id] };
+    if (!this.deck.length) this.deck = this._shuffle(PARTY_POOL.filter((id) => !this.hand.some((c) => c.id === id)));
+    return { ...PARTY_CARDS[this.deck.pop()] };
   }
   handPos(i, n = this.hand.length) { const sp = n > 3 ? 122 : 128; return { x: 480 + (i - (n - 1) / 2) * sp - CARD_W / 2, y: HAND_Y }; }
   slotPos(side, lane) { return { x: LANE_X[lane], y: side === 'you' ? YOU_Y : FOE_Y }; }
@@ -98,7 +103,7 @@ export default class CardDuel {
   }
 
   _foePlace(mana) {
-    const pool = this.round === 1 ? ['pawn'] : this.round <= 2 ? ['pawn', 'soldier'] : this.round <= 4 ? ['pawn', 'soldier', 'knight', 'rook'] : ['soldier', 'knight', 'rook', 'jack', 'queen'];
+    const pool = this.round === 1 ? ['pawn'] : this.round <= 2 ? ['pawn', 'soldier', 'bishop'] : this.round <= 4 ? ['pawn', 'soldier', 'bishop', 'knight', 'rook'] : ['soldier', 'bishop', 'knight', 'rook', 'jack', 'queen', 'king'];
     let guard = 6;
     while (guard-- > 0) {
       const empty = [0, 1, 2].filter((l) => !this.board.foe[l]);
@@ -126,7 +131,7 @@ export default class CardDuel {
   }
 
   _drawUp() {
-    if (this.round === 1) this.hand = [{ ...PARTY_CARDS.golem }, { ...PARTY_CARDS.bolt }, { ...PARTY_CARDS.guest }];
+    if (this.round === 1) this.hand = TUTORIAL_HAND.map((id) => ({ ...PARTY_CARDS[id] }));
     else while (this.hand.length < 3) this.hand.push(this._draw());
     // dramatic final turn: the legendary card shows up
     const last = this.round === this.maxRounds;
@@ -246,7 +251,8 @@ export default class CardDuel {
   _validLane(card, lane) {
     if (!card) return false;
     if (card.type === 'creature') return !this.board.you[lane];
-    return true; // bolt: piece or face in that lane
+    if (card.target === 'ally') return !!this.board.you[lane];
+    return true; // bolt/flare/boxed: piece or face in that lane
   }
 
   _cast(i, lane) {
@@ -257,7 +263,7 @@ export default class CardDuel {
     this.hand.splice(i, 1);
     this.sel = -1;
     const from = this.handPos(i, this.hand.length + 1);
-    const to = lane != null ? this.slotPos(c.type === 'creature' ? 'you' : 'foe', lane) : { x: 480, y: 250 };
+    const to = lane != null ? this.slotPos(c.type === 'creature' || c.target === 'ally' ? 'you' : 'foe', lane) : { x: 480, y: 250 };
     this.flyer = { card: c, fx: from.x + CARD_W / 2, fy: from.y + CARD_H / 2, tx: to.x, ty: to.y, t: 0, dur: 0.28 };
     playSfx('card');
     this._enqueue(0.28, () => {});
@@ -273,13 +279,41 @@ export default class CardDuel {
       this.fx.sparkle(s.x, s.y, PALETTE.sun, 10, 30);
       this.placedOnce = true;
       this._react('happy', 0.8);
-    } else if (c.id === 'bolt') {
+      if (c.enter) this._enter(c, lane, u);
+    } else if (c.dmg) { // Confetti Bolt / Grill Flare
       const f = this.board.foe[lane], s = this.slotPos('foe', lane);
-      this.fx.confetti(s.x, s.y + 20, 36);
+      if (c.id === 'flare') this.fx.burst(s.x, s.y, PALETTE.sunDeep, 30, 220); else this.fx.confetti(s.x, s.y + 20, 36);
       this.flashScreen = 0.5;
       if (f) { this._damage(f, c.dmg, 'foe', lane); this._enqueue(0.3, () => this._reap()); }
       else this._face('foe', c.dmg, lane);
       this._enqueue(0, () => this._checkOver());
+    } else if (c.destroy) { // Back in the Box
+      const f = this.board.foe[lane], s = this.slotPos('foe', lane);
+      this.fx.ringPulse(s.x, s.y, '#7b55d6', 70, 0.4, 5); this.flashScreen = 0.4;
+      if (f) { this.fx.floatText(s.x, s.y - 40, 'Back in the box!', '#c9a0dc', { big: true }); f.dead = true; playSfx('swap'); this._enqueue(0.3, () => this._reap()); }
+      else this._face('foe', 2, lane);
+      this._enqueue(0, () => this._checkOver());
+    } else if (c.aoe) { // Confetti Cannon
+      this.flashScreen = 0.6; this.shake = 8; playSfx('star');
+      for (let i = 0; i < 4; i++) this.fx.confetti(240 + i * 160, 200, 24);
+      this.board.foe.forEach((f, l) => this._damage(f, c.aoe, 'foe', l));
+      this._face('foe', c.aoe, 1);
+      this._enqueue(0.35, () => this._reap());
+      this._enqueue(0, () => this._checkOver());
+    } else if (c.target === 'ally') { // Giant Growth / Pep Talk / Crochet Blanket
+      const u = this.board.you[lane], s = this.slotPos('you', lane);
+      if (!u) return;
+      if (c.mendOne) u.hp = u.maxHp;
+      u.atk += c.buffAtk ?? 0; u.hp += c.buffHp ?? 0; u.maxHp += c.buffHp ?? 0;
+      this.fx.sparkle(s.x, s.y, c.id === 'growth' ? PALETTE.heal : PALETTE.sun, 14, 34);
+      this.fx.floatText(s.x, s.y - 44, `+${c.buffAtk ?? 0}/+${c.buffHp ?? 0}`, PALETTE.sun, { big: true });
+      u.flash = 0.6; playSfx('pickup'); this._react('happy');
+    } else if (c.mana) { // Coffee Run
+      this.mana += c.mana;
+      this.fx.floatText(480, 470, `+${c.mana} mana`, PALETTE.sun, { big: true }); playSfx('pickup'); this._react('happy', 0.6);
+    } else if (c.draw) { // Game Night
+      for (let i = 0; i < c.draw && this.hand.length < 5; i++) this.hand.push({ ...this._draw(), fresh: 1 });
+      playSfx('card'); this._react('happy', 0.6);
     } else if (c.id === 'snack') {
       this.hp.you = Math.min(this.maxHp.you, this.hp.you + c.heal);
       this.fx.floatText(YOU_BADGE.x + 40, YOU_BADGE.y - 10, `+${c.heal}`, PALETTE.heal, { big: true });
@@ -294,6 +328,31 @@ export default class CardDuel {
       this._enqueue(0.9, () => {});
       for (let l = 0; l < 3; l++) this._clashLane(l, 2, true);
       this._enqueue(0, () => this._checkOver());
+    }
+  }
+
+  /** A guest's "Enter:" ability, right after it lands. */
+  _enter(c, lane, me) {
+    const others = this.board.you.map((u, l) => [u, l]).filter(([u]) => u && u !== me);
+    const s = this.slotPos('you', lane);
+    if (c.enter === 'rally' || c.enter === 'buffall') {
+      for (const [u, l] of others) {
+        u.atk += c.n; if (c.enter === 'buffall') { u.hp += c.n; u.maxHp += c.n; }
+        const p = this.slotPos('you', l); this.fx.sparkle(p.x, p.y, PALETTE.sun, 8, 26); this.fx.floatText(p.x, p.y - 40, c.enter === 'rally' ? `+${c.n} atk` : `+${c.n}/+${c.n}`, PALETTE.sun);
+      }
+      if (others.length) playSfx('pickup');
+    } else if (c.enter === 'heal') {
+      this.hp.you = Math.min(this.maxHp.you, this.hp.you + c.n);
+      this.fx.floatText(YOU_BADGE.x + 40, YOU_BADGE.y - 10, `+${c.n}`, PALETTE.heal, { big: true }); this.fx.sparkle(YOU_BADGE.x, YOU_BADGE.y, PALETTE.heal, 12, 30); playSfx('pickup');
+    } else if (c.enter === 'mend') {
+      for (const [u, l] of others) if (u.hp < u.maxHp) { u.hp = u.maxHp; const p = this.slotPos('you', l); this.fx.sparkle(p.x, p.y, PALETTE.heal, 10, 28); this.fx.floatText(p.x, p.y - 40, 'Fixed!', PALETTE.heal); }
+      this.fx.floatText(s.x, s.y - 60, 'I can fix that.', PALETTE.paper); playSfx('pickup');
+    } else if (c.enter === 'aoe') {
+      this.board.foe.forEach((f, l) => this._damage(f, c.n, 'foe', l));
+      this._enqueue(0.3, () => this._reap());
+    } else if (c.enter === 'ping') {
+      const f = this.board.foe[lane];
+      if (f) { this._damage(f, c.n, 'foe', lane); this._enqueue(0.3, () => this._reap()); }
     }
   }
 
@@ -440,7 +499,7 @@ export default class CardDuel {
       }
       ctx.restore();
       keycap(ctx, String(l + 1), x - 52, 234, { small: true });
-      if (ok && selCard.id === 'bolt') { ctx.save(); ctx.globalAlpha = 0.6 + 0.4 * pulse; drawCrosshair(ctx, x, FOE_Y); ctx.restore(); }
+      if (ok && selCard.type === 'spell' && selCard.target === 'lane') { ctx.save(); ctx.globalAlpha = 0.6 + 0.4 * pulse; drawCrosshair(ctx, x, FOE_Y); ctx.restore(); }
     }
   }
 
@@ -484,7 +543,8 @@ export default class CardDuel {
   _drawMana(ctx) {
     const x0 = 806, y0 = 400;
     text(ctx, 'MANA', x0 - 16, y0 - 26, { font: 'bold 12px "Trebuchet MS", sans-serif', color: PALETTE.sun });
-    for (let i = 0; i < this.maxMana; i++) drawLand(ctx, x0 + i * 22, y0, i >= this.mana, { glow: this.phase === 'you' ? 0.7 : 0 });
+    const n = Math.max(this.maxMana, this.mana), step = n > 6 ? 110 / (n - 1) : 22; // Coffee Run can go past the cap
+    for (let i = 0; i < n; i++) drawLand(ctx, x0 + i * step, y0, i >= this.mana, { glow: this.phase === 'you' ? 0.7 : 0 });
   }
 
   _drawEnd(ctx) {

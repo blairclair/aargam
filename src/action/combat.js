@@ -352,9 +352,10 @@ export function updatePickups(L, dt) {
 // ---------------------------------------------------------------- ground zones
 /**
  * Zones are lingering ground areas. kind:
- *  'web' | 'puddle' | 'fire'  (hostile: slow/hurt the hero)    'net' (snares enemies)   'burnmark' (visual)
+ *  'web' | 'fire' (hostile: slow/hurt the hero)   'puddle' (hostile: hero slides, see heroes.js wetT)    'net' (snares enemies)   'burnmark' (visual)
  * z: { kind, x, y, r, dur, dmg?, slow? }
  */
+const WHOA = ['Whoa!', 'Slippery!', 'Woah woah woah!', 'Wheee!', 'No grip!'];
 export function addZone(L, z) { const zone = { t: 0, ...z }; L.zones.push(zone); return zone; }
 
 export function updateZones(L, dt) {
@@ -372,7 +373,11 @@ export function updateZones(L, dt) {
     const inside = Math.hypot(h.x - z.x, (h.y - z.y) / 0.7) < r;
     if (!inside) continue;
     if (z.kind === 'web') h.slowT = Math.max(h.slowT, 0.3);
-    if (z.kind === 'puddle') { h.slowT = Math.max(h.slowT, 0.2); if (z.dmg) hurtHero(L, z.dmg, z.x, z.y, { kind: 'hazard', knock: 0 }); }
+    if (z.kind === 'puddle') { // slippery, not slow: the hero skids around (heroes.js wetT) and keeps sliding a moment after
+      if (!(h.wetT > 0.2) && (h.whoaCd ?? 0) < L.time) { h.whoaCd = L.time + 2.5; L.fx.floatText(h.x, h.y - 110, WHOA[Math.floor(Math.random() * WHOA.length)], PALETTE.lake); playSfx('splash'); }
+      h.wetT = 0.6;
+      if (z.dmg) hurtHero(L, z.dmg, z.x, z.y, { kind: 'hazard', knock: 0 });
+    }
     if (z.kind === 'fire' && z.t > 0.2) hurtHero(L, z.dmg ?? 6, z.x, z.y, { kind: 'hazard', knock: 30 });
   }
   L.zones = L.zones.filter((z) => !z.dead);

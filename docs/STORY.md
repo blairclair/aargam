@@ -175,9 +175,9 @@ during outros it shows a **NEW SKILLS** card.
   > deck deployed in formation
   ```
 - **AARON** (*sparkle*): The board games came alive! The playing cards are marching like an army!
-- **VICTORIA** (*lean*, face: neutral): You look way too happy about this.
+- **VICTORIA** (*lean*, face: neutral): Look at you light up! I love it.
 - **AARON** (*bounce*): I played a LOT of Magic: The Gathering as a teen. Card battles are my thing.
-- **VICTORIA** (*nod*): Then clear the toy army, card nerd. Watch out for the jack-in-the-box.
+- **VICTORIA** (*nod*): Then go get 'em, champ! I've got your back. Watch out for the jack-in-the-box.
 
 #### Outro  `playroom.outro`  (background: playroom)
 
@@ -187,7 +187,7 @@ during outros it shows a **NEW SKILLS** card.
   > cards returned to deck. gg
   ```
 - **AARON** (*sparkle*): Did you see me win that card duel? Teenage me is SO proud right now.
-- **VICTORIA** (*nod*): Very cool, nerd. Now help me pick up four hundred tiny plastic houses.
+- **VICTORIA** (*nod*): That was AMAZING, babe! I'm so proud of you. Now help me pick up four hundred tiny plastic houses.
 - **NARRATOR** (sfx: unlock): New skills! Aaron learned Tap a Card. Victoria learned Bouncy Ball.
 
 ### Primary Bedroom
@@ -479,7 +479,7 @@ _Mouse Heist chase (after the bake)_
 - **lowhp**: A: "I need to tap out. Not yet, not yet!" · V: "Toy army hurts. Heal up."
 - **hit**: A: "Your turn is over!" · V: "Game over." · A: "Discard!"
 - **win**: A: "Toy army disbanded. Victory!" · V: "Toys back on the shelf."
-- **minigame**: A: "Card Duel! Play cards to beat its hand." · V: "Okay, card nerd. Show me."
+- **minigame**: A: "Card Duel! Play cards to beat its hand." · V: "You've got this, babe! Show them how it's done!"
 - **minigameWin**: A: "GG! Teenage me is proud." · PP: "> opponent: concedes"
 - **minigameFail**: A: "Bad draw. Shuffle up, again!" · V: "Try a different card order."
 

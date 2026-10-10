@@ -258,26 +258,49 @@ function sock_monster(c, P) {
 
 // ================================================================ GUEST BEDROOM
 // ---- Rubber Duck ----
+// P.o.duck (action/enemies.js DUCKS) picks the variant: colours + accessories (pirate, devil, ninja, ghost,
+// zombie, disco, cool, viking, drummer shako, wizard, punk, squirt, golden, mama bonnet, duckling).
 function rubber_duck(c, P) {
   const { wind, rel } = phases(P);
+  const V = P.o?.duck ?? {};
   const walk = P.anim === 'move';
-  const bob = Math.sin(P.t * (walk ? 10 : 3) + P.seed * 6) * (walk ? 1.6 : 1);
+  const bob = Math.sin(P.t * (walk ? 10 : 3) + P.seed * 6) * (walk ? 1.6 : 1) + (V.ghost ? -5 + Math.sin(P.t * 2.4 + P.seed * 5) * 2.5 : 0);
   const tilt = walk ? Math.sin(P.t * 10 + P.seed * 6) * 0.12 : 0;
-  ripple(c, 14, 4.5, P.t + P.seed, '#cfeaff', 2, walk ? 1.4 : 0.7);
-  shadow(c, 11, 3.5, 0.18);
+  if (!V.ghost) ripple(c, 14, 4.5, P.t + P.seed, '#cfeaff', 2, walk ? 1.4 : 0.7);
+  shadow(c, 11, 3.5, V.ghost ? 0.08 : 0.18);
   c.save();
+  if (V.ghost) c.globalAlpha *= 0.5 + 0.15 * Math.sin(P.t * 3 + P.seed * 4);
   c.translate(rel ? P.dir * rel * 6 : 0, bob - 1);
   if (wind) { c.translate(Math.sin(P.t * 45) * wind, 0); c.scale(1 + wind * 0.08, 1 - wind * 0.1); }
   c.rotate(tilt);
   c.scale(P.dir, 1);
-  const Y = '#ffd23f', YD = '#e0a91a', OR = '#ff8a2a';
+  const hue = (P.t * 140 + P.seed * 360) % 360;
+  const Y = V.disco ? `hsl(${hue},90%,64%)` : V.body ?? '#ffd23f';
+  const YD = V.disco ? `hsl(${hue},80%,44%)` : V.deep ?? '#e0a91a';
+  const OR = V.beak ?? '#ff8a2a';
+  // devil tail (behind the body)
+  if (V.tail) {
+    c.strokeStyle = YD; c.lineWidth = 1.6; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(-11, -8); c.quadraticCurveTo(-20, -4 + Math.sin(P.t * 6) * 3, -19, -14); c.stroke();
+    c.fillStyle = YD; c.beginPath(); c.moveTo(-19, -17); c.lineTo(-22, -12); c.lineTo(-16, -13); c.closePath(); c.fill();
+  }
   // body
   c.fillStyle = YD; c.beginPath(); c.ellipse(0, -7, 13, 8, 0, 0, TAU); c.fill();
   c.fillStyle = Y; c.beginPath(); c.ellipse(-0.5, -8, 12, 7, 0, 0, TAU); c.fill();
+  if (V.ghost) { // wispy tail instead of a waterline
+    c.fillStyle = Y; c.beginPath(); c.moveTo(-12, -6);
+    for (let i = 0; i <= 4; i++) c.quadraticCurveTo(-12 + i * 6 - 3, 2 + Math.sin(P.t * 6 + i) * 2, -12 + i * 6, -3);
+    c.lineTo(12, -6); c.closePath(); c.fill();
+  }
   // tail flick
   c.fillStyle = Y; c.beginPath(); c.moveTo(-10, -10); c.lineTo(-16, -15); c.lineTo(-11, -6); c.closePath(); c.fill();
   // wing
   c.fillStyle = YD; c.beginPath(); c.ellipse(-2, -8, 6, 3.5, 0.2 + (walk ? Math.sin(P.t * 12) * 0.2 : 0), 0, TAU); c.fill();
+  if (V.stitches) { // zombie stitches across the body
+    c.strokeStyle = '#3b2a20'; c.lineWidth = 0.9;
+    c.beginPath(); c.moveTo(-8, -12); c.lineTo(4, -4); c.stroke();
+    for (let i = 0; i < 4; i++) { const x = -7 + i * 3.3, y = -11.3 + i * 2.2; c.beginPath(); c.moveTo(x - 1.4, y + 1.6); c.lineTo(x + 1.4, y - 1.6); c.stroke(); }
+  }
   // head
   c.fillStyle = YD; c.beginPath(); c.arc(6, -18, 7.5, 0, TAU); c.fill();
   c.fillStyle = Y; c.beginPath(); c.arc(5.5, -18.5, 7, 0, TAU); c.fill();
@@ -287,14 +310,71 @@ function rubber_duck(c, P) {
   c.fillStyle = OR;
   c.beginPath(); c.moveTo(11, -18 - open * 0.3); c.quadraticCurveTo(17, -18.5 - open, 17, -17 - open); c.lineTo(11, -16.5); c.closePath(); c.fill();
   c.beginPath(); c.moveTo(11, -16); c.quadraticCurveTo(17, -15.5 + open, 16, -14.5 + open); c.lineTo(11, -15); c.closePath(); c.fill();
+  if (V.squirt) { const k = (P.t * 1.5 + P.seed) % 1; c.fillStyle = rgba('#7fc8f0', 1 - k); c.beginPath(); c.arc(16, -14 + k * 10, 1.4, 0, TAU); c.fill(); }
+  // ninja mask band (under the eye)
+  if (V.mask) {
+    c.fillStyle = V.mask; c.fillRect(-1, -22.5, 12.5, 4);
+    const fl = Math.sin(P.t * 14 + P.seed * 9) * 2;
+    c.beginPath(); c.moveTo(-1, -22); c.lineTo(-8, -24 + fl); c.lineTo(-7, -21 + fl); c.lineTo(-1, -19); c.closePath(); c.fill();
+  }
   // eye
   if (isHurt(P)) dizzy(c, 7, -20, 0, 2);
-  else {
-    c.fillStyle = INK; c.beginPath(); c.arc(7.5, -20, 1.7, 0, TAU); c.fill();
-    c.fillStyle = '#fff'; c.beginPath(); c.arc(7, -20.6, 0.6, 0, TAU); c.fill();
+  else if (V.patch) {
+    c.fillStyle = INK; c.beginPath(); c.ellipse(7.5, -20, 2.6, 2.2, 0, 0, TAU); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 0.9; c.beginPath(); c.moveTo(2, -25); c.lineTo(11, -17.5); c.stroke();
+  } else if (V.xeye) {
+    c.strokeStyle = INK; c.lineWidth = 1.2; c.beginPath(); c.moveTo(6, -21.5); c.lineTo(9, -18.5); c.moveTo(9, -21.5); c.lineTo(6, -18.5); c.stroke();
+  } else if (V.shades) {
+    c.fillStyle = INK; c.beginPath(); c.moveTo(3, -22); c.lineTo(11, -22); c.lineTo(10.5, -18.5); c.lineTo(4.5, -18.5); c.closePath(); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 0.9; c.beginPath(); c.moveTo(3, -21.5); c.lineTo(-1, -20.5); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.7)'; c.fillRect(5, -21.5, 2, 0.9);
+  } else {
+    c.fillStyle = V.mask ? '#fff' : V.ghost ? '#2b3a55' : INK; c.beginPath(); c.arc(7.5, -20, V.mask ? 1.5 : 1.7, 0, TAU); c.fill();
+    if (V.mask) { c.fillStyle = INK; c.beginPath(); c.arc(8, -20, 0.8, 0, TAU); c.fill(); }
+    else { c.fillStyle = '#fff'; c.beginPath(); c.arc(7, -20.6, 0.6, 0, TAU); c.fill(); }
     c.strokeStyle = INK; c.lineWidth = 1.3; c.lineCap = 'round';
     c.beginPath(); c.moveTo(5, -23.5); c.lineTo(10, -22); c.stroke();
   }
+  // headwear
+  if (V.bandana) {
+    c.fillStyle = V.bandana; c.beginPath(); c.arc(5.5, -20, 7.2, Math.PI * 1.05, Math.PI * 1.95); c.closePath(); c.fill();
+    c.fillStyle = '#fff'; for (const [x, y] of [[3, -24], [7, -25], [9.5, -22.5]]) { c.beginPath(); c.arc(x, y, 0.7, 0, TAU); c.fill(); }
+    c.fillStyle = V.bandana; c.beginPath(); c.moveTo(-1, -21); c.lineTo(-5, -23); c.lineTo(-4.5, -19); c.closePath(); c.fill();
+  }
+  if (V.horns) {
+    c.fillStyle = '#2b2232';
+    c.beginPath(); c.moveTo(2, -24); c.quadraticCurveTo(0, -29, 1.5, -31); c.lineTo(4.5, -25); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(8, -25); c.quadraticCurveTo(9, -30, 11.5, -31); c.lineTo(10.5, -24); c.closePath(); c.fill();
+  }
+  if (V.helmet) {
+    c.fillStyle = '#9aa3b2'; c.beginPath(); c.arc(5.5, -21, 7.4, Math.PI, 0); c.closePath(); c.fill();
+    c.fillStyle = '#c9a23a'; c.fillRect(-2, -21.5, 15, 1.8);
+    c.fillStyle = '#f8efe6';
+    c.beginPath(); c.moveTo(-1, -24); c.quadraticCurveTo(-6, -27, -5, -33); c.quadraticCurveTo(-2, -28, 1, -26); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(12, -24); c.quadraticCurveTo(17, -27, 16, -33); c.quadraticCurveTo(13, -28, 10, -26); c.closePath(); c.fill();
+  }
+  if (V.shako) { // Marching Ravens drummer: tall purple shako, gold plate, plume
+    c.fillStyle = '#4b2a7a'; c.fillRect(0.5, -35, 10, 11); c.fillStyle = '#2b1648'; c.fillRect(-0.5, -25, 12, 2);
+    c.fillStyle = '#e6c25a'; c.beginPath(); c.arc(5.5, -30, 2.2, 0, TAU); c.fill();
+    c.fillStyle = '#fff'; c.beginPath(); c.ellipse(5.5 + Math.sin(P.t * 8) * 0.8, -39, 2.2, 4.5, 0, 0, TAU); c.fill();
+    c.fillStyle = '#e6c25a'; c.beginPath(); c.ellipse(5.5 + Math.sin(P.t * 8) * 0.8, -37, 1.4, 2.4, 0, 0, TAU); c.fill();
+  }
+  if (V.wizard) {
+    c.fillStyle = '#3f5fc4'; c.beginPath(); c.moveTo(-2, -23); c.lineTo(13, -23); c.lineTo(4 + Math.sin(P.t * 3) * 2, -40); c.closePath(); c.fill();
+    c.fillStyle = '#ffd96a'; for (const [x, y] of [[4, -28], [7, -33], [8, -26]]) { c.beginPath(); c.arc(x, y, 0.9, 0, TAU); c.fill(); }
+  }
+  if (V.mohawk) {
+    c.fillStyle = V.mohawk; c.beginPath(); c.moveTo(0, -23);
+    for (let i = 0; i < 5; i++) { c.lineTo(1 + i * 2.2, -31 - (i % 2) * 1.5); c.lineTo(2.1 + i * 2.2, -24.5); }
+    c.closePath(); c.fill();
+  }
+  if (V.bonnet) {
+    c.fillStyle = '#ffb7cf'; c.beginPath(); c.arc(4.5, -19.5, 7.8, Math.PI * 0.95, Math.PI * 1.75); c.lineTo(4.5, -19.5); c.closePath(); c.fill();
+    c.strokeStyle = '#e98aa8'; c.lineWidth = 1.2; c.beginPath(); c.arc(4.5, -19.5, 7.8, Math.PI * 0.95, Math.PI * 1.75); c.stroke();
+    c.fillStyle = '#e98aa8'; c.beginPath(); c.ellipse(-3, -16, 2.2, 1.3, 0.5, 0, TAU); c.ellipse(-3, -13.5, 2.2, 1.3, -0.5, 0, TAU); c.fill(); // ribbon bow
+  }
+  if (V.gold) { c.fillStyle = 'rgba(255,255,230,0.85)'; c.beginPath(); c.ellipse(-4, -11, 5, 1.6, -0.2, 0, TAU); c.fill(); c.beginPath(); c.ellipse(2.5, -22.5, 2.4, 1.2, -0.5, 0, TAU); c.fill(); }
+  if (V.gold || V.disco) for (let i = 0; i < 2; i++) { const a = P.t * 3 + i * 3 + P.seed * 7; sparkle(c, Math.cos(a) * 12, -14 + Math.sin(a * 1.3) * 9, 2, 0.6 + 0.4 * Math.sin(P.t * 8 + i), '#fff'); }
   // squeak lines
   if (rel) {
     c.strokeStyle = rgba('#ffffff', 1 - rel * 0.6); c.lineWidth = 1.4;
@@ -782,7 +862,7 @@ export const PAINTERS = {
   lint: [40, 48, lint],
   hanger: [56, 66, hanger],
   sock_monster: [200, 150, sock_monster],
-  rubber_duck: [52, 48, rubber_duck],
+  rubber_duck: [56, 64, rubber_duck],
   pipe_snake: [72, 56, pipe_snake],
   drip: [44, 74, drip],
   gnome: [40, 60, gnome],
