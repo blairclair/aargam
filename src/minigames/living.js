@@ -3,6 +3,8 @@
 // Click = CLAP: a shockwave that scatters every nearby bunny. Teaches itself: a ghost hand herds the first
 // bunny into the vacuum while everyone else naps, then it's your turn. Mid-game twist: a STAMPEDE bursts out
 // from under the couch, and the vacuum kicks into TURBO for a few seconds.
+// Some of the 'bunnies' are creepy dolls & teddies (built at random, see action/creepies.js): they fight the
+// suction, protest louder the closer they get to the nozzle, and scream all the way into the bag.
 import { PALETTE, FONT } from '../core/theme.js';
 import { finishMinigame } from '../core/flow.js';
 import { text, panel } from '../ui/widgets.js';
@@ -10,6 +12,7 @@ import { Fx } from '../art/fx.js';
 import * as Sprites from '../art/sprites.js';
 import { playSfx, playMusic } from '../audio/sfx.js';
 import { bark } from '../story/lines.js';
+import { makeToy, drawCreepy } from '../action/creepies.js';
 import { Bust, Speech, Combo, clamp, lerp, rand, pick, rr, timeMul, drawHand, drawPulseRing, fmtTime } from './c/common.js';
 
 const TAU = Math.PI * 2;
@@ -29,6 +32,15 @@ const OBSTACLES = [
   { kind: 'plant', x: FX0 + 44, y: FY0 + 46, r: 28 },
 ];
 const BAG_WORDS = ['bagged!', 'shoop!', 'into the bag!', 'bye bunny!', 'fwoomp!'];
+// toy protests, by how close to the nozzle they are (far → near), then the scream on the way in
+const PROTEST = [
+  ['No.', "I don't want to.", 'put me DOWN', 'we were playing!', 'stop pushing', "I'm telling"],
+  ['NO NO NO', "I'LL BE GOOD", 'not the bag!', 'you can\'t do this!', 'I HAVE RIGHTS', 'let go of me!'],
+  ["I'LL REMEMBER THIS", 'NOT THE BAAAG', 'I WILL FIND YOU', 'MOMMY?!', "IT'S DARK IN THERE", 'YOU\'LL BE SORRY'],
+];
+const SCREAMS = ['AAAAAAAAAAHHHH!', 'NOOOOOOOOOOO—', 'EEEEEEEEEEEEE!', 'WHY YOU WHYYYY—', 'AAAUUGGHHHH!'];
+const MUFFLED = ['(muffled screaming)', 'mmph! MMPH!', '(angry thumping)', '...let me out...', '(distant sobbing)'];
+const TOY_LINES = { aaron: ['They scream. Why do they scream.', 'Still counts as cleaning!'], victoria: ['Into the bag. No negotiating.', "You're grounded. In the bag."] };
 
 export default class Minigame {
   constructor(game) { this.game = game; }
@@ -61,6 +73,10 @@ export default class Minigame {
       const [x, y] = spots[i % spots.length];
       this.bunnies.push(this._bunny(x + rand(-20, 20), y + rand(-20, 20), { sneaky: i >= nNormal, asleep: true }));
     }
+    // swap a few for creepy toys (a mix of dolls & teddies, creepiest look)
+    const cands = this.bunnies.filter((b) => !b.demo);
+    for (let i = 0, n = extra ? 3 : 4; i < n; i++) this._toyify(cands[(i * 3 + 1) % cands.length], i);
+    this.toyLine = false;
     this.total = this.bunnies.length - 1; // the demo bunny is a freebie
     playMusic('minigame');
   }
@@ -69,6 +85,31 @@ export default class Minigame {
 
   _bunny(x, y, o = {}) {
     return { x, y, vx: 0, vy: 0, r: o.sneaky ? 15 : 17, hop: rand(0, TAU), hopT: rand(0.3, 1.2), scared: 0, juke: rand(0.3, 0.8), state: 'free', st: 0, face: 1, fluff: rand(0, 10), ...o };
+  }
+
+  _toyify(b, i) {
+    if (!b || b.toy) return;
+    b.toy = makeToy(i % 2 ? 'creepy_teddy' : 'creepy_doll', Math.random() < 0.25 ? 2 : 3);
+    b.r = 17; b.yellT = rand(0.5, 2); b.protestT = 0;
+  }
+
+  _protest(b, md, dt) {
+    b.protestT = Math.max(0, b.protestT - dt);
+    b.yellT -= dt;
+    if (md > 380) return;
+    const near = clamp(1 - (md - 50) / 330, 0, 1);
+    if (b.yellT <= 0) {
+      const tier = near > 0.66 ? 2 : near > 0.33 ? 1 : 0;
+      this.fx.floatText(b.x + rand(-10, 10), b.y - 62, pick(PROTEST[tier]), tier === 2 ? '#ff7a6b' : tier ? '#ffb3b3' : PALETTE.paper, { size: 13 + tier * 3 });
+      b.yellT = lerp(2.4, 0.75, near) * rand(0.8, 1.2);
+      b.protestT = 0.6;
+      if (tier === 2) playSfx('hurt');
+    }
+    // digs its heels in: the odd lurch away from the nozzle when it's close
+    if (near > 0.5 && b.scared <= 0 && Math.random() < dt * 1.1) {
+      const a = Math.atan2(b.y - MOUTH.y, b.x - MOUTH.x) + rand(-0.6, 0.6);
+      b.vx += Math.cos(a) * 240; b.vy += Math.sin(a) * 240; b.protestT = 0.6;
+    }
   }
 
   _say(event) { this.speech.say(bark('living', event, { hero: this.p.hero })); }
@@ -166,6 +207,8 @@ export default class Minigame {
       this.bunnies.push(b);
       this.fx.snowPuff(b.x, b.y, 10, DUST);
     }
+    this._toyify(this.bunnies[this.bunnies.length - 1], 1);
+    if (!this.easy) this._toyify(this.bunnies[this.bunnies.length - 3], 0);
     this.total += n;
     // existing bunnies panic too
     for (const b of this.bunnies) if (b.state === 'free' && !b.stampede) { b.scared = 1; b.vx += rand(-200, 200); b.vy += rand(-200, 200); }
@@ -222,10 +265,16 @@ export default class Minigame {
       const mdx = MOUTH.x - b.x, mdy = MOUTH.y - b.y, md = Math.hypot(mdx, mdy) || 1;
       if (md < suckR && this.phase !== 'end') {
         const k = 1 - md / suckR;
-        b.vx += (mdx / md) * 900 * k * dt; b.vy += (mdy / md) * 900 * k * dt;
+        const pull = b.toy ? 680 : 900; // toys fight the suction
+        b.vx += (mdx / md) * pull * k * dt; b.vy += (mdy / md) * pull * k * dt;
         if (Math.random() < dt * 8) this.fx._p({ x: b.x + rand(-8, 8), y: b.y + rand(-8, 8), vx: mdx / md * 140, vy: mdy / md * 140, g: 0, drag: 0, life: 0.3, max: 0.3, color: DUST, size: 2.5, shape: 'dot', rot: 0, vr: 0 });
       }
-      if (md < CAPTURE_R + b.r * 0.5 && this.phase !== 'end') { b.state = 'sucked'; b.st = 0; b.a0 = Math.atan2(b.y - MOUTH.y, b.x - MOUTH.x); b.d0 = md; playSfx('pour'); continue; }
+      if (b.toy && playing) this._protest(b, md, dt);
+      if (md < CAPTURE_R + b.r * 0.5 && this.phase !== 'end') {
+        b.state = 'sucked'; b.st = 0; b.a0 = Math.atan2(b.y - MOUTH.y, b.x - MOUTH.x); b.d0 = md; playSfx('pour');
+        if (b.toy) this._scream(b);
+        continue;
+      }
       // walls: soft push away (except the right wall near the vacuum, so you can corner them into it)
       const W = 34, wf = 900;
       if (b.x < FX0 + W) b.vx += wf * (1 - (b.x - FX0) / W) * dt;
@@ -256,6 +305,17 @@ export default class Minigame {
     this.bunnies = this.bunnies.filter((b) => !b.gone);
   }
 
+  _scream(b) {
+    this.fx.floatText(MOUTH.x - 90, MOUTH.y - 92 - rand(0, 20), pick(SCREAMS), '#ff5d5d', { size: 22, big: true });
+    playSfx('shout'); playSfx('hurt');
+    this.fx.addShake(5);
+    if (!this.toyLine) {
+      this.toyLine = true;
+      const h = this.p.hero === 'victoria' ? 'victoria' : 'aaron';
+      this.speech.say({ who: h, text: pick(TOY_LINES[h]) }, 3);
+    }
+  }
+
   _bagged(b) {
     b.gone = true;
     this.bagPuff = 1;
@@ -268,6 +328,7 @@ export default class Minigame {
     this.bagged++;
     const n = this.combo.hit();
     playSfx('squish');
+    if (b.toy) this.fx.floatText(MOUTH.x - 30, MOUTH.y - 150, pick(MUFFLED), 'rgba(255,246,229,0.7)', { size: 12 });
     this.fx.floatText(MOUTH.x - 50, MOUTH.y - 48, n >= 2 ? `x${n} ${pick(['double bag!', 'bunny train!', 'roundup!'])}` : pick(BAG_WORDS), n >= 2 ? PALETTE.sun : PALETTE.paper, { size: n >= 2 ? 18 : 15 });
     if (n >= 2) { this.timeLeft = Math.min(this.timeTotal, this.timeLeft + 2); this.fx.floatText(MOUTH.x - 50, MOUTH.y - 24, '+2s', PALETTE.sun); playSfx('star'); }
     this.fx.sparkle(MOUTH.x, MOUTH.y - 30, PALETTE.sun, 5, 20);
@@ -445,6 +506,7 @@ export default class Minigame {
   }
 
   _drawBunny(ctx, b) {
+    if (b.toy) return this._drawToy(ctx, b);
     const s = b.scale ?? 1;
     const hopY = -Math.abs(Math.sin(b.hop)) * 7;
     const dark = b.sneaky;
@@ -493,6 +555,20 @@ export default class Minigame {
     ctx.restore();
   }
 
+  _drawToy(ctx, b) {
+    const T = b.toy, s = b.scale ?? 1;
+    const fighting = b.protestT > 0 || b.state === 'sucked';
+    T.facing = b.face < 0 ? Math.PI : 0;
+    T.state = b.asleep ? 'sit' : 'move';
+    T.anim = fighting || Math.hypot(b.vx, b.vy) > 40 ? 'move' : 'idle';
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    if (b.state === 'sucked') ctx.rotate(b.st * 14);
+    const shake = fighting ? rand(-2.5, 2.5) : 0;
+    drawCreepy(ctx, T, shake, b.r * 0.75 - (fighting ? Math.abs(Math.sin(this.t * 30)) * 3 : 0), { t: this.t + b.fluff, scale: 1.0 * s, alpha: 1 });
+    ctx.restore();
+  }
+
   _drawOverlay(ctx) {
     const cx = FX0 + FLOOR.w / 2;
     if (this.phase === 'intro') {
@@ -534,7 +610,7 @@ export default class Minigame {
       const win = this.phase === 'win';
       panel(ctx, -230, -56, 460, 112, { style: this.success ? 'mint' : 'dark', radius: 18, lineWidth: 3 });
       text(ctx, win ? 'ALL BAGGED!' : this.success ? "Time's up! Nice herding!" : "Time's up!", 0, -8, { align: 'center', font: win ? FONT.big : 'bold 30px "Trebuchet MS", sans-serif', color: this.success ? PALETTE.heal : '#ffb3b3' });
-      text(ctx, `${this.bagged} of ${this.total} dust bunnies in the bag`, 0, 28, { align: 'center', font: FONT.ui, color: PALETTE.paper });
+      text(ctx, `${this.bagged} of ${this.total} in the bag`, 0, 28, { align: 'center', font: FONT.ui, color: PALETTE.paper });
       ctx.restore();
       if (T > 2.2) text(ctx, this.success ? 'click to continue' : 'one more try — click', cx, 340, { align: 'center', font: FONT.small, color: PALETTE.paper, alpha: 0.6 + 0.4 * Math.sin(T * 4) });
     }

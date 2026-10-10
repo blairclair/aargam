@@ -55,6 +55,7 @@ real photo heads + hair, outfits from the photos.
 | art-world | src/art/world | ✅ DONE (b69567f): 9 rooms, 41 furniture, 24 enemies, drawWater, drawStringLights. Open: dough blob looks more worried than menacing |
 
 ## User feedback log (most recent first)
+- 2026-10-10: Bunny Roundup: 4 of the bunnies (+1-2 in the stampede) are creepy toys that resist suction, protest louder near the nozzle and scream into the bag.
 - 2026-10-10: Living-room fight gets creepy dolls & teddies (src/action/creepies.js): each one randomly built; 3 tiers tied to Roomba hp — waddle → still-then-jerk → only move when you look away; room darkens/flickers. Victoria's office skill Unplug → Short Circuit (chain bolt). Single-file build: node tools/build-single.mjs → dist/housewarming.html (emailable).
 - 2026-10-09: Per-room difficulty (Easy/Medium/Hard) on the select screen — src/core/difficulty.js. Medium = original tuning; Easy/Hard scale enemy hp/dmg/speed/attack gaps/telegraphs and the minigame clock (Drumline: tempo).
 - 2026-10-07 round 3: Victoria's Spanish cut entirely (2026-10-09: last line removed too). Office action too easy (now ~40 bugs, overlapping waves). More detail on bugs/dough/kettle (drawScale + detail pass). Wrench was harder to land than the kick (now 70px / 153°). Victoria's kitchen popups were dry (rewritten, parity with Aaron). Bread Bake boring → Mouse Heist chase after it (hero = whoever is playing).

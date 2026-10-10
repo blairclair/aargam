@@ -81,6 +81,14 @@ function init(L, e) {
 }
 export const CREEPY_INIT = { creepy_doll: init, creepy_teddy: init };
 
+/** A stand-alone random toy for drawing outside the fight (Bunny Roundup uses these). */
+export function makeToy(type, tier = 3) {
+  const e = { type, tier, seed: Math.floor(R() * 1000), facing: 0, state: 'move', anim: 'idle', h: 58 };
+  init(null, e);
+  e.state = 'move';
+  return e;
+}
+
 /** Is the hero facing this toy (and close enough to see it)? */
 function watched(L, e) {
   const h = L.hero;
