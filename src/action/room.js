@@ -378,6 +378,7 @@ export default class RoomScene {
     ctx.restore();
 
     // ---- screen space
+    this.stage.drawOver?.(ctx, this);
     if (this.phase === 'won') { ctx.fillStyle = `rgba(255,201,74,${Math.min(0.2, this.endT * 0.1)})`; ctx.fillRect(0, 0, W, H); }
     if (this.phase === 'lost') { ctx.fillStyle = `rgba(16,19,31,${Math.min(0.45, this.endT * 0.25)})`; ctx.fillRect(0, 0, W, H); }
     this.drawOffscreenMarkers(ctx, cx, cy);

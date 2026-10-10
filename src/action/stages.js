@@ -6,6 +6,7 @@ import { openEdgePoint, isOpen } from './arena.js';
 import { addTelegraph, addZone } from './combat.js';
 import { playSfx } from '../audio/sfx.js';
 import { officeSlime } from './goo.js';
+import { creepyDirector, drawCreepyDark } from './creepies.js';
 
 export const DEPTH = { office: 0, kitchen: 1, living: 1, dining: 2, playroom: 2, primary: 2, guest: 3, backyard: 4, pond: 5 };
 
@@ -146,7 +147,9 @@ export const STAGES = {
       L.boss = L.spawnEnemy('roomba', 650, 300, { spawnDelay: 1.2, hpMul: 3, dmgMul: 0.75 });
       for (let i = 0; i < 3; i++) L.spawnEnemy('dust_bunny', 250 + i * 400, 300 + (i % 2) * 50, { spawnDelay: 1.4, counts: false });
     },
-    update() {},
+    update(L, dt) { creepyDirector(L, dt); }, // creepy dolls & teddies, creepier as the Roomba weakens
+    drawOver(ctx, L) { drawCreepyDark(ctx, L); },
+    onKill(L, e) { if (e === L.boss) creepyDirector(L, 0); }, // the toys go limp with it
     objective(L) { return { text: `${ROOMS.living.objective}`, progress: 1 - L.boss.hp / L.boss.maxHp }; },
     done(L) { return L.boss.dead; },
   },

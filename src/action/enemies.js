@@ -6,6 +6,7 @@ import { playSfx } from '../audio/sfx.js';
 import { collide, inWater, isOpen } from './arena.js';
 import { angDiff, hurtHero, lob, addTelegraph, addZone, spawnShot } from './combat.js';
 import { BOSS_AI, BOSS_SHAPE } from './bosses.js';
+import { CREEPY_AI, CREEPY_INIT, CREEPY_SHAPE } from './creepies.js';
 
 // r = body radius, h = sprite height (for hit/label placement), mass = knockback resistance
 const SHAPE = {
@@ -29,6 +30,7 @@ const SHAPE = {
   vine: { r: 16, h: 40, mass: 99, color: '#3f7a4a' },
   code_fish: { r: 13, h: 24, mass: 0.9, color: '#6fb7e8' },
   ...BOSS_SHAPE,
+  ...CREEPY_SHAPE,
 };
 
 /**
@@ -59,7 +61,7 @@ export function createEnemy(L, type, x, y, opts = {}) {
   };
   for (const k of Object.keys(opts)) if (!['hpMul', 'dmgMul', 'speedMul', 'scale', 'spawnDelay'].includes(k)) e[k] = opts[k];
   if (e.boss) e.mass = shape.mass;
-  INIT[e.type]?.(L, e);
+  (INIT[e.type] ?? CREEPY_INIT[e.type])?.(L, e);
   return e;
 }
 
@@ -154,7 +156,7 @@ export function updateEnemies(L, dt) {
       if (Math.random() < 0.12) L.fx.burst(e.x, e.y - e.h - 6, PALETTE.sun, 1, 30);
     } else if (h && !h.down) {
       const sp = e.speed * (e.slowT > 0 ? 0.5 : 1);
-      (BOSS_AI[e.type] ?? AI[e.type])?.(L, e, dt, sp);
+      (BOSS_AI[e.type] ?? AI[e.type] ?? CREEPY_AI[e.type])?.(L, e, dt, sp);
     }
     if (e.snareT > 0 && !e.boss) { e.x = ox; e.y = oy; }
     if (e.anchored) { e.x = e.ax; e.y = e.ay; }

@@ -1,6 +1,7 @@
 // Action drawing: gameplay overlays + simple fallbacks for anything art hasn't shipped yet
 // (room interiors, furniture kinds, v2 enemies, v2 projectiles). Owned by: action team.
 import { PALETTE } from '../core/theme.js';
+import { drawCreepy } from './creepies.js';
 
 const TAU = Math.PI * 2;
 
@@ -170,6 +171,7 @@ export function drawFurnitureFallback(ctx, p, t, game) {
 function eyes(c, x, y, s = 3, col = PALETTE.ink) { c.fillStyle = '#fff'; c.beginPath(); c.arc(x - s, y, s, 0, TAU); c.arc(x + s, y, s, 0, TAU); c.fill(); c.fillStyle = col; c.beginPath(); c.arc(x - s + 1, y, s * 0.5, 0, TAU); c.arc(x + s + 1, y, s * 0.5, 0, TAU); c.fill(); }
 
 export function drawEnemyFallback(ctx, type, x, y, o, e) {
+  if (type === 'creepy_doll' || type === 'creepy_teddy') return drawCreepy(ctx, e, x, y, o);
   const s = o.scale ?? 1, t = o.t ?? 0, col = e?.color ?? '#999';
   ctx.save();
   ctx.translate(x, y); ctx.scale(s, s);

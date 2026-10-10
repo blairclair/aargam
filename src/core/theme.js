@@ -114,6 +114,8 @@ export const ENEMIES = {
   chair:         { id: 'chair', name: 'Bull Chair', hp: 50, speed: 140, damage: 14, room: 'dining', role: 'telegraphed charge' },
   dust_bunny:    { id: 'dust_bunny', name: 'Dust Bunny', hp: 10, speed: 150, damage: 4, room: 'living', role: 'fast hopper, flees' },
   roomba:        { id: 'roomba', name: 'Roomba Tank', hp: 320, speed: 70, damage: 18, room: 'living', role: 'mini-boss: suction + bumper charge', electronic: true, boss: true },
+  creepy_doll:   { id: 'creepy_doll', name: 'Creepy Doll', hp: 18, speed: 70, damage: 6, room: 'living', role: 'random-built toy; creepier as the Roomba weakens' },
+  creepy_teddy:  { id: 'creepy_teddy', name: 'Creepy Teddy', hp: 24, speed: 62, damage: 7, room: 'living', role: 'random-built toy; creepier as the Roomba weakens' },
   card_soldier:  { id: 'card_soldier', name: 'Card Soldier', hp: 28, speed: 80, damage: 9, room: 'playroom', role: 'formation marcher' },
   pawn:          { id: 'pawn', name: 'Pawn', hp: 35, speed: 60, damage: 10, room: 'playroom', role: 'hops grid squares' },
   jack_box:      { id: 'jack_box', name: 'Jack-in-the-Box', hp: 55, speed: 0, damage: 14, room: 'playroom', role: 'pop-up ambush' },
