@@ -11,3 +11,4 @@ node_modules/
 .agents/skills/errata-*/
 .claude/skills/errata-*/
 .cursor/skills/errata-*/
+dist/
