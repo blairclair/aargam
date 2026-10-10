@@ -29,6 +29,7 @@ export default class ResultsScene {
     this.t = 0;
     this.landed = 0;
     this.revealed = false;
+    this.done = false; // scenes are reused: without this, Continue was dead on every results screen after the first
     this.sparks = new Sparks();
     this.sparks.burst(480, -10, [PALETTE.sun, '#ff8fb1', PALETTE.mint, PALETTE.sky, PALETTE.paper], 60, 260, { g: 160, stars: 0.15 });
     playMusic('house');
