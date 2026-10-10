@@ -71,7 +71,7 @@ Movement, animation, and color from round 1 are loved — **keep them**. One her
 | Earned in | Aaron | Victoria |
 |---|---|---|
 | start | **Karate Kick** (basic) | **Wrench Whack** (basic) |
-| Office | **Debug** — reveal & mark hidden enemies (crit on marked) | **Unplug** — stun electronic enemies in a cone |
+| Office | **Debug** — reveal & mark hidden enemies (crit on marked) | **Short Circuit** — a bolt that chains through up to 6 enemies; machines take extra damage and are stunned |
 | Kitchen | **Bread Toss** — lob a baguette (ranged) | **Hot Pan** — wide sizzling swing, burns |
 | Dining | **Plate Shield** — block & reflect | **Plate Shield** — block & reflect |
 | Living | **Karate Sweep** — spinning kick, knockback | **Throw Pillow** — ricocheting ranged |

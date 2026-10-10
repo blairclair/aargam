@@ -20,8 +20,8 @@ const DIFF_BTN = (i) => ({ x: 712 + i * 76, y: 26, w: 72, h: 30 });
 // Retry tips: first entry whose hero knows the skill wins (other hero preferred).
 const TIPS = {
   office: [{ hero: 'aaron', text: 'Tip: keep moving and kick bugs before they swarm you.' }],
-  kitchen: [{ hero: 'victoria', skill: 'unplug', text: 'Try Victoria: her Unplug stuns the Toaster Turrets.' }, { hero: 'aaron', skill: 'debug', text: 'Try Aaron: Debug marks enemies so they take extra damage.' }],
-  living: [{ hero: 'victoria', skill: 'unplug', text: 'Try Victoria: Unplug stuns the Roomba Tank, and this is her specialty.' }],
+  kitchen: [{ hero: 'victoria', skill: 'unplug', text: 'Try Victoria: Short Circuit chains through the Toaster Turrets and fries them.' }, { hero: 'aaron', skill: 'debug', text: 'Try Aaron: Debug marks enemies so they take extra damage.' }],
+  living: [{ hero: 'victoria', skill: 'unplug', text: 'Try Victoria: Short Circuit fries the Roomba Tank, and this is her specialty.' }],
   dining: [{ hero: 'victoria', skill: 'hot_pan', text: 'Try Victoria: Hot Pan\'s wide swing swats flying plates.' }, { hero: 'aaron', skill: 'bread_toss', text: 'Try Aaron: Bread Toss hits plates from a safe distance.' }],
   playroom: [{ hero: 'aaron', skill: 'debug', text: 'Try Aaron: Debug reveals Jack-in-the-Boxes before they pop.' }, { hero: 'victoria', skill: 'throw_pillow', text: 'Try Victoria: Throw Pillow ricochets through the card soldiers.' }],
   primary: [{ hero: 'victoria', skill: 'throw_pillow', text: 'Try Victoria: Throw Pillow ricochets through the lint swarm.' }, { hero: 'aaron', skill: 'karate_sweep', text: 'Try Aaron: Karate Sweep knocks the lint swarm back.' }],

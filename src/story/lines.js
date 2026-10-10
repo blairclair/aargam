@@ -133,7 +133,7 @@ export const CUTSCENES = {
       { who: 'partyplanner', text: '> init(): bugs squashed: ALL\n> crash log saved to Desktop/sorry.txt', sfx: 'type' },
       { who: 'aaron', text: 'The crash log! PartyPlanner is still running. Inside the house itself.', expr: 'surprise' },
       { who: 'victoria', text: 'So every room it touched is broken. Fine. One room at a time.', expr: 'nod' },
-      { who: 'narrator', text: 'New skills! Aaron learned Debug. Victoria learned Unplug.', sfx: 'unlock' },
+      { who: 'narrator', text: 'New skills! Aaron learned Debug. Victoria learned Short Circuit.', sfx: 'unlock' },
     ],
   },
   'kitchen.outro': {

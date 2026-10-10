@@ -58,7 +58,7 @@ export const HEROES = {
     look: { hair: '#d9b47a', shirt: '#1f2540', jacket: PALETTE.denim, pants: '#4a6b94', glasses: false, skin: '#f4cdb0' },
     base: { maxHp: 105, speed: 200, damage: 16 },
     basic: 'wrench',
-    abilities: { attack: { name: 'Wrench Whack', cooldown: 0.4 }, ability: { name: 'Unplug', cooldown: 6 }, special: { name: 'Hot Pan', cooldown: 4 } },
+    abilities: { attack: { name: 'Wrench Whack', cooldown: 0.4 }, ability: { name: 'Short Circuit', cooldown: 6 }, special: { name: 'Hot Pan', cooldown: 4 } },
   },
 };
 export const HERO_IDS = ['aaron', 'victoria'];
@@ -68,7 +68,7 @@ export const SKILLS = {
   kick:         { id: 'kick', hero: 'aaron', slot: 'basic', name: 'Karate Kick', desc: 'Quick kick. Childhood karate pays off.', earnedIn: 'start' },
   wrench:       { id: 'wrench', hero: 'victoria', slot: 'basic', name: 'Wrench Whack', desc: 'A solid whack. Also fixes things.', earnedIn: 'start' },
   debug:        { id: 'debug', hero: 'aaron', slot: 'skill', name: 'Debug', desc: 'Reveal hidden enemies; marked enemies take extra damage.', earnedIn: 'office' },
-  unplug:       { id: 'unplug', hero: 'victoria', slot: 'skill', name: 'Unplug', desc: 'Stun electronic enemies in a cone.', earnedIn: 'office' },
+  unplug:       { id: 'unplug', hero: 'victoria', slot: 'skill', name: 'Short Circuit', desc: 'A bolt that jumps between up to 6 enemies. Machines get fried and stunned.', earnedIn: 'office' },
   bread_toss:   { id: 'bread_toss', hero: 'aaron', slot: 'skill', name: 'Bread Toss', desc: 'Lob a baguette.', earnedIn: 'kitchen' },
   hot_pan:      { id: 'hot_pan', hero: 'victoria', slot: 'skill', name: 'Hot Pan', desc: 'Wide sizzling swing that burns.', earnedIn: 'kitchen' },
   plate_shield_a: { id: 'plate_shield_a', hero: 'aaron', slot: 'skill', name: 'Plate Shield', desc: 'Block and reflect shots.', earnedIn: 'dining' },

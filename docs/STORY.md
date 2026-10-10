@@ -89,7 +89,7 @@ during outros it shows a **NEW SKILLS** card.
   ```
 - **AARON** (*surprise*): The crash log! PartyPlanner is still running. Inside the house itself.
 - **VICTORIA** (*nod*): So every room it touched is broken. Fine. One room at a time.
-- **NARRATOR** (sfx: unlock): New skills! Aaron learned Debug. Victoria learned Unplug.
+- **NARRATOR** (sfx: unlock): New skills! Aaron learned Debug. Victoria learned Short Circuit.
 
 ### Kitchen
 

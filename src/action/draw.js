@@ -375,6 +375,18 @@ export function drawVfx(ctx, v) {
       }
       break;
     }
+    case 'chain': { // Short Circuit: jagged bolt through each hop, with a glow underlay
+      ctx.globalAlpha = 1 - k; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (const [w, col] of [[9, 'rgba(255,201,74,0.35)'], [3, v.color], [1.5, '#fff']]) {
+        ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(v.pts[0].x, v.pts[0].y);
+        for (let i = 1; i < v.pts.length; i++) {
+          const a = v.pts[i - 1], b = v.pts[i];
+          for (let s = 1; s <= 5; s++) { const f = s / 5, j = s < 5 ? (Math.random() - 0.5) * 18 : 0; ctx.lineTo(a.x + (b.x - a.x) * f + j, a.y + (b.y - a.y) * f + j); }
+        }
+        ctx.stroke();
+      }
+      break;
+    }
     case 'bolt': { ctx.globalAlpha = 1 - k; ctx.strokeStyle = v.color; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(v.x, v.y - 200); for (let s = 1; s <= 6; s++) ctx.lineTo(v.x + (Math.random() - 0.5) * 24, v.y - 200 + s * 200 / 6); ctx.stroke(); break; }
     case 'card': {
       const up = k * 30;

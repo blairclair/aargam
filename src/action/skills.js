@@ -73,18 +73,40 @@ export const SKILL_DEF = {
       L.fx.floatText(h.x, h.y - 124, n ? `Debug: ${n} marked` : 'Debug: no bugs nearby', PALETTE.mint);
     },
   },
+  // Short Circuit (id stays 'unplug' so saves keep it): Victoria rewires the room's current into a bolt that
+  // jumps enemy to enemy. Real damage on every hop; machines take extra and stay fried (stunned) for a while.
   unplug: {
-    cd: 7, tut: 'Press {key}: Unplug stuns machines in a cone (and dazes the rest).',
+    cd: 7, tut: 'Press {key}: Short Circuit! A bolt jumps between up to 6 enemies. Machines get fried.',
     cast(L, h) {
       playSfx('error');
-      const range = 170, arc = Math.PI * 0.45;
-      for (const e of L.enemies) {
-        if (!targetable(e) || dist(h.x, h.y, e.x, e.y) > range + e.r || angDiff(angleTo(h.x, h.y, e.x, e.y), h.facing) > arc / 2) continue;
-        damageEnemy(L, e, h.damage * 0.5, h.x, h.y, { knock: 60, stun: e.electronic ? 3.2 : 1.0 });
-        if (e.electronic) L.fx.floatText(e.x, e.y - e.h - 18, 'UNPLUGGED', PALETTE.sun);
+      const hit = new Set(), pts = [{ x: h.x + Math.cos(h.facing) * 16, y: h.y - 22 }];
+      // first target: the closest enemy roughly where she's aiming, else just the closest one
+      let e = null, bd = 280;
+      for (const c of L.enemies) {
+        if (!targetable(c)) continue;
+        const d = dist(h.x, h.y, c.x, c.y);
+        if (d < bd && (d < c.r + 30 || angDiff(angleTo(h.x, h.y, c.x, c.y), h.facing) < 0.6)) { bd = d; e = c; }
       }
-      vfx(L, { kind: 'zap', x: h.x, y: h.y - 16, ang: h.facing, arc, r: range, dur: 0.35, color: PALETTE.sun });
-      L.fx.addShake(3);
+      e ??= nearestEnemy(L, h.x, h.y, 200);
+      let px = h.x, py = h.y;
+      while (e && hit.size < 6) {
+        hit.add(e);
+        const zap = e.electronic ? 2.2 : 1.4;
+        damageEnemy(L, e, h.damage * zap, px, py, { knock: 90, stun: e.electronic ? 3 : 1.1 });
+        if (e.electronic) L.fx.floatText(e.x, e.y - e.h - 18, 'FRIED', PALETTE.sun);
+        L.fx.burst(e.x, e.y - e.h * 0.5, PALETTE.sun, 6, 150);
+        pts.push({ x: e.x, y: e.y - e.h * 0.5 });
+        px = e.x; py = e.y;
+        e = nearestEnemy(L, px, py, 220, hit);
+      }
+      if (hit.size) {
+        vfx(L, { kind: 'chain', x: h.x, y: h.y, pts, dur: 0.4, color: PALETTE.sun });
+        L.fx.addShake(2 + hit.size);
+        if (hit.size > 2) L.fx.floatText(h.x, h.y - 124, `Short Circuit x${hit.size}!`, PALETTE.sun);
+      } else {
+        vfx(L, { kind: 'zap', x: h.x, y: h.y - 16, ang: h.facing, arc: 0.5, r: 120, dur: 0.3, color: PALETTE.sun });
+        L.fx.floatText(h.x, h.y - 124, 'Short Circuit: nothing in reach', 'rgba(255,246,229,0.7)');
+      }
     },
   },
 
